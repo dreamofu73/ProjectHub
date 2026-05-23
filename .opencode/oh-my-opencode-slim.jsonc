@@ -1,0 +1,255 @@
+{
+  "$schema": "https://unpkg.com/oh-my-opencode-slim@latest/oh-my-opencode-slim.schema.json",
+  "preset": "mix",
+  "presets": {
+    "opencode": {
+      "orchestrator": {
+        "model": "opencode/mimo-v2.5-free",
+        "skills": [
+          "*",
+          "!make-interfaces-feel-better"
+        ],
+        "mcps": [
+          "*",
+          "!context7",
+          "!gh_app",
+          "!websearch"
+        ]
+      },
+      "oracle": {
+        "model": "opencode/big-pickle",
+        "variant": "max",
+        "skills": [
+          "simplify",
+          "ce-brainstorm",
+          "workers-best-practices"
+        ],
+        "mcps": [
+          "codegraph"
+        ]
+      },
+      "council": {
+        "model": "opencode/mimo-v2.5-free",
+        "variant": "high",
+        "skills": [],
+        "mcps": []
+      },
+      "librarian": {
+        "model": "opencode/deepseek-v4-flash-free",
+        "skills": [
+          "customer-research"
+        ],
+        "mcps": [
+          "websearch",
+          "context7",
+          "gh_app"
+        ]
+      },
+      "explorer": {
+        "model": "opencode/deepseek-v4-flash-free",
+        "skills": [],
+        "mcps": [
+          "codegraph"
+        ]
+      },
+      "designer": {
+        "model": "opencode/mimo-v2.5-free",
+        "variant": "medium",
+        "skills": [
+          "make-interfaces-feel-better",
+          "better-icons",
+          "vercel-react-best-practices"
+        ],
+        "mcps": [
+          "codegraph"
+        ]
+      },
+      "fixer": {
+        "model": "opencode/north-mini-code-free",
+        "variant": "high",
+        "skills": [
+          "rust-best-practices",
+          "vite",
+          "tsdown"
+        ],
+        "mcps": [
+          "codegraph"
+        ]
+      },
+      "observer": {
+        "model": "opencode/deepseek-v4-flash-free",
+        "skills": [],
+        "mcps": []
+      }
+    },
+	"google": {
+      "orchestrator": {
+        "model": "google/antigravity-gemini-3.1-pro",
+        "skills": [
+          "*",
+          "!make-interfaces-feel-better"
+        ],
+        "mcps": [
+          "*",
+          "!context7",
+          "!gh_app",
+          "!websearch"
+        ]
+      },
+      "oracle": {
+        "model": "google/antigravity-gemini-3.1-pro",
+        "variant": "max",
+        "skills": [
+          "simplify",
+          "ce-brainstorm",
+          "workers-best-practices"
+        ],
+        "mcps": [
+          "codegraph"
+        ]
+      },
+      "council": {
+        "model": "google/antigravity-gemini-3.1-pro",
+        "variant": "high",
+        "skills": [],
+        "mcps": []
+      },
+      "librarian": {
+        "model": "google/gemini-2.5-flash",
+        "skills": [
+          "customer-research"
+        ],
+        "mcps": [
+          "websearch",
+          "context7",
+          "gh_app"
+        ]
+      },
+      "explorer": {
+        "model": "google/gemini-2.5-flash",
+        "skills": [],
+        "mcps": [
+          "codegraph"
+        ]
+      },
+      "designer": {
+        "model": "google/gemini-3.1-flash-lite",
+        "variant": "medium",
+        "skills": [
+          "make-interfaces-feel-better",
+          "better-icons",
+          "vercel-react-best-practices"
+        ],
+        "mcps": [
+          "codegraph"
+        ]
+      },
+      "fixer": {
+        "model": "google/gemini-2.5-pro",
+        "variant": "high",
+        "skills": [
+          "rust-best-practices",
+          "vite",
+          "tsdown"
+        ],
+        "mcps": [
+          "codegraph"
+        ]
+      },
+      "observer": {
+        "model": "google/gemini-2.5-flash",
+        "skills": [],
+        "mcps": []
+      }
+    },
+    "mix": {
+      "orchestrator": {
+        "model": "opencode/big-pickle",
+        "skills": [
+          "*",
+          "!make-interfaces-feel-better"
+        ],
+        "mcps": [
+          "*",
+          "!context7",
+          "!gh_app",
+          "!websearch"
+        ]
+      },
+      "oracle": {
+        "model": "google/antigravity-gemini-3.1-pro",
+        "variant": "max",
+        "skills": [
+          "simplify",
+          "ce-brainstorm",
+          "workers-best-practices"
+        ],
+        "mcps": [
+          "codegraph"
+        ]
+      },
+      "council": {
+        "model": "google/antigravity-gemini-3.1-pro",
+        "variant": "high",
+        "skills": [],
+        "mcps": []
+      },
+      "librarian": {
+        "model": "google/gemini-2.5-flash",
+        "skills": [
+          "customer-research"
+        ],
+        "mcps": [
+          "websearch",
+          "context7",
+          "gh_app"
+        ]
+      },
+      "explorer": {
+        "model": "google/gemini-2.5-flash",
+        "skills": [],
+        "mcps": [
+          "codegraph"
+        ]
+      },
+      "designer": {
+        "model": "google/gemini-2.5-flash",
+        "variant": "medium",
+        "skills": [
+          "make-interfaces-feel-better",
+          "better-icons",
+          "vercel-react-best-practices"
+        ],
+        "mcps": [
+          "codegraph"
+        ]
+      },
+      "fixer": {
+        "model": "opencode/deepseek-v4-flash-free",
+        "variant": "high",
+        "skills": [
+          "rust-best-practices",
+          "vite",
+          "tsdown"
+        ],
+        "mcps": [
+          "codegraph"
+        ]
+      },
+      "observer": {
+        "model": "google/gemini-2.5-flash",
+        "skills": [],
+        "mcps": []
+      }
+    }
+  },
+  "companion": {
+    "enabled": true,
+    "position": "bottom-right",
+    "size": "medium",
+    "gifPack": "default",
+    "loopStyle": "classic",
+    "speed": 1,
+    "debug": false
+  }
+}

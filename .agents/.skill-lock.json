@@ -1,0 +1,141 @@
+{
+  "version": 3,
+  "skills": {
+    "agent-browser": {
+      "source": "vercel-labs/agent-browser",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/vercel-labs/agent-browser.git",
+      "skillPath": "skills/agent-browser/SKILL.md",
+      "skillFolderHash": "c1470a475a0472fceda2401ea6763708a91680a8",
+      "installedAt": "2026-06-04T05:03:38.006Z",
+      "updatedAt": "2026-06-04T07:54:55.544Z"
+    },
+    "find-skills": {
+      "source": "vercel-labs/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/vercel-labs/skills.git",
+      "skillPath": "skills/find-skills/SKILL.md",
+      "skillFolderHash": "3013fdeb8a11b10b1eb795ec3ae8bfca38f7c26d",
+      "installedAt": "2026-06-19T04:29:26.656Z",
+      "updatedAt": "2026-06-19T04:29:36.473Z"
+    },
+    "react-performance-optimization": {
+      "source": "nickcrew/claude-ctx-plugin",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/nickcrew/claude-ctx-plugin.git",
+      "skillPath": "skills/react-performance-optimization/SKILL.md",
+      "skillFolderHash": "bd195e0083e998a0a8a4c04471a3651b55a6e2d5",
+      "installedAt": "2026-06-19T04:36:34.541Z",
+      "updatedAt": "2026-06-19T04:36:34.541Z"
+    },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/anthropics/skills.git",
+      "skillPath": "skills/frontend-design/SKILL.md",
+      "skillFolderHash": "0d5b74a14bdf3ebcd64f352d06376a2ef05ed296",
+      "pluginName": "example-skills",
+      "installedAt": "2026-06-19T04:38:50.334Z",
+      "updatedAt": "2026-06-19T04:38:50.334Z"
+    },
+    "rust-best-practices": {
+      "source": "apollographql/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/apollographql/skills.git",
+      "skillPath": "skills/rust-best-practices/SKILL.md",
+      "skillFolderHash": "73bee942cb621e4ee7f2c3f86de01ab09638ee5d",
+      "installedAt": "2026-06-19T04:40:40.257Z",
+      "updatedAt": "2026-06-19T04:40:40.257Z"
+    },
+    "rust-patterns": {
+      "source": "affaan-m/everything-claude-code",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/affaan-m/everything-claude-code.git",
+      "skillPath": "skills/rust-patterns/SKILL.md",
+      "skillFolderHash": "70b9890d51c38bc2a184a4e8d7e301e8371c1776",
+      "installedAt": "2026-06-19T04:42:04.351Z",
+      "updatedAt": "2026-06-19T04:44:29.890Z"
+    },
+    "security-review": {
+      "source": "affaan-m/everything-claude-code",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/affaan-m/everything-claude-code.git",
+      "skillPath": "skills/security-review/SKILL.md",
+      "skillFolderHash": "32c1fb5575e4f285c961f8dc511c333eaede01d7",
+      "installedAt": "2026-06-19T04:46:24.558Z",
+      "updatedAt": "2026-06-19T04:46:24.558Z"
+    },
+    "make-interfaces-feel-better": {
+      "source": "jakubkrehel/make-interfaces-feel-better",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/jakubkrehel/make-interfaces-feel-better.git",
+      "skillPath": "skills/make-interfaces-feel-better/SKILL.md",
+      "skillFolderHash": "ae0b04b484f3c222048395723a253f6959bf727d",
+      "installedAt": "2026-07-14T04:18:28.307Z",
+      "updatedAt": "2026-07-14T04:18:28.307Z"
+    },
+    "vercel-react-best-practices": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/vercel-labs/agent-skills.git",
+      "skillPath": "skills/react-best-practices/SKILL.md",
+      "skillFolderHash": "343db72180d05814949fef7d46be96b5c6ee86b3",
+      "installedAt": "2026-07-14T04:26:42.829Z",
+      "updatedAt": "2026-07-14T04:26:42.829Z"
+    },
+    "better-icons": {
+      "source": "better-auth/better-icons",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/better-auth/better-icons.git",
+      "skillPath": "skills/SKILL.md",
+      "skillFolderHash": "49c97e1227b9611b44248acd341c7f188582f937",
+      "installedAt": "2026-07-14T04:30:21.539Z",
+      "updatedAt": "2026-07-14T04:30:21.539Z"
+    },
+    "ce-brainstorm": {
+      "source": "everyinc/compound-engineering-plugin",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/everyinc/compound-engineering-plugin.git",
+      "skillPath": "skills/ce-brainstorm/SKILL.md",
+      "skillFolderHash": "8c69ce850d49e9bd19268520b8f7a8412a2f7493",
+      "installedAt": "2026-07-14T04:30:57.228Z",
+      "updatedAt": "2026-07-14T04:30:57.228Z"
+    },
+    "tsdown": {
+      "source": "antfu/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/antfu/skills.git",
+      "skillPath": "skills/tsdown/SKILL.md",
+      "skillFolderHash": "d2deb9ea5fee2fcbdecbc7e450e5facbfa870f8c",
+      "installedAt": "2026-07-14T04:35:48.106Z",
+      "updatedAt": "2026-07-14T04:35:48.106Z"
+    },
+    "vite": {
+      "source": "antfu/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/antfu/skills.git",
+      "skillPath": "skills/vite/SKILL.md",
+      "skillFolderHash": "3c0dc60ce4ffc34fca02aaa7eb21130ae48c8dff",
+      "installedAt": "2026-07-14T04:39:57.370Z",
+      "updatedAt": "2026-07-14T04:39:57.370Z"
+    }
+  },
+  "dismissed": {
+    "findSkillsPrompt": true
+  },
+  "lastSelectedAgents": [
+    "amp",
+    "antigravity",
+    "antigravity-cli",
+    "cline",
+    "codex",
+    "cursor",
+    "deepagents",
+    "gemini-cli",
+    "github-copilot",
+    "kimi-code-cli",
+    "opencode",
+    "warp",
+    "zed"
+  ]
+}

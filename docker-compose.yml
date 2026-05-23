@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: pms-postgres
+    environment:
+      POSTGRES_USER: pms_user
+      POSTGRES_PASSWORD: pms_password
+      POSTGRES_DB: pms_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    profiles:
+      - postgres
+
+  mysql:
+    image: mysql:8.0
+    container_name: pms-mysql
+    environment:
+      MYSQL_USER: pms_user
+      MYSQL_PASSWORD: pms_password
+      MYSQL_DATABASE: pms_db
+      MYSQL_ROOT_PASSWORD: root_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    restart: unless-stopped
+    profiles:
+      - mysql
+
+  mariadb:
+    image: mariadb:11
+    container_name: pms-mariadb
+    environment:
+      MARIADB_USER: pms_user
+      MARIADB_PASSWORD: pms_password
+      MARIADB_DATABASE: pms_db
+      MARIADB_ROOT_PASSWORD: root_password
+    # MySQL 컨테이너와 동시에 기동할 수 있도록 호스트 포트를 3307로 분리
+    ports:
+      - "3307:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    restart: unless-stopped
+    profiles:
+      - mariadb
+
+volumes:
+  postgres_data:
+  mysql_data:
+  mariadb_data:

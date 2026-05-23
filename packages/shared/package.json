@@ -1,0 +1,13 @@
+{
+  "name": "shared",
+  "version": "0.0.0",
+  "private": true,
+  "dependencies": {
+    "@tauri-apps/api": "^2.11.1"
+  },
+  "exports": {
+    "./lib/*": "./src/lib/*.ts",
+    "./types": "./src/types/index.ts",
+    "./types/*": "./src/types/*.ts"
+  }
+}

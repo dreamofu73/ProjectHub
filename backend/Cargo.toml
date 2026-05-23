@@ -1,0 +1,45 @@
+[package]
+name = "backend"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+axum = { version = "0.7", features = ["ws", "macros", "multipart"] }
+tower-http = { version = "0.5", features = ["cors", "fs", "trace"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+uuid = { version = "1.15", features = ["v4"] }
+# 분산 환경에서도 충돌 없는 64비트 정수 기본키 생성기(Sonyflake).
+# 기본 피처(pnet)는 Windows 빌드에 Npcap SDK(Packet.lib) 링크가 필요하므로 비활성화하고,
+# machine_id 는 순수 std 로 구한 실제 송신 인터페이스 IP 로 빌더에서 지정합니다.
+sonyflake = { version = "0.5", default-features = false }
+sqlx = { version = "0.9.0", features = ["sqlite", "runtime-tokio", "macros", "mysql", "postgres", "any", "tls-rustls"] }
+# 멀티 DB SQL 생성기. 방언별 직렬화(Postgres / MySQL·MariaDB / SQLite)를 담당합니다.
+# sea-query-binder 는 sqlx 0.8 + 드라이버별 풀만 지원하므로 채택하지 않고,
+# db::bind 모듈이 sqlx AnyPool 용 바인딩 브리지를 직접 제공합니다.
+# `thread-safe`: 식별자 참조를 Rc → Arc 로 바꿔 문장을 Send 로 만듭니다.
+# (axum 핸들러는 await 를 넘나드는 값이 Send 여야 합니다)
+sea-query = { version = "1.0", features = ["thread-safe"] }
+tokio = { version = "1", features = ["full"] }
+regex = "1.10"
+futures = "0.3"
+jsonwebtoken = "9.3.0"
+chrono = "0.4.38"
+toml = "0.8"
+mime_guess = "2.0"
+tokio-util = { version = "0.7", features = ["io"] }
+zip = "8.6.0"
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
+tracing-appender = "0.2.5"
+file-rotate = "0.8.0"
+argon2 = "0.5"
+csv = "1.4.0"
+calamine = "0.36.0"
+utoipa = { version = "4.2.3", features = ["axum_extras"] }
+utoipa-swagger-ui = { version = "7.1.0", features = ["axum"] }
+
+[dev-dependencies]
+reqwest = { version = "0.12", features = ["json"] }
+tokio = { version = "1", features = ["full"] }
+tower = { version = "0.5", features = ["util"] }

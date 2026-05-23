@@ -1,0 +1,76 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# Dependencies
+node_modules/
+.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# Build output (dist/ · build/ · out/ match at any depth)
+dist/
+build/
+out/
+
+# Rust & Tauri
+target/
+apps/desktop/src-tauri/gen/
+
+# TypeScript
+*.tsbuildinfo
+
+# Testing (test-results/ · playwright-report/ match at any depth)
+coverage/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+apps/web/e2e/.auth/
+test/playwright/fixtures/.auth/
+test/playwright/report/
+
+# SQLite & dynamic data
+data/
+
+# Config & logs
+config*.toml
+*.log
+*.pid
+logs/
+
+# Env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Secrets & binaries
+*.pem
+*.exe
+*.pdb
+
+# Temp & workspace
+/tmp/
+.slim/
+.slim/deepwork/
+_workspace/
+
+# Agent tooling
+.playwright-mcp/
+.codegraph/
+.claude/settings.local.json
+
+# IDE & OS
+.idea/
+.vscode/
+.DS_Store
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*

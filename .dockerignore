@@ -1,0 +1,58 @@
+# Git
+.git
+.gitignore
+.gitattributes
+.agent*
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node / frontend dependencies (rebuilt in container)
+node_modules/
+apps/*/node_modules/
+packages/*/node_modules/
+
+# Rust build artifacts (rebuilt in container)
+target/
+apps/desktop/src-tauri/target/
+
+# Data (persistent, excluded from image)
+data/
+logs/
+
+# Docs / artifacts
+docs/
+*.md
+README.md
+
+# Scripts directory (not needed in production image)
+scripts/
+pms
+pms-dev
+pms.pid
+skills-lock.json
+
+# Tauri desktop (not needed in server image)
+apps/desktop/src-tauri/gen/
+apps/desktop/src-tauri/icons/
+apps/desktop/src-tauri/tauri.conf.json
+
+# Playwright & Testing
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# Agent & Workspace
+.playwright-mcp/
+.slim/
+_workspace/
+.agents_bak/
+.codegraph/

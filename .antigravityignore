@@ -1,0 +1,13 @@
+# 무거운 의존성 폴더 제외
+node_modules/
+.gradle/
+.idea/
+build/
+target/
+
+# 미디어 및 로그 파일 제외
+*.png
+*.jpg
+*.log
+package-lock.json
+yarn.lock
