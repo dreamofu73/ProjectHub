@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Save, X } from 'lucide-react';
-import { Button } from 'ui/Button';
-import { Input, Select } from 'ui/Input';
-import { useToast } from 'ui/Toast';
+import { Button } from './Button';
+import { Input, Select } from './Input';
+import { useToast } from './Toast';
 import { api } from 'shared/lib/api';
-import { useLanguage } from '../../context/LanguageContext';
+import { useLanguage } from 'shared/hooks/LanguageContext';
+import { useProjectMembers, type Member } from 'shared/hooks/useProjectMembers';
 import type { Project } from 'shared/types';
 
 interface NewTaskPanelProps {
@@ -13,19 +14,36 @@ interface NewTaskPanelProps {
   onCreated: () => void;
 }
 
+function safeJsonParse<T>(raw: string | null | undefined, fallback: T): T {
+  if (!raw) return fallback;
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function memberName(m: Member): string {
+  const fullName = [m.firstname, m.lastname].filter(Boolean).join(' ').trim();
+  return fullName || m.login;
+}
+
 export function NewTaskPanel({ project, onClose, onCreated }: NewTaskPanelProps) {
   const { t } = useLanguage();
   const { showToast } = useToast();
-  
-  const taskTypes = project.task_types ? JSON.parse(project.task_types) : ['Design', 'Development', 'Testing'];
-  const taskCategories = project.task_categories ? JSON.parse(project.task_categories) : ['General', 'Feature', 'Bug'];
-  const taskStatuses = project.task_statuses ? JSON.parse(project.task_statuses) : ['New', 'In Progress', 'Done'];
+  const { members } = useProjectMembers(project.id);
+
+  const taskTypes = safeJsonParse<string[]>(project.task_types, ['Design', 'Development', 'Testing']);
+  const taskCategories = safeJsonParse<string[]>(project.task_categories, ['General', 'Feature', 'Bug']);
+  const taskStatuses = safeJsonParse<string[]>(project.task_statuses, ['New', 'In Progress', 'Done']);
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [taskType, setTaskType] = useState(taskTypes[0] || 'Development');
   const [taskCategory, setTaskCategory] = useState(taskCategories[0] || 'General');
   const [status, setStatus] = useState(taskStatuses[0] || 'New');
+  const [assigneeId, setAssigneeId] = useState('');
   const [plannedStartDate, setPlannedStartDate] = useState('');
   const [plannedEndDate, setPlannedEndDate] = useState('');
   const [progress, setProgress] = useState(0);
@@ -48,6 +66,7 @@ export function NewTaskPanel({ project, onClose, onCreated }: NewTaskPanelProps)
           task_type: taskType,
           task_category: taskCategory,
           status,
+          assignee_id: assigneeId || null,
           planned_start_date: plannedStartDate || null,
           planned_end_date: plannedEndDate || null,
           progress,
@@ -66,6 +85,11 @@ export function NewTaskPanel({ project, onClose, onCreated }: NewTaskPanelProps)
       setIsSubmitting(false);
     }
   };
+
+  const assigneeOptions = [
+    { value: '', label: t('unassigned') },
+    ...members.map((m) => ({ value: m.user_id, label: memberName(m) })),
+  ];
 
   return (
     <div className="flex flex-col h-full select-none bg-[var(--bg-surface)] text-[var(--text-primary)]">
@@ -86,6 +110,7 @@ export function NewTaskPanel({ project, onClose, onCreated }: NewTaskPanelProps)
             <Select label={t('task_category')} value={taskCategory} onChange={(e) => setTaskCategory(e.target.value)} options={taskCategories.map((t: string) => ({ value: t, label: t }))} fullWidth />
             <Select label={t('status')} value={status} onChange={(e) => setStatus(e.target.value)} options={taskStatuses.map((s: string) => ({ value: s, label: s }))} fullWidth />
           </div>
+          <Select label={t('assignee')} value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)} options={assigneeOptions} fullWidth />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input label={t('planned_start_date')} type="date" value={plannedStartDate} onChange={(e) => setPlannedStartDate(e.target.value)} fullWidth />
             <Input label={t('planned_end_date')} type="date" value={plannedEndDate} onChange={(e) => setPlannedEndDate(e.target.value)} fullWidth />

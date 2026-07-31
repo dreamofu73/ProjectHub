@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { api } from 'shared/lib/api';
-import type { Member } from './useProjectMembers';
+import type { Member } from 'shared/hooks/useProjectMembers';
 
 export function useMemberBulkActions(projectId: string | undefined, fetchMembers: () => void) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());

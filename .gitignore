@@ -59,6 +59,9 @@ logs/
 .slim/deepwork/
 _workspace/
 
+# Generated docs (산출물)
+docs/
+
 # Agent tooling
 .playwright-mcp/
 .codegraph/

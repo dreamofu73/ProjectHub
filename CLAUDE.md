@@ -4,7 +4,6 @@
 
 > [!IMPORTANT]
 > 분야별 구체적인 개발 가이드라인은 다음 개별 파일을 반드시 참조하십시오:
-> - **모노레포 아키텍처 가이드**: [docs/monorepo_architecture.md](docs/monorepo_architecture.md)
 > - **백엔드 개발 규칙**: [backend/CLAUDE.md](backend/CLAUDE.md)
 > - **웹 프런트엔드 개발 규칙**: [apps/web/CLAUDE.md](apps/web/CLAUDE.md)
 > - **데스크톱 앱 개발 규칙**: [apps/desktop/CLAUDE.md](apps/desktop/CLAUDE.md)

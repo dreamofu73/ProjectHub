@@ -193,6 +193,57 @@ where
     deserializer.deserialize_any(Visitor)
 }
 
+/// Deserialize `Option<Option<String>>` (double-nullable).
+///
+/// - `null` or absent → `None` (field not provided)
+/// - explicit null or `""` → `Some(None)` (field provided, set to null)
+/// - a string value → `Some(Some(s))`
+///
+/// This is used for update requests where:
+/// - omission = "don't change" → None
+/// - explicit null = "clear the value" → Some(None)
+/// - a value = "set to this value" → Some(Some(s))
+pub fn nullable_string<'de, D>(deserializer: D) -> Result<Option<Option<String>>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    struct Visitor;
+
+    impl<'de> serde::de::Visitor<'de> for Visitor {
+        type Value = Option<Option<String>>;
+
+        fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+            formatter.write_str("null or a string")
+        }
+
+        fn visit_str<E: serde::de::Error>(self, v: &str) -> Result<Self::Value, E> {
+            if v.is_empty() {
+                Ok(Some(None))
+            } else {
+                Ok(Some(Some(v.to_string())))
+            }
+        }
+
+        fn visit_string<E: serde::de::Error>(self, v: String) -> Result<Self::Value, E> {
+            if v.is_empty() {
+                Ok(Some(None))
+            } else {
+                Ok(Some(Some(v)))
+            }
+        }
+
+        fn visit_none<E: serde::de::Error>(self) -> Result<Self::Value, E> {
+            Ok(Some(None))
+        }
+
+        fn visit_unit<E: serde::de::Error>(self) -> Result<Self::Value, E> {
+            Ok(Some(None))
+        }
+    }
+
+    deserializer.deserialize_any(Visitor)
+}
+
 /// Deserialize `Vec<i64>` from a JSON array of numbers or strings.
 ///
 /// Accepts: `[1, "2", 3]`, `["100", "200"]`, `[]`

@@ -174,18 +174,39 @@ pub struct CreateTaskRequest {
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct UpdateTaskRequest {
     pub title: Option<String>,
-    pub description: Option<String>,
+    #[serde(default, deserialize_with = "crate::serde_utils::nullable_string")]
+    pub description: Option<Option<String>>,
     pub task_type: Option<String>,
     pub task_category: Option<String>,
     pub status: Option<String>,
-    pub planned_start_date: Option<String>,
-    pub planned_end_date: Option<String>,
-    pub actual_start_date: Option<String>,
-    pub actual_end_date: Option<String>,
+    #[serde(default, deserialize_with = "crate::serde_utils::nullable_string")]
+    pub planned_start_date: Option<Option<String>>,
+    #[serde(default, deserialize_with = "crate::serde_utils::nullable_string")]
+    pub planned_end_date: Option<Option<String>>,
+    #[serde(default, deserialize_with = "crate::serde_utils::nullable_string")]
+    pub actual_start_date: Option<Option<String>>,
+    #[serde(default, deserialize_with = "crate::serde_utils::nullable_string")]
+    pub actual_end_date: Option<Option<String>>,
     #[serde(default, deserialize_with = "crate::serde_utils::optional_string_or_number")]
     pub progress: Option<i64>,
     #[serde(default, deserialize_with = "crate::serde_utils::nullable_string_or_number")]
     pub assignee_id: Option<Option<i64>>,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct BulkUpdateTasksRequest {
+    #[serde(default, deserialize_with = "crate::serde_utils::vec_string_or_number")]
+    pub task_ids: Vec<i64>,
+    #[serde(default, deserialize_with = "crate::serde_utils::nullable_string_or_number")]
+    pub assignee_id: Option<Option<i64>>,
+    pub progress: Option<i64>,
+    #[serde(default, deserialize_with = "crate::serde_utils::nullable_string")]
+    pub planned_start_date: Option<Option<String>>,
+    #[serde(default, deserialize_with = "crate::serde_utils::nullable_string")]
+    pub planned_end_date: Option<Option<String>>,
+    pub status: Option<String>,
+    pub task_type: Option<String>,
+    pub task_category: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow, ToSchema)]
@@ -221,6 +242,12 @@ pub struct Post {
     pub title: String,
     pub content: Option<String>,
     pub category: String,
+    pub popup_start_date: Option<String>,
+    pub popup_end_date: Option<String>,
+    /// 공지 상단 고정 여부.
+    pub is_pinned: bool,
+    /// 상세 조회 수.
+    pub view_count: i64,
     pub created_at: String,
     pub updated_at: String,
 }
@@ -235,6 +262,8 @@ pub struct CreatePostRequest {
     pub category: String,
     pub popup_start_date: Option<String>,
     pub popup_end_date: Option<String>,
+    /// 공지 상단 고정 여부 (관리자 전용, 미지정 시 false).
+    pub is_pinned: Option<bool>,
     #[serde(default, deserialize_with = "crate::serde_utils::opt_vec_string_or_number")]
     pub attachment_ids: Option<Vec<i64>>,
 }
@@ -246,6 +275,8 @@ pub struct UpdatePostRequest {
     pub category: Option<String>,
     pub popup_start_date: Option<String>,
     pub popup_end_date: Option<String>,
+    /// 공지 상단 고정 여부 (관리자 전용, 미지정 시 변경하지 않음).
+    pub is_pinned: Option<bool>,
     #[serde(default, deserialize_with = "crate::serde_utils::optional_string_or_number")]
     pub project_id: Option<i64>,
     #[serde(default, deserialize_with = "crate::serde_utils::opt_vec_string_or_number")]

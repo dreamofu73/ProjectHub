@@ -248,7 +248,6 @@ This project maintains role-based standard guardrails in separate files. All con
 | **Backend Guide** | `backend/CLAUDE.md` | DB query rules (SeaQuery), routing, JWT, build restrictions |
 | **Frontend Guide** | `apps/web/CLAUDE.md` | Architecture, UI development, i18n, screen patterns, build rules |
 | **Desktop Guide** | `apps/desktop/CLAUDE.md` | Desktop-specific rules (shares web guide) |
-| **Monorepo Architecture** | `docs/monorepo_architecture.md` | Dependency management, routing separation, API client design |
 
 ### Key Development Rules Summary
 

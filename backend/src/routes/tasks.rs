@@ -1,4 +1,4 @@
-use crate::models::{CreateTaskRequest, UpdateTaskRequest};
+use crate::models::{BulkUpdateTasksRequest, CreateTaskRequest, UpdateTaskRequest};
 use axum::{
     extract::{Extension, Path, Query, Multipart},
     response::Json,
@@ -15,13 +15,13 @@ use crate::routes::utils::{check_project_access, require_project_member, is_proj
 use csv::ReaderBuilder;
 use calamine::{open_workbook_from_rs, DataType, Reader, Xlsx};
 use std::io::Cursor;
-use sea_query::{Asterisk, Expr, ExprTrait, JoinType, Order, Query as SeaQuery};
+use sea_query::{Asterisk, Expr, ExprTrait, JoinType, Order, Query as SeaQuery, SelectStatement};
 
 pub fn router() -> crate::routes::ProtectedRoutes {
     crate::routes::ProtectedRoutes::from_router(
         Router::new()
             .route("/tasks", get(get_tasks))
-            .route("/tasks/bulk", post(bulk_create_tasks))
+            .route("/tasks/bulk", post(bulk_create_tasks).put(bulk_update_tasks))
             .route("/tasks/:id", get(get_task_by_id))
             .route("/tasks", post(create_task))
             .route("/tasks/:id", put(update_task))
@@ -253,6 +253,22 @@ async fn create_task(
         return Err((StatusCode::FORBIDDEN, Json(json!({"success": false, "error": "보관된 프로젝트는 수정할 수 없습니다."}))));
     }
 
+    // Validation: title required (non-blank after trim), progress must be 0..=100,
+    // planned_start_date must be on or before planned_end_date.
+    if req.title.trim().is_empty() {
+        return Err((StatusCode::BAD_REQUEST, Json(json!({"success": false, "error": "Title is required"}))));
+    }
+    if let Some(progress) = req.progress {
+        if !(0..=100).contains(&progress) {
+            return Err((StatusCode::BAD_REQUEST, Json(json!({"success": false, "error": "Progress must be between 0 and 100"}))));
+        }
+    }
+    if let (Some(start), Some(end)) = (&req.planned_start_date, &req.planned_end_date) {
+        if start > end {
+            return Err((StatusCode::BAD_REQUEST, Json(json!({"success": false, "error": "planned_end_date must be on or after planned_start_date"}))));
+        }
+    }
+
     let now = crate::db::now_string();
     let task_id = crate::db::new_id();
     let stmt = SeaQuery::insert()
@@ -288,6 +304,58 @@ async fn create_task(
     Ok(Json(json!({ "success": true, "id": task_id.to_string() })))
 }
 
+/// Build the joined SELECT used to fetch a full task row with project/user display info.
+fn task_select_stmt(id: i64) -> SelectStatement {
+    SeaQuery::select()
+        .expr(Expr::col(("t", Asterisk)))
+        .expr_as(Expr::col(("p", "name")), "project_name")
+        .expr_as(Expr::col(("p", "identifier")), "project_identifier")
+        .expr_as(Expr::col(("u", "firstname")), "assignee_firstname")
+        .expr_as(Expr::col(("u", "lastname")), "assignee_lastname")
+        .expr_as(Expr::col(("u", "login")), "assignee_login")
+        .from_as("tasks", "t")
+        .join_as(JoinType::Join, "projects", "p", Expr::col(("p", "id")).equals(("t", "project_id")))
+        .join_as(JoinType::LeftJoin, "users", "u", Expr::col(("u", "id")).equals(("t", "assignee_id")))
+        .and_where(Expr::col(("t", "id")).eq(id))
+        .to_owned()
+}
+
+/// Fetch a full task row (with joined project/user info) by id.
+async fn fetch_task_by_id(pool: &Arc<AnyPool>, id: i64) -> Result<Option<sqlx::any::AnyRow>, sqlx::Error> {
+    let stmt = task_select_stmt(id);
+    crate::db::fetch_optional(pool, &stmt).await
+}
+
+/// Serialize a task row (from `task_select_stmt`) into the API response object.
+fn task_row_to_json(t: &sqlx::any::AnyRow) -> Value {
+    let firstname: Option<String> = t.get("assignee_firstname");
+    let lastname: Option<String> = t.get("assignee_lastname");
+    let login: Option<String> = t.get("assignee_login");
+    let assignee_name = display_name(firstname.as_deref(), lastname.as_deref(), login.as_deref().unwrap_or(""));
+
+    json!({
+        "id": t.get::<i64, _>("id").to_string(),
+        "project_id": t.get::<i64, _>("project_id").to_string(),
+        "title": t.get::<String, _>("title"),
+        "description": t.get::<Option<String>, _>("description"),
+        "task_type": t.get::<Option<String>, _>("task_type"),
+        "task_category": t.get::<Option<String>, _>("task_category"),
+        "status": t.get::<Option<String>, _>("status"),
+        "planned_start_date": t.get::<Option<String>, _>("planned_start_date"),
+        "planned_end_date": t.get::<Option<String>, _>("planned_end_date"),
+        "actual_start_date": t.get::<Option<String>, _>("actual_start_date"),
+        "actual_end_date": t.get::<Option<String>, _>("actual_end_date"),
+        "progress": t.get::<i64, _>("progress"),
+        "author_id": t.get::<i64, _>("author_id").to_string(),
+        "assignee_id": t.get::<Option<i64>, _>("assignee_id").map(|v| v.to_string()),
+        "assignee_name": assignee_name,
+        "project_name": t.get::<String, _>("project_name"),
+        "project_identifier": t.get::<String, _>("project_identifier"),
+        "created_at": t.get::<String, _>("created_at"),
+        "updated_at": t.get::<String, _>("updated_at")
+    })
+}
+
 async fn get_task_by_id(
     Path(id_str): Path<String>,
     user: AuthUser,
@@ -307,53 +375,12 @@ async fn get_task_by_id(
     let project_id: i64 = task_info.get("project_id");
     check_project_access(&pool, &user, &project_id.to_string()).await?;
 
-    let stmt = SeaQuery::select()
-        .expr(Expr::col(("t", Asterisk)))
-        .expr_as(Expr::col(("p", "name")), "project_name")
-        .expr_as(Expr::col(("p", "identifier")), "project_identifier")
-        .expr_as(Expr::col(("u", "firstname")), "assignee_firstname")
-        .expr_as(Expr::col(("u", "lastname")), "assignee_lastname")
-        .expr_as(Expr::col(("u", "login")), "assignee_login")
-        .from_as("tasks", "t")
-        .join_as(JoinType::Join, "projects", "p", Expr::col(("p", "id")).equals(("t", "project_id")))
-        .join_as(JoinType::LeftJoin, "users", "u", Expr::col(("u", "id")).equals(("t", "assignee_id")))
-        .and_where(Expr::col(("t", "id")).eq(id))
-        .to_owned();
-    
-    let task = crate::db::fetch_optional(&pool, &stmt)
+    let task = fetch_task_by_id(&pool, id)
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()}))))?;
 
     if let Some(t) = task {
-        let firstname: Option<String> = t.get("assignee_firstname");
-        let lastname: Option<String> = t.get("assignee_lastname");
-        let login: Option<String> = t.get("assignee_login");
-        let assignee_name = display_name(firstname.as_deref(), lastname.as_deref(), login.as_deref().unwrap_or(""));
-
-        Ok(Json(json!({
-            "success": true,
-            "data": {
-                "id": t.get::<i64, _>("id").to_string(),
-                "project_id": t.get::<i64, _>("project_id").to_string(),
-                "title": t.get::<String, _>("title"),
-                "description": t.get::<Option<String>, _>("description"),
-                "task_type": t.get::<Option<String>, _>("task_type"),
-                "task_category": t.get::<Option<String>, _>("task_category"),
-                "status": t.get::<Option<String>, _>("status"),
-                "planned_start_date": t.get::<Option<String>, _>("planned_start_date"),
-                "planned_end_date": t.get::<Option<String>, _>("planned_end_date"),
-                "actual_start_date": t.get::<Option<String>, _>("actual_start_date"),
-                "actual_end_date": t.get::<Option<String>, _>("actual_end_date"),
-                "progress": t.get::<i64, _>("progress"),
-                "author_id": t.get::<i64, _>("author_id").to_string(),
-                "assignee_id": t.get::<Option<i64>, _>("assignee_id").map(|v| v.to_string()),
-                "assignee_name": assignee_name,
-                "project_name": t.get::<String, _>("project_name"),
-                "project_identifier": t.get::<String, _>("project_identifier"),
-                "created_at": t.get::<String, _>("created_at"),
-                "updated_at": t.get::<String, _>("updated_at")
-            }
-        })))
+        Ok(Json(json!({ "success": true, "data": task_row_to_json(&t) })))
     } else {
         Err((StatusCode::NOT_FOUND, Json(json!({"success": false, "error": "Task not found"}))))
     }
@@ -383,21 +410,63 @@ async fn update_task(
         return Err((StatusCode::FORBIDDEN, Json(json!({"success": false, "error": "보관된 프로젝트는 수정할 수 없습니다."}))));
     }
 
+    // Validation: title must be non-blank after trim, progress must be 0..=100,
+    // planned_start_date must be on or before planned_end_date.
+    if let Some(title) = &req.title {
+        if title.trim().is_empty() {
+            return Err((StatusCode::BAD_REQUEST, Json(json!({"success": false, "error": "Title is required"}))));
+        }
+    }
+    if let Some(progress) = req.progress {
+        if !(0..=100).contains(&progress) {
+            return Err((StatusCode::BAD_REQUEST, Json(json!({"success": false, "error": "Progress must be between 0 and 100"}))));
+        }
+    }
+    if let (Some(Some(start)), Some(Some(end))) = (&req.planned_start_date, &req.planned_end_date) {
+        if start > end {
+            return Err((StatusCode::BAD_REQUEST, Json(json!({"success": false, "error": "planned_end_date must be on or after planned_start_date"}))));
+        }
+    }
+
     let mut update_stmt = SeaQuery::update();
     update_stmt.table("tasks")
         .value("updated_at", crate::db::now_string());
 
     if let Some(title) = req.title { update_stmt.value("title", title); }
-    if let Some(description) = req.description { update_stmt.value("description", description); }
+    match req.description {
+        Some(None) => { update_stmt.value("description", None::<String>); }
+        Some(Some(v)) => { update_stmt.value("description", v); }
+        None => {}
+    }
     if let Some(task_type) = req.task_type { update_stmt.value("task_type", task_type); }
     if let Some(task_category) = req.task_category { update_stmt.value("task_category", task_category); }
     if let Some(status) = req.status { update_stmt.value("status", status); }
-    if let Some(planned_start_date) = req.planned_start_date { update_stmt.value("planned_start_date", planned_start_date); }
-    if let Some(planned_end_date) = req.planned_end_date { update_stmt.value("planned_end_date", planned_end_date); }
-    if let Some(actual_start_date) = req.actual_start_date { update_stmt.value("actual_start_date", actual_start_date); }
-    if let Some(actual_end_date) = req.actual_end_date { update_stmt.value("actual_end_date", actual_end_date); }
+    match req.planned_start_date {
+        Some(None) => { update_stmt.value("planned_start_date", None::<String>); }
+        Some(Some(v)) => { update_stmt.value("planned_start_date", v); }
+        None => {}
+    }
+    match req.planned_end_date {
+        Some(None) => { update_stmt.value("planned_end_date", None::<String>); }
+        Some(Some(v)) => { update_stmt.value("planned_end_date", v); }
+        None => {}
+    }
+    match req.actual_start_date {
+        Some(None) => { update_stmt.value("actual_start_date", None::<String>); }
+        Some(Some(v)) => { update_stmt.value("actual_start_date", v); }
+        None => {}
+    }
+    match req.actual_end_date {
+        Some(None) => { update_stmt.value("actual_end_date", None::<String>); }
+        Some(Some(v)) => { update_stmt.value("actual_end_date", v); }
+        None => {}
+    }
     if let Some(progress) = req.progress { update_stmt.value("progress", progress); }
-    if let Some(assignee_id) = req.assignee_id { update_stmt.value("assignee_id", assignee_id); }
+    match req.assignee_id {
+        Some(None) => { update_stmt.value("assignee_id", None::<i64>); }
+        Some(Some(v)) => { update_stmt.value("assignee_id", v); }
+        None => {}
+    }
 
     let stmt = update_stmt
         .and_where(Expr::col("id").eq(id))
@@ -407,7 +476,102 @@ async fn update_task(
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()}))))?;
 
-    Ok(Json(json!({ "success": true })))
+    // Return the updated task with the same shape as `get_task_by_id`.
+    let task = fetch_task_by_id(&pool, id)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()}))))?;
+
+    if let Some(t) = task {
+        Ok(Json(json!({ "success": true, "data": task_row_to_json(&t) })))
+    } else {
+        Err((StatusCode::NOT_FOUND, Json(json!({"success": false, "error": "Task not found"}))))
+    }
+}
+
+/// Bulk update multiple tasks (assignee, progress, planned dates, status/type/category).
+///
+/// Mirrors `update_task` field semantics: `Some(None)` clears to SQL NULL,
+/// `Some(Some(v))` sets the value, `None` leaves the column unchanged.
+async fn bulk_update_tasks(
+    user: AuthUser,
+    Extension(pool): Extension<Arc<AnyPool>>,
+    axum::Json(req): axum::Json<BulkUpdateTasksRequest>,
+) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    if req.task_ids.is_empty() {
+        return Err((StatusCode::BAD_REQUEST, Json(json!({"success": false, "error": "task_ids is required"}))));
+    }
+
+    // Validation: progress must be 0..=100, planned dates must be in order.
+    if let Some(progress) = req.progress {
+        if !(0..=100).contains(&progress) {
+            return Err((StatusCode::BAD_REQUEST, Json(json!({"success": false, "error": "Progress must be between 0 and 100"}))));
+        }
+    }
+    if let (Some(Some(start)), Some(Some(end))) = (&req.planned_start_date, &req.planned_end_date) {
+        if start > end {
+            return Err((StatusCode::BAD_REQUEST, Json(json!({"success": false, "error": "planned_end_date must be on or after planned_start_date"}))));
+        }
+    }
+
+    let mut updated = 0usize;
+
+    for id in req.task_ids {
+        let stmt = SeaQuery::select()
+            .column("project_id")
+            .from("tasks")
+            .and_where(Expr::col("id").eq(id))
+            .to_owned();
+        let task_info = crate::db::fetch_optional(&pool, &stmt)
+            .await
+            .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()}))))?;
+
+        let project_id: i64 = match task_info {
+            Some(info) => info.get("project_id"),
+            None => return Err((StatusCode::NOT_FOUND, Json(json!({"success": false, "error": "Task not found"})))),
+        };
+
+        require_project_member(&pool, &user, project_id).await?;
+
+        if is_project_archived(&pool, project_id).await.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()}))))? {
+            return Err((StatusCode::FORBIDDEN, Json(json!({"success": false, "error": "보관된 프로젝트는 수정할 수 없습니다."}))));
+        }
+
+        let mut update_stmt = SeaQuery::update();
+        update_stmt.table("tasks")
+            .value("updated_at", crate::db::now_string());
+
+        match req.assignee_id {
+            Some(None) => { update_stmt.value("assignee_id", None::<i64>); }
+            Some(Some(v)) => { update_stmt.value("assignee_id", v); }
+            None => {}
+        }
+        if let Some(progress) = req.progress { update_stmt.value("progress", progress); }
+        match &req.planned_start_date {
+            Some(None) => { update_stmt.value("planned_start_date", None::<String>); }
+            Some(Some(v)) => { update_stmt.value("planned_start_date", v.as_str()); }
+            None => {}
+        }
+        match &req.planned_end_date {
+            Some(None) => { update_stmt.value("planned_end_date", None::<String>); }
+            Some(Some(v)) => { update_stmt.value("planned_end_date", v.as_str()); }
+            None => {}
+        }
+        if let Some(status) = &req.status { update_stmt.value("status", status.as_str()); }
+        if let Some(task_type) = &req.task_type { update_stmt.value("task_type", task_type.as_str()); }
+        if let Some(task_category) = &req.task_category { update_stmt.value("task_category", task_category.as_str()); }
+
+        let stmt = update_stmt
+            .and_where(Expr::col("id").eq(id))
+            .to_owned();
+
+        crate::db::execute(&pool, &stmt)
+            .await
+            .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()}))))?;
+
+        updated += 1;
+    }
+
+    Ok(Json(json!({ "success": true, "data": { "updated": updated } })))
 }
 
 async fn delete_task(

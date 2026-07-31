@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { api } from 'shared/lib/api';
-import type { Member, UserData } from './useProjectMembers';
+import type { Member, UserData } from 'shared/hooks/useProjectMembers';
 
 export function useAddMemberModal(
   projectId: string | undefined,

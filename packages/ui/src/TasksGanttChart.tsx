@@ -1,41 +1,49 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 
+import { useLanguage } from 'shared/hooks/LanguageContext';
+
+import { getStatusColor } from './TaskStatusBadge';
+
 import type { Task } from 'shared/types/index';
 
 interface TasksGanttChartProps {
   tasks: Task[];
   onTaskClick?: (task: Task) => void;
-  onDateChange?: (taskId: string, field: 'planned_start_date' | 'planned_end_date', value: string) => void;
+  onDateChange?: (taskId: string, plannedStartDate: string, plannedEndDate: string) => void;
 }
-
-const statusColors: Record<string, { bg: string; border: string; text: string }> = {
-  'new': { bg: '#e3f2fd', border: '#2196f3', text: '#1565c0' },
-  'in_progress': { bg: '#fff3e0', border: '#ff9800', text: '#e65100' },
-  'resolved': { bg: '#f3e5f5', border: '#9c27b0', text: '#6a1b9a' },
-  'closed': { bg: '#e8f5e9', border: '#4caf50', text: '#2e7d32' },
-  'default': { bg: '#f5f5f5', border: '#9e9e9e', text: '#424242' },
-};
-
-const getStatusColor = (status: string) => {
-  return statusColors[status?.toLowerCase()] || statusColors.default;
-};
 
 const DAY_WIDTH = 40;
 const ROW_HEIGHT = 44;
 const HEADER_HEIGHT = 50;
 const MIN_BAR_WIDTH = 8;
 
+interface DragState {
+  taskId: string;
+  field: 'planned_start_date' | 'planned_end_date';
+  startX: number;
+  startDate: string;
+  endDate: string;
+}
+
+interface DatePreview {
+  taskId: string;
+  startDate: string;
+  endDate: string;
+}
+
 export const TasksGanttChart: React.FC<TasksGanttChartProps> = ({
   tasks,
   onTaskClick,
   onDateChange,
 }) => {
+  const { t } = useLanguage();
   const [viewStartDate, setViewStartDate] = useState(() => {
     const d = new Date();
     d.setDate(d.getDate() - 7);
     return d;
   });
-  const [dragging, setDragging] = useState<{ taskId: string; field: 'planned_start_date' | 'planned_end_date'; startX: number; startDate: string; endDate: string } | null>(null);
+  const [dragging, setDragging] = useState<DragState | null>(null);
+  const [dragPreview, setDragPreview] = useState<DatePreview | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Generate 30 days of columns
@@ -49,23 +57,29 @@ export const TasksGanttChart: React.FC<TasksGanttChartProps> = ({
     return result;
   }, [viewStartDate]);
 
-  // Format date as YYYY-MM-DD
-  const formatDate = useCallback((d: Date) => {
-    return d.toISOString().split('T')[0];
+  // Format date as local "YYYY-MM-DD" (timezone-safe)
+  const formatDate = useCallback((d: Date): string => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
   }, []);
 
-  // Parse date string
+  // Parse "YYYY-MM-DD" as local midnight (timezone-safe)
   const parseDate = useCallback((dateStr: string | null | undefined): Date | null => {
     if (!dateStr) return null;
-    const d = new Date(dateStr);
+    const parts = dateStr.split('-');
+    if (parts.length !== 3) return null;
+    const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
     return isNaN(d.getTime()) ? null : d;
   }, []);
 
   // Calculate bar position for an issue
   const getBarPosition = useCallback((task: Task) => {
-    const start = parseDate(task.planned_start_date);
-    const end = parseDate(task.planned_end_date);
-    
+    const preview = dragPreview?.taskId === task.id ? dragPreview : null;
+    const start = parseDate(preview ? preview.startDate : task.planned_start_date);
+    const end = parseDate(preview ? preview.endDate : task.planned_end_date);
+
     if (!start || !end) return null;
 
     const viewStart = new Date(viewStartDate);
@@ -85,11 +99,12 @@ export const TasksGanttChart: React.FC<TasksGanttChartProps> = ({
       left: Math.max(0, startOffset) * DAY_WIDTH,
       width: Math.max(MIN_BAR_WIDTH, duration * DAY_WIDTH),
     };
-  }, [viewStartDate, parseDate]);
+  }, [viewStartDate, parseDate, dragPreview]);
 
   // Handle drag start
   const handleDragStart = useCallback((e: React.MouseEvent, task: Task, field: 'planned_start_date' | 'planned_end_date') => {
     e.stopPropagation();
+    setDragPreview(null);
     setDragging({
       taskId: task.id,
       field,
@@ -99,29 +114,38 @@ export const TasksGanttChart: React.FC<TasksGanttChartProps> = ({
     });
   }, []);
 
-  // Handle drag move
+  // Handle drag move (live preview) and drag end (commit once via onDateChange)
   useEffect(() => {
     if (!dragging) return;
 
-    const handleMouseMove = (e: MouseEvent) => {
-      const deltaX = e.clientX - dragging.startX;
-      const daysDelta = Math.round(deltaX / DAY_WIDTH);
-      
-      // Calculate new date
-      const currentDate = dragging.field === 'planned_start_date' 
-        ? new Date(dragging.startDate)
-        : new Date(dragging.endDate);
-      
-      currentDate.setDate(currentDate.getDate() + daysDelta);
-      const newDateStr = formatDate(currentDate);
-      
-      if (onDateChange) {
-        onDateChange(dragging.taskId, dragging.field, newDateStr);
+    const computePreview = (clientX: number): DatePreview => {
+      const daysDelta = Math.round((clientX - dragging.startX) / DAY_WIDTH);
+      const start = parseDate(dragging.startDate);
+      const end = parseDate(dragging.endDate);
+      let startDate = dragging.startDate;
+      let endDate = dragging.endDate;
+      if (start) {
+        start.setDate(start.getDate() + (dragging.field === 'planned_start_date' ? daysDelta : 0));
+        startDate = formatDate(start);
       }
+      if (end) {
+        end.setDate(end.getDate() + (dragging.field === 'planned_end_date' ? daysDelta : 0));
+        endDate = formatDate(end);
+      }
+      return { taskId: dragging.taskId, startDate, endDate };
     };
 
-    const handleMouseUp = () => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setDragPreview(computePreview(e.clientX));
+    };
+
+    const handleMouseUp = (e: MouseEvent) => {
+      const preview = computePreview(e.clientX);
       setDragging(null);
+      setDragPreview(null);
+      if (onDateChange) {
+        onDateChange(preview.taskId, preview.startDate, preview.endDate);
+      }
     };
 
     document.addEventListener('mousemove', handleMouseMove);
@@ -131,7 +155,7 @@ export const TasksGanttChart: React.FC<TasksGanttChartProps> = ({
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [dragging, formatDate, onDateChange]);
+  }, [dragging, formatDate, parseDate, onDateChange]);
 
   // Navigate dates
   const navigate = useCallback((direction: number) => {
@@ -183,7 +207,7 @@ export const TasksGanttChart: React.FC<TasksGanttChartProps> = ({
             <span className="text-xs font-bold text-[var(--text-muted)] uppercase">일감</span>
           </div>
           {/* Issue rows */}
-          {tasks.map(task => (
+          {tasks.map((task, index) => (
             <div
               key={task.id}
               className="flex items-center px-3 border-b border-[var(--border)] hover:bg-[var(--bg-hover)] cursor-pointer"
@@ -191,8 +215,8 @@ export const TasksGanttChart: React.FC<TasksGanttChartProps> = ({
               onClick={() => onTaskClick?.(task)}
             >
               <div className="flex flex-col min-w-0 gap-0.5">
-                <span className="text-xs font-bold text-[var(--text-primary)] truncate">
-                  #{task.id}
+                <span className="text-xs font-bold text-[var(--text-primary)] truncate" title={`#${task.id}`}>
+                  {index + 1}
                 </span>
                 <span className="text-[10px] text-[var(--text-muted)] truncate max-w-[200px]">
                   {task.title}
@@ -202,7 +226,7 @@ export const TasksGanttChart: React.FC<TasksGanttChartProps> = ({
           ))}
           {tasks.length === 0 && (
             <div className="flex items-center justify-center h-20 text-xs text-[var(--text-muted)]">
-              일감가 없습니다
+              {t('noTasksFound')}
             </div>
           )}
         </div>

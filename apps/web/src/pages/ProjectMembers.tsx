@@ -5,7 +5,7 @@ import { Button } from 'ui/Button';
 import { api } from 'shared/lib/api';
 import { Pagination } from 'ui/Pagination';
 import { AddMemberModal } from '../components/project-members/AddMemberModal';
-import { useProjectMembers } from '../components/project-members/useProjectMembers';
+import { useProjectMembers } from 'shared/hooks/useProjectMembers';
 import { useMemberBulkActions } from '../components/project-members/useMemberBulkActions';
 import { useAddMemberModal } from '../components/project-members/useAddMemberModal';
 import { MemberToolbar } from '../components/project-members/MemberToolbar';

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { X, Upload, Download } from 'lucide-react';
-import { Button } from 'ui/Button';
-import { useToast } from 'ui/Toast';
-import { useLanguage } from '../../context/LanguageContext';
+import { Button } from './Button';
+import { useToast } from './Toast';
+import { useLanguage } from 'shared/hooks/LanguageContext';
 import type { Project } from 'shared/types';
 
 interface BulkUploadModalProps {

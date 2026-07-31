@@ -249,7 +249,6 @@ VERSION=1.2.0 ./scripts/desktop/release.sh   # 플랫폼별 인스톨러 + 아�
 | **백엔드 가이드** | `backend/CLAUDE.md` | DB 쿼리 규칙 (SeaQuery), 라우팅, JWT, 빌드 제한 |
 | **프런트엔드 가이드** | `apps/web/CLAUDE.md` | 아키텍처, UI 개발, i18n, 화면 패턴, 빌드 규칙 |
 | **데스크톱 가이드** | `apps/desktop/CLAUDE.md` | 데스크톱 전용 규칙 (웹 가이드 공유) |
-| **모노레포 아키텍처** | `docs/monorepo_architecture.md` | 의존성 관리, 라우팅 분리, API 클라이언트 설계 |
 
 ### 핵심 개발 규칙 요약
 
