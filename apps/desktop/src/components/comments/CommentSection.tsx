@@ -4,6 +4,7 @@ import {
   ChevronDown, ChevronUp, User, Paperclip, X, Download, FileText
 } from 'lucide-react';
 import { api } from 'shared/lib/api';
+import { useToast } from 'ui/Toast';
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -91,6 +92,7 @@ export function CommentSection({
   labels: labelsProp,
 }: CommentSectionProps) {
   const labels = { ...DEFAULT_LABELS, ...labelsProp };
+  const { showToast } = useToast();
 
   const userStr = localStorage.getItem('user');
   const currentUser = userStr ? JSON.parse(userStr) : null;
@@ -101,6 +103,7 @@ export function CommentSection({
   const [newComment, setNewComment] = useState('');
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [editSubmitting, setEditSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
   // 수정 모드 전용 첨부파일 상태 (새 댓글 작성 흐름과 분리)
@@ -163,6 +166,7 @@ export function CommentSection({
       if (!json.success) {
         // api() 가 오류 본문을 { success, error } 로 정규화하므로 원인이 그대로 담긴다.
         console.error('Failed to submit comment:', json.error);
+        showToast(json.error || '댓글 등록에 실패했습니다.', 'error');
         return;
       }
 
@@ -182,6 +186,7 @@ export function CommentSection({
       fetchComments();
     } catch (err) {
       console.error('Failed to submit comment:', err);
+      showToast('댓글 등록에 실패했습니다.', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -191,6 +196,8 @@ export function CommentSection({
     const hasContent = editContent.trim().length > 0;
     // 본문/유지 첨부/신규 첨부가 모두 비어 있으면 저장하지 않음
     if (!hasContent && editKeptAttachments.length === 0 && editPendingFiles.length === 0) return;
+    if (editSubmitting) return; // 중복 제출 방지
+    setEditSubmitting(true);
     try {
       // 1) 제거된 기존 첨부파일 삭제 (백엔드 DELETE /api/attachments/:id 지원)
       const original = comments.find(c => c.id === commentId);
@@ -209,6 +216,7 @@ export function CommentSection({
       const json = await res.json();
       if (!json.success) {
         console.error('Failed to edit comment:', json.error);
+        showToast(json.error || '댓글 수정에 실패했습니다.', 'error');
         return;
       }
 
@@ -226,6 +234,9 @@ export function CommentSection({
       fetchComments();
     } catch (err) {
       console.error('Failed to edit comment:', err);
+      showToast('댓글 수정에 실패했습니다.', 'error');
+    } finally {
+      setEditSubmitting(false);
     }
   };
 
@@ -235,8 +246,10 @@ export function CommentSection({
       const res = await api(getDeleteCommentUrl(commentId), { method: 'DELETE' });
       const json = await res.json();
       if (json.success) fetchComments();
+      else showToast(json.error || '댓글 삭제에 실패했습니다.', 'error');
     } catch (err) {
       console.error('Failed to delete comment:', err);
+      showToast('댓글 삭제에 실패했습니다.', 'error');
     }
   };
 
@@ -477,7 +490,7 @@ export function CommentSection({
                               {renderAttachments(comment.attachments, true)}
                             </div>
                             {canManage(comment.author_id) && (
-                              <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                              <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity shrink-0">
                                 <button type="button"
                                   onClick={() => startEdit(comment)}
                                   className="p-1 rounded hover:bg-[var(--bg-surface-2)] text-[var(--text-muted)] hover:text-[var(--primary)] transition-colors border-none bg-transparent cursor-pointer" title={labels.edit}>
@@ -591,7 +604,7 @@ export function CommentSection({
                     )}
                   </div>
                   {canManage(comment.author_id) && editingId !== comment.id && (
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
                       <button type="button"
                         onClick={() => startEdit(comment)}
                         className="flex items-center gap-1 px-2 py-1 text-xs border border-[var(--border)] rounded-lg text-[var(--text-muted)] hover:text-[var(--primary)] hover:border-[var(--primary)]/30 hover:bg-[var(--primary)]/5 transition-all cursor-pointer bg-transparent font-medium">

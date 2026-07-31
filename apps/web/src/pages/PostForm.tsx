@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, Paperclip, FileText, File, X, AlertCircle } from 'lucide-react';
 import { uploadFilesWithProgress } from 'shared/lib/upload';
 import { useToast } from 'ui/Toast';
 import { api } from 'shared/lib/api';
 import { HTMLEditor } from 'ui/HTMLEditor';
+import { ConfirmDialog } from 'ui/ConfirmDialog';
 import { useLanguage } from '../context/LanguageContext';
 import type { Attachment } from 'shared/types';
 
@@ -30,13 +31,24 @@ export default function PostForm() {
   const [saving, setSaving] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState('');
+  const [dirty, setDirty] = useState(false);
+  const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
+  const titleRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isGlobal && currentUser.role !== 'admin') {
       showToast(t('permissionDenied') || '권한이 없습니다.', 'error');
-      navigateBack();
+      doNavigateBack();
     }
   }, [isGlobal, currentUser.role]);
+
+  // 미저장 이탈 경고 (탭 닫기/새로고침)
+  useEffect(() => {
+    if (!dirty) return;
+    const handler = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ''; };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [dirty]);
 
   useEffect(() => {
     if (isEdit) {
@@ -57,7 +69,7 @@ export default function PostForm() {
         setPopupEndDate(json.data.popup_end_date || "");
       } else {
         showToast(t('postLoadFail') || '게시글을 불러오지 못했습니다.', 'error');
-        navigateBack();
+        doNavigateBack();
       }
     } catch (err) {
       console.error('Failed to fetch post:', err);
@@ -95,7 +107,7 @@ export default function PostForm() {
     }
   };
 
-  const navigateBack = () => {
+  const doNavigateBack = () => {
     if (isGlobal) {
       navigate(isEdit ? `/boards/${boardType}/${postId}` : `/boards/${boardType}`);
     } else {
@@ -103,15 +115,25 @@ export default function PostForm() {
     }
   };
 
+  // 취소/뒤로가기: 미저장 변경이 있으면 확인 다이얼로그
+  const handleBackClick = () => { if (dirty) setLeaveConfirmOpen(true); else doNavigateBack(); };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
       setError(t('enterTitle') || '제목을 입력하세요.');
+      titleRef.current?.focus();
       return;
     }
 
     if (!isGlobal && (category === 'notice' || category === 'resource') && currentUser.role !== 'admin') {
       setError(t('permissionDenied') || '권한이 없습니다.');
+      return;
+    }
+
+    const noticeSelected = (isGlobal && boardType === 'notice') || (!isGlobal && category === 'notice');
+    if (noticeSelected && popupStartDate && popupEndDate && popupEndDate < popupStartDate) {
+      setError(t('popupDateInvalid') || '팝업 종료일은 시작일보다 빠를 수 없습니다.');
       return;
     }
 
@@ -153,9 +175,11 @@ export default function PostForm() {
             );
           } catch (err) {
             console.error("Post attachment upload failed:", err);
+            showToast(t('attachmentUploadFail') || '본문은 저장되었으나 첨부파일 업로드에 실패했습니다.', 'error');
           }
         }
 
+        setDirty(false);
         showToast(isEdit ? (t('postUpdated') || '게시글이 수정되었습니다.') : (t('postCreated') || '게시글이 작성되었습니다.'), 'success');
         if (isGlobal) {
           navigate(`/boards/${boardType}`);
@@ -184,8 +208,9 @@ export default function PostForm() {
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={navigateBack}
-            className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-2)] transition-colors border-none bg-transparent cursor-pointer"
+            onClick={handleBackClick}
+            disabled={saving}
+            className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-2)] transition-colors border-none bg-transparent cursor-pointer disabled:opacity-50"
           >
             <ArrowLeft size={16} />
           </button>
@@ -212,12 +237,14 @@ export default function PostForm() {
             {t('title') || '제목'} <span className="text-red-500">*</span>
           </label>
           <input
+            ref={titleRef}
             type="text"
             placeholder={t('enterTitlePlaceholder') || '게시글 제목을 입력하세요'}
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e) => { setTitle(e.target.value); setDirty(true); }}
             required
-            className="flex-1 px-3.5 py-2 h-9.5 border border-[var(--border)] rounded-xl bg-[var(--bg-surface)] text-xs focus:outline-none focus:ring-1 focus:ring-[var(--primary)]/50 focus:border-[var(--primary)] transition-all placeholder:text-[var(--text-muted)] text-[var(--text-primary)]"
+            disabled={saving}
+            className="flex-1 px-3.5 py-2 h-9.5 border border-[var(--border)] rounded-xl bg-[var(--bg-surface)] text-xs focus:outline-none focus:ring-1 focus:ring-[var(--primary)]/50 focus:border-[var(--primary)] transition-all placeholder:text-[var(--text-muted)] text-[var(--text-primary)] disabled:opacity-60"
           />
         </div>
 
@@ -230,8 +257,9 @@ export default function PostForm() {
               </label>
               <select
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-3.5 py-2 h-9.5 border border-[var(--border)] rounded-xl bg-[var(--bg-surface)] text-xs focus:outline-none focus:ring-1 focus:ring-[var(--primary)]/50 focus:border-[var(--primary)] transition-all text-[var(--text-primary)] cursor-pointer font-medium"
+                onChange={(e) => { setCategory(e.target.value); setDirty(true); }}
+                disabled={saving}
+                className="w-full px-3.5 py-2 h-9.5 border border-[var(--border)] rounded-xl bg-[var(--bg-surface)] text-xs focus:outline-none focus:ring-1 focus:ring-[var(--primary)]/50 focus:border-[var(--primary)] transition-all text-[var(--text-primary)] cursor-pointer font-medium disabled:opacity-60"
               >
                 <option value="general" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('general') || '일반'}</option>
                 {currentUser.role === 'admin' && (
@@ -253,15 +281,19 @@ export default function PostForm() {
                 <input
                   type="date"
                   value={popupStartDate}
-                  onChange={(e) => setPopupStartDate(e.target.value)}
-                  className="w-full px-3.5 py-2 h-9.5 border border-[var(--border)] rounded-xl bg-[var(--bg-surface)] text-xs focus:outline-none focus:ring-1 focus:ring-[var(--primary)]/50 focus:border-[var(--primary)] transition-all text-[var(--text-primary)] cursor-pointer"
+                  max={popupEndDate || undefined}
+                  onChange={(e) => { setPopupStartDate(e.target.value); setDirty(true); }}
+                  disabled={saving}
+                  className="w-full px-3.5 py-2 h-9.5 border border-[var(--border)] rounded-xl bg-[var(--bg-surface)] text-xs focus:outline-none focus:ring-1 focus:ring-[var(--primary)]/50 focus:border-[var(--primary)] transition-all text-[var(--text-primary)] cursor-pointer disabled:opacity-60"
                 />
                 <span className="text-[var(--text-muted)] text-xs font-bold shrink-0">~</span>
                 <input
                   type="date"
                   value={popupEndDate}
-                  onChange={(e) => setPopupEndDate(e.target.value)}
-                  className="w-full px-3.5 py-2 h-9.5 border border-[var(--border)] rounded-xl bg-[var(--bg-surface)] text-xs focus:outline-none focus:ring-1 focus:ring-[var(--primary)]/50 focus:border-[var(--primary)] transition-all text-[var(--text-primary)] cursor-pointer"
+                  min={popupStartDate || undefined}
+                  onChange={(e) => { setPopupEndDate(e.target.value); setDirty(true); }}
+                  disabled={saving}
+                  className="w-full px-3.5 py-2 h-9.5 border border-[var(--border)] rounded-xl bg-[var(--bg-surface)] text-xs focus:outline-none focus:ring-1 focus:ring-[var(--primary)]/50 focus:border-[var(--primary)] transition-all text-[var(--text-primary)] cursor-pointer disabled:opacity-60"
                 />
               </div>
             </div>
@@ -270,7 +302,7 @@ export default function PostForm() {
 
         {/* ── 내용 ── */}
         <div className="flex-1 flex flex-col min-h-[300px]">
-          <HTMLEditor value={content} onChange={setContent} height={380} />
+          <HTMLEditor value={content} onChange={(v) => { setContent(v); setDirty(true); }} height={380} />
         </div>
 
         {/* ── 기존 첨부파일 (수정 모드) ── */}
@@ -310,8 +342,18 @@ export default function PostForm() {
             <input
               type="file"
               multiple
-              onChange={(e) => { if (e.target.files) setFiles(prev => [...prev, ...Array.from(e.target.files!)]); }}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              disabled={saving}
+              onChange={(e) => {
+                if (!e.target.files) return;
+                const incoming = Array.from(e.target.files);
+                setFiles(prev => {
+                  const names = new Set(prev.map(f => f.name));
+                  return [...prev, ...incoming.filter(f => !names.has(f.name))];
+                });
+                setDirty(true);
+                e.target.value = '';
+              }}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10 disabled:cursor-not-allowed"
             />
             <div className="flex flex-col items-center justify-center gap-1.5 pointer-events-none select-none">
               <Paperclip size={18} className="text-[var(--text-muted)]" />
@@ -357,8 +399,9 @@ export default function PostForm() {
         <div className="flex items-center justify-end gap-2 pt-5 border-t border-[var(--border)] shrink-0">
           <button
             type="button"
-            onClick={navigateBack}
-            className="bg-[var(--bg-surface-2)] hover:opacity-90 text-[var(--text-secondary)] font-bold px-4 py-2 rounded-xl text-xs border-none cursor-pointer h-9"
+            onClick={handleBackClick}
+            disabled={saving}
+            className="bg-[var(--bg-surface-2)] hover:opacity-90 text-[var(--text-secondary)] font-bold px-4 py-2 rounded-xl text-xs border-none cursor-pointer h-9 disabled:opacity-50"
           >
             {t('cancel') || '취소'}
           </button>
@@ -375,6 +418,17 @@ export default function PostForm() {
           </button>
         </div>
       </form>
+
+      <ConfirmDialog
+        isOpen={leaveConfirmOpen}
+        title={t('unsavedTitle') || '저장되지 않은 변경사항'}
+        message={t('unsavedLeaveConfirm') || '작성 중인 내용이 저장되지 않았습니다. 정말 나가시겠습니까?'}
+        confirmLabel={t('leaveWithoutSaving') || '나가기'}
+        cancelLabel={t('cancel') || '취소'}
+        danger
+        onConfirm={() => { setLeaveConfirmOpen(false); setDirty(false); doNavigateBack(); }}
+        onCancel={() => setLeaveConfirmOpen(false)}
+      />
     </div>
   );
 }

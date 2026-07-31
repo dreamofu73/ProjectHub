@@ -12,7 +12,7 @@ import { PostComments } from '../components/boards/PostComments';
 import type { Post, Attachment } from 'shared/types';
 
 export default function PostDetailPage() {
-  const { formatDate, formatTime } = useLanguage();
+  const { formatDate, formatTime, t } = useLanguage();
   const { id, boardType, postId } = useParams<{ id?: string; boardType?: string; postId: string }>();
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -22,6 +22,7 @@ export default function PostDetailPage() {
   const [post, setPost] = useState<Post | null>(null);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [downloadingAll, setDownloadingAll] = useState(false);
 
   const userStr = localStorage.getItem('user');
@@ -33,22 +34,24 @@ export default function PostDetailPage() {
   }, [postId]);
 
   const fetchPost = async () => {
+    setLoadError(false);
     try {
       const res = await api(`/api/posts/${postId}`);
       const json = await res.json();
       if (json.success) {
         setPost(json.data);
       } else {
-        showToast('게시글을 불러오지 못했습니다.', 'error');
-        navigateBack();
+        setPost(null); // 존재하지 않는 게시글
       }
     } catch (err) {
       console.error('Failed to fetch post:', err);
-      showToast('오류가 발생했습니다.', 'error');
+      setLoadError(true); // 네트워크/서버 오류 → 재시도 가능
     } finally {
       setLoading(false);
     }
   };
+
+  const handleRetry = () => { setLoading(true); fetchPost(); fetchAttachments(); };
 
 
   const fetchAttachments = async () => {
@@ -106,8 +109,36 @@ export default function PostDetailPage() {
     }
   };
 
-  if (loading) return <div className="text-center py-20"><div className="spinner text-primary" /></div>;
-  if (!post) return <div className="text-center py-20 text-muted">게시글을 찾을 수 없습니다.</div>;
+  if (loading) return (
+    <div className="flex flex-col gap-6 animate-pulse">
+      <div className="h-9 w-24 rounded-lg bg-[var(--bg-surface-2)]" />
+      <div className="rounded-2xl border border-border overflow-hidden">
+        <div className="p-6 bg-gray-50/50 dark:bg-slate-850/50 flex flex-col gap-4">
+          <div className="h-5 w-20 rounded-md bg-[var(--bg-surface-2)]" />
+          <div className="h-8 w-2/3 rounded-lg bg-[var(--bg-surface-2)]" />
+          <div className="h-6 w-48 rounded-full bg-[var(--bg-surface-2)]" />
+        </div>
+        <div className="p-6 flex flex-col gap-3">
+          {[...Array(5)].map((_, i) => <div key={i} className="h-4 rounded bg-[var(--bg-surface-2)]" style={{ width: `${90 - i * 8}%` }} />)}
+        </div>
+      </div>
+    </div>
+  );
+  if (loadError) return (
+    <div className="flex flex-col items-center justify-center text-center py-20 gap-4">
+      <p className="text-sm font-semibold text-[var(--text-secondary)]">게시글을 불러오지 못했습니다.</p>
+      <div className="flex items-center gap-2">
+        <Button variant="outline" size="sm" onClick={handleRetry}>다시 시도</Button>
+        <Button variant="ghost" size="sm" onClick={navigateBack}>목록으로</Button>
+      </div>
+    </div>
+  );
+  if (!post) return (
+    <div className="flex flex-col items-center justify-center text-center py-20 gap-4">
+      <p className="text-sm text-[var(--text-muted)]">게시글을 찾을 수 없습니다.</p>
+      <Button variant="outline" size="sm" icon={ArrowLeft} onClick={navigateBack}>목록으로</Button>
+    </div>
+  );
 
   const isAuthorOrAdmin = user && (user.id === post.author_id || user.role === 'admin');
 
@@ -162,14 +193,24 @@ export default function PostDetailPage() {
               <Clock size={14} />
               <span>{formatTime(post.created_at)}</span>
             </div>
+            {post.category === 'notice' && (post.popup_start_date || post.popup_end_date) && (
+              <div className="flex items-center gap-1.5 text-danger font-semibold">
+                <Calendar size={14} />
+                <span>{t('popupPeriod') || '팝업 기간'} {post.popup_start_date || '—'} ~ {post.popup_end_date || '—'}</span>
+              </div>
+            )}
           </div>
         </div>
 
         <CardBody className="p-0">
-          <div 
-            className="p-6 text-sm leading-relaxed break-words text-foreground prose dark:prose-invert max-w-none"
-            dangerouslySetInnerHTML={{ __html: post.content || '' }}
-          />
+          {post.content ? (
+            <div
+              className="p-6 text-sm leading-relaxed break-words text-foreground prose dark:prose-invert max-w-none"
+              dangerouslySetInnerHTML={{ __html: post.content }}
+            />
+          ) : (
+            <div className="p-6 text-sm text-[var(--text-muted)] italic">{t('noContent') || '내용이 없습니다.'}</div>
+          )}
 
           <AttachmentList 
             attachments={attachments} 

@@ -259,6 +259,8 @@ export interface Post {
   content: string;
   comment_count?: number;
   attachments?: Attachment[];
+  popup_start_date?: string | null;
+  popup_end_date?: string | null;
 }
 
 export interface Notification {
