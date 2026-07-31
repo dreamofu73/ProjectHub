@@ -5,10 +5,11 @@ import {
   Trash2, Calendar, User, Clock, RotateCcw,
   ChevronRight
 } from 'lucide-react';
-import { HTMLEditor } from 'ui/HTMLEditor';
+import { HTMLEditor, createHTMLEditorLabels } from 'ui/HTMLEditor';
 import { Button } from 'ui/Button';
 import { useLanguage } from '../../context/LanguageContext';
 import { api } from 'shared/lib/api';
+import { sanitizeHtml } from 'shared/lib/sanitize';
 import { FileUploader } from "ui/FileUploader";
 import { AttachmentList } from "ui/AttachmentList";
 import { uploadFilesWithProgress } from "shared/lib/upload";
@@ -56,7 +57,7 @@ function injectHeadingIds(html: string): string {
 }
 
 export default function WikiClient({ project, wikiList, activePage, initialId, isArchived }: WikiClientProps) {
-  const { formatDateTime, t } = useLanguage();
+  const { formatDateTime, t, language } = useLanguage();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -491,7 +492,7 @@ export default function WikiClient({ project, wikiList, activePage, initialId, i
                 {/* Content View */}
                   <div
                     className="prose prose-sm dark:prose-invert max-w-none md-preview"
-                    dangerouslySetInnerHTML={{ __html: injectHeadingIds(content || '') }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(injectHeadingIds(content || '')) }}
                   />
                 
                 {/* Attachments Section - Card view */}
@@ -645,6 +646,7 @@ export default function WikiClient({ project, wikiList, activePage, initialId, i
                   value={content}
                   onChange={setContent}
                   height={500}
+                  labels={createHTMLEditorLabels(t, language)}
                 />
               </div>
 
@@ -815,7 +817,7 @@ export default function WikiClient({ project, wikiList, activePage, initialId, i
                 <div className="flex-1 overflow-y-auto px-6 py-5 custom-scrollbar">
                   <div
                     className="prose prose-sm dark:prose-invert max-w-none"
-                    dangerouslySetInnerHTML={{ __html: selectedVersion.content || '' }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedVersion.content || '') }}
                   />
                 </div>
               </div>
@@ -828,7 +830,7 @@ export default function WikiClient({ project, wikiList, activePage, initialId, i
                 <div className="flex-1 overflow-y-auto px-6 py-5 custom-scrollbar">
                   <div
                     className="prose prose-sm dark:prose-invert max-w-none"
-                    dangerouslySetInnerHTML={{ __html: activePage?.content || '' }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(activePage?.content || '') }}
                   />
                 </div>
               </div>

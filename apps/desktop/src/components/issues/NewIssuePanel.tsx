@@ -195,7 +195,7 @@ export function NewIssuePanel({ project, onClose, onCreated }: NewIssuePanelProp
               className="form-control w-full min-h-[200px] resize-y"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="이슈에 대한 상세 설명을 입력하세요 (Markdown 지원)"
+              placeholder="이슈에 대한 상세 설명을 입력하세요"
             />
           </div>
 

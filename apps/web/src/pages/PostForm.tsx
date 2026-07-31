@@ -4,7 +4,7 @@ import { ArrowLeft, Save, Paperclip, FileText, File, X, AlertCircle } from 'luci
 import { uploadFilesWithProgress } from 'shared/lib/upload';
 import { useToast } from 'ui/Toast';
 import { api } from 'shared/lib/api';
-import { HTMLEditor } from 'ui/HTMLEditor';
+import { HTMLEditor, createHTMLEditorLabels } from 'ui/HTMLEditor';
 import { ConfirmDialog } from 'ui/ConfirmDialog';
 import { useLanguage } from '../context/LanguageContext';
 import type { Attachment } from 'shared/types';
@@ -13,13 +13,12 @@ export default function PostForm() {
   const { id, boardType, postId } = useParams<{ id?: string; boardType?: string; postId?: string }>();
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
 
   const isEdit = !!postId;
   const isGlobal = !!boardType;
   const isAdmin = currentUser.role === 'admin';
-  const projectId = isGlobal ? null : String(id || '0');
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -39,6 +38,20 @@ export default function PostForm() {
   // 첨부 삭제 확인 다이얼로그 (네이티브 confirm 대체)
   const [pendingAttachmentDelete, setPendingAttachmentDelete] = useState<string | null>(null);
   const titleRef = useRef<HTMLInputElement>(null);
+  
+  // 실제 숫자형 프로젝트 ID 보관
+  const [realProjectId, setRealProjectId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isGlobal && id) {
+      api(`/api/projects/${id}`)
+        .then(res => res.json())
+        .then(json => {
+          if (json.success && json.data) setRealProjectId(String(json.data.id));
+        })
+        .catch(err => console.error("Failed to fetch project ID", err));
+    }
+  }, [id, isGlobal]);
 
   useEffect(() => {
     if (isGlobal && currentUser.role !== 'admin') {
@@ -162,7 +175,7 @@ export default function PostForm() {
       const pinnedValue = isNotice && isAdmin ? isPinned : false;
       const body: PostPayload = isEdit
         ? { title, content, category, popup_start_date: popupStartDate, popup_end_date: popupEndDate, is_pinned: pinnedValue }
-        : { project_id: projectId, title, content, category, popup_start_date: popupStartDate, popup_end_date: popupEndDate, is_pinned: pinnedValue };
+        : { project_id: isGlobal ? null : realProjectId, title, content, category, popup_start_date: popupStartDate, popup_end_date: popupEndDate, is_pinned: pinnedValue };
 
       const res = await api(url, {
         method,
@@ -327,7 +340,7 @@ export default function PostForm() {
 
         {/* ── 내용 ── */}
         <div className="flex-1 flex flex-col min-h-[300px]">
-          <HTMLEditor value={content} onChange={(v) => { setContent(v); setDirty(true); }} height={380} />
+          <HTMLEditor value={content} onChange={(v) => { setContent(v); setDirty(true); }} height={380} labels={createHTMLEditorLabels(t, language)} />
         </div>
 
         {/* ── 기존 첨부파일 (수정 모드) ── */}

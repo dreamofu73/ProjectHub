@@ -5,7 +5,7 @@ import {
   Trash2, Calendar, User, Clock, RotateCcw,
   HelpCircle, ChevronRight
 } from 'lucide-react';
-import { HTMLEditor } from 'ui/HTMLEditor';
+import { HTMLEditor, createHTMLEditorLabels } from 'ui/HTMLEditor';
 import { Button } from 'ui/Button';
 import { Input } from 'ui/Input';
 import { useLanguage } from '../../context/LanguageContext';
@@ -13,6 +13,7 @@ import { api } from 'shared/lib/api';
 import { FileUploader } from "ui/FileUploader";
 import { AttachmentList } from "ui/AttachmentList";
 import { uploadFilesWithProgress } from "shared/lib/upload";
+import { sanitizeHtml } from 'shared/lib/sanitize';
 import { WikiComments } from './WikiComments';
 
 import type { Project, WikiPage as ActiveWikiPage, Attachment, CreateWikiPageRequest, UpdateWikiPageRequest } from 'shared/types';
@@ -57,7 +58,7 @@ function injectHeadingIds(html: string): string {
 }
 
 export default function WikiClient({ project, wikiList, activePage, initialId, isArchived }: WikiClientProps) {
-  const { formatDateTime, t } = useLanguage();
+  const { formatDateTime, t, language } = useLanguage();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -492,7 +493,7 @@ export default function WikiClient({ project, wikiList, activePage, initialId, i
                 {/* Content View */}
                   <div
                     className="prose prose-sm dark:prose-invert max-w-none md-preview"
-                    dangerouslySetInnerHTML={{ __html: injectHeadingIds(content || '') }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(injectHeadingIds(content || '')) }}
                   />
                 
                 {/* Attachments Section - Card view */}
@@ -655,6 +656,7 @@ export default function WikiClient({ project, wikiList, activePage, initialId, i
                     value={content}
                     onChange={setContent}
                     height={500}
+                    labels={createHTMLEditorLabels(t, language)}
                   />
                   <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1.5 pl-1">
                     <HelpCircle size={12} />
@@ -822,7 +824,7 @@ export default function WikiClient({ project, wikiList, activePage, initialId, i
                 <div className="flex-1 overflow-y-auto px-6 py-5 custom-scrollbar">
                   <div
                     className="prose prose-sm dark:prose-invert max-w-none"
-                    dangerouslySetInnerHTML={{ __html: selectedVersion.content || '' }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedVersion.content || '') }}
                   />
                 </div>
               </div>
@@ -835,7 +837,7 @@ export default function WikiClient({ project, wikiList, activePage, initialId, i
                 <div className="flex-1 overflow-y-auto px-6 py-5 custom-scrollbar">
                   <div
                     className="prose prose-sm dark:prose-invert max-w-none"
-                    dangerouslySetInnerHTML={{ __html: activePage?.content || '' }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(activePage?.content || '') }}
                   />
                 </div>
               </div>

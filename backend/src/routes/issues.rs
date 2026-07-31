@@ -187,7 +187,7 @@ async fn bulk_update_issues(
     let mut tx = pool.begin().await.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()}))))?;
 
     for id_val in ids {
-        let id = id_val.as_i64().ok_or_else(|| (StatusCode::BAD_REQUEST, Json(json!({"success": false, "error": "invalid id"}))))?;
+        let id = id_val.as_i64().or_else(|| id_val.as_str().and_then(|s| s.parse::<i64>().ok())).ok_or_else(|| (StatusCode::BAD_REQUEST, Json(json!({"success": false, "error": "invalid id"}))))?;
         
         let stmt = SeaQuery::select()
             .column("project_id")
@@ -211,7 +211,7 @@ async fn bulk_update_issues(
         }
 
         let assigned_id_val = if let Some(v) = assigned_to_id {
-            if v.is_null() { Some(None) } else { v.as_i64().map(Some) }
+            if v.is_null() { Some(None) } else { v.as_i64().or_else(|| v.as_str().and_then(|s| s.parse::<i64>().ok())).map(Some) }
         } else {
             None
         };

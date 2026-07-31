@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Plus, CheckSquare, Square, Minus, Upload, Search } from 'lucide-react';
+import { Plus, CheckSquare, Square, Minus, Upload, Search, CornerDownRight } from 'lucide-react';
 import { useToast } from 'ui/Toast';
 import { useLanguage } from '../context/LanguageContext';
 import { useTasks } from 'shared/hooks/useTasks';
@@ -8,8 +8,14 @@ import { TaskDetailPanel } from 'ui/TaskDetailPanel';
 import { BulkTaskEditPanel } from 'ui/BulkTaskEditPanel';
 import { BulkUploadModal } from 'ui/BulkUploadModal';
 import { TasksGanttChart } from 'ui/TasksGanttChart';
+import { NewMilestonePanel } from 'ui/NewMilestonePanel';
 import { TaskStatusBadge } from 'ui/TaskStatusBadge';
+import { useMilestones } from 'shared/hooks/useMilestones';
+import { flattenTaskTree } from 'shared/lib/taskTree';
 import { useLocation } from 'react-router-dom';
+
+import type { Task } from 'shared/types';
+import type { GanttDatePatch } from 'ui/TasksGanttChart';
 
 export default function TasksPage() {
   const { t } = useLanguage();
@@ -19,8 +25,11 @@ export default function TasksPage() {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
+  const [newTaskParent, setNewTaskParent] = useState<Task | null>(null);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [isBulkEditOpen, setIsBulkEditOpen] = useState(false);
+  const [isMilestoneOpen, setIsMilestoneOpen] = useState(false);
+  const { milestones, createMilestone, deleteMilestone } = useMilestones(project?.id);
   const location = useLocation();
   const viewMode = new URLSearchParams(location.search).get('view') === 'gantt' ? 'gantt' : 'table';
   const [statusFilter, setStatusFilter] = useState('all');
@@ -45,6 +54,11 @@ export default function TasksPage() {
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable)) return;
       if (isNewTaskOpen || isBulkUploadOpen) return;
+      if (isMilestoneOpen) {
+        e.preventDefault();
+        setIsMilestoneOpen(false);
+        return;
+      }
       if (isBulkEditOpen) {
         e.preventDefault();
         setIsBulkEditOpen(false);
@@ -57,18 +71,26 @@ export default function TasksPage() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedTaskId, isNewTaskOpen, isBulkUploadOpen, isBulkEditOpen]);
+  }, [selectedTaskId, isNewTaskOpen, isBulkUploadOpen, isBulkEditOpen, isMilestoneOpen]);
 
   // 간트 차트 드래그 결과를 낙관적으로 로컬 상태에 반영하고 서버에 저장한다.
-  const handleGanttDateChange = useCallback(async (taskId: string, plannedStartDate: string, plannedEndDate: string) => {
-    const ok = await updateTask(taskId, {
-      planned_start_date: plannedStartDate,
-      planned_end_date: plannedEndDate,
-    });
+  const handleGanttDateChange = useCallback(async (taskId: string, patch: GanttDatePatch) => {
+    const ok = await updateTask(taskId, patch);
     if (!ok) {
       showToast(t('taskUpdatedError'), 'error');
     }
   }, [updateTask, showToast, t]);
+
+  // 특정 일감의 하위 일감 생성 패널을 연다.
+  const openSubtaskPanel = useCallback((taskId: string) => {
+    setNewTaskParent(tasks.find(task => task.id === taskId) ?? null);
+    setIsNewTaskOpen(true);
+  }, [tasks]);
+
+  const closeNewTaskPanel = useCallback(() => {
+    setIsNewTaskOpen(false);
+    setNewTaskParent(null);
+  }, []);
 
   // ── 필터/검색 (테이블 뷰 전용) ──────────────────────────────────────
   const statusOptions = useMemo(() => {
@@ -89,6 +111,9 @@ export default function TasksPage() {
       return true;
     });
   }, [tasks, statusFilter, searchQuery]);
+
+  // 테이블 뷰도 상위/하위 일감 순서로 정렬해 계층을 그대로 보여준다.
+  const visibleRows = useMemo(() => flattenTaskTree(visibleTasks), [visibleTasks]);
 
   // ── 일괄 선택 (테이블 뷰 전용) ──────────────────────────────────────
   const allSelected = !isArchived && visibleTasks.length > 0 && visibleTasks.every(task => selectedIds.has(task.id));
@@ -130,7 +155,10 @@ export default function TasksPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setIsNewTaskOpen(true)}
+                onClick={() => {
+                  setNewTaskParent(null);
+                  setIsNewTaskOpen(true);
+                }}
                 className="h-8.5 px-3.5 bg-[var(--primary)] hover:opacity-90 text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer flex items-center gap-1.5 active:scale-[0.98] border-none"
               >
                 <Plus size={13} />
@@ -150,7 +178,15 @@ export default function TasksPage() {
           
           <>
             {viewMode === 'gantt' ? (
-            <TasksGanttChart tasks={tasks} onTaskClick={(task) => setSelectedTaskId(task.id)} onDateChange={handleGanttDateChange} />
+            <TasksGanttChart
+              tasks={tasks}
+              milestones={milestones}
+              readOnly={isArchived}
+              onTaskClick={(task) => setSelectedTaskId(task.id)}
+              onDateChange={handleGanttDateChange}
+              onAddSubtask={openSubtaskPanel}
+              onAddMilestone={() => setIsMilestoneOpen(true)}
+            />
           ) : (
             <>
               <div className="flex flex-wrap items-center gap-2 mb-3">
@@ -234,8 +270,8 @@ export default function TasksPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {visibleTasks.map(task => (
-                    <tr key={task.id} className={`border-b border-[var(--border)] hover:bg-[var(--bg-hover)] cursor-pointer ${selectedIds.has(task.id) ? 'bg-[var(--primary)]/5' : ''}`} onClick={() => setSelectedTaskId(task.id)}>
+                  {visibleRows.map(({ task, depth }) => (
+                    <tr key={task.id} className={`group border-b border-[var(--border)] hover:bg-[var(--bg-hover)] cursor-pointer ${selectedIds.has(task.id) ? 'bg-[var(--primary)]/5' : ''}`} onClick={() => setSelectedTaskId(task.id)}>
                       {!isArchived && (
                         <td className="py-2 text-center" onClick={(e) => toggleSelectRow(task.id, e)}>
                           <div className="flex items-center justify-center">
@@ -246,7 +282,26 @@ export default function TasksPage() {
                           </div>
                         </td>
                       )}
-                      <td className="py-2">{task.title}</td>
+                      <td className="py-2">
+                        <div className="flex items-center gap-2" style={{ paddingLeft: depth * 18 }}>
+                          {depth > 0 && <CornerDownRight size={12} className="text-[var(--text-muted)] shrink-0" />}
+                          <span className="truncate">{task.title}</span>
+                          {!isArchived && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openSubtaskPanel(task.id);
+                              }}
+                              className="opacity-0 group-hover:opacity-100 focus:opacity-100 p-1 rounded-md text-[var(--text-muted)] hover:text-[var(--primary)] hover:bg-[var(--bg-surface-2)] transition-all shrink-0 cursor-pointer"
+                              title={t('addSubtask')}
+                              aria-label={t('addSubtask')}
+                            >
+                              <Plus size={12} />
+                            </button>
+                          )}
+                        </div>
+                      </td>
                       <td className="py-2">{task.task_type}</td>
                       <td className="py-2">{task.task_category}</td>
                       <td className="py-2"><TaskStatusBadge status={task.status} /></td>
@@ -281,11 +336,23 @@ export default function TasksPage() {
         <div className="fixed top-[calc(var(--header-height)+1rem)] bottom-4 right-0 w-2/3 z-50 bg-[var(--bg-surface)] border-l border-y border-[var(--border)] rounded-l-xl shadow-2xl animate-slide-in-right flex flex-col overflow-hidden">
           <NewTaskPanel
             project={project}
-            onClose={() => setIsNewTaskOpen(false)}
+            parentTaskId={newTaskParent?.id ?? null}
+            parentTaskTitle={newTaskParent?.title}
+            onClose={closeNewTaskPanel}
             onCreated={() => {
-              setIsNewTaskOpen(false);
+              closeNewTaskPanel();
               fetchTasks();
             }}
+          />
+        </div>
+      )}
+      {isMilestoneOpen && project && (
+        <div className="fixed top-[calc(var(--header-height)+1rem)] bottom-4 right-0 w-2/3 z-50 bg-[var(--bg-surface)] border-l border-y border-[var(--border)] rounded-l-xl shadow-2xl animate-slide-in-right flex flex-col overflow-hidden">
+          <NewMilestonePanel
+            milestones={milestones}
+            onCreate={createMilestone}
+            onDelete={deleteMilestone}
+            onClose={() => setIsMilestoneOpen(false)}
           />
         </div>
       )}

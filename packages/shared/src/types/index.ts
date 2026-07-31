@@ -58,8 +58,23 @@ export interface Task {
   progress: number;
   author_id: string;
   assignee_id: string | null;
+  /** 상위 일감 ID. 최상위 일감이면 null. */
+  parent_task_id: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface Milestone {
+  id: string;
+  project_id: string;
+  name: string;
+  /** `name`의 별칭. 백엔드가 두 형태를 모두 내려준다. */
+  subject?: string;
+  description: string | null;
+  status: string;
+  due_date: string | null;
+  issue_count?: number;
+  closed_issue_count?: number;
 }
 
 export interface Attachment {

@@ -8,6 +8,7 @@ import { ConfirmDialog } from 'ui/ConfirmDialog';
 import { useLanguage } from '../context/LanguageContext';
 import { useToast } from 'ui/Toast';
 import { api, fetchBlobUrl } from 'shared/lib/api';
+import { sanitizeHtml } from 'shared/lib/sanitize';
 import { PostComments } from '../components/boards/PostComments';
 
 import type { Post, Attachment, AdjacentPosts } from 'shared/types';
@@ -235,7 +236,7 @@ export default function PostDetailPage() {
           {post.content ? (
             <div
               className="p-6 text-sm leading-relaxed break-words text-foreground prose dark:prose-invert max-w-none"
-              dangerouslySetInnerHTML={{ __html: post.content }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content) }}
             />
           ) : (
             <div className="p-6 text-sm text-[var(--text-muted)] italic">{t('noContent') || '내용이 없습니다.'}</div>

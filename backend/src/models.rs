@@ -133,6 +133,8 @@ pub struct Task {
     pub author_id: i64,
     #[serde(serialize_with = "crate::serde_utils::serialize_opt_i64_as_string")]
     pub assignee_id: Option<i64>,
+    #[serde(serialize_with = "crate::serde_utils::serialize_opt_i64_as_string")]
+    pub parent_task_id: Option<i64>,
     pub created_at: String,
     pub updated_at: String,
 }
@@ -169,6 +171,8 @@ pub struct CreateTaskRequest {
     pub progress: Option<i64>,
     #[serde(default, deserialize_with = "crate::serde_utils::optional_string_or_number")]
     pub assignee_id: Option<i64>,
+    #[serde(default, deserialize_with = "crate::serde_utils::optional_string_or_number")]
+    pub parent_task_id: Option<i64>,
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
@@ -191,6 +195,8 @@ pub struct UpdateTaskRequest {
     pub progress: Option<i64>,
     #[serde(default, deserialize_with = "crate::serde_utils::nullable_string_or_number")]
     pub assignee_id: Option<Option<i64>>,
+    #[serde(default, deserialize_with = "crate::serde_utils::nullable_string_or_number")]
+    pub parent_task_id: Option<Option<i64>>,
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]

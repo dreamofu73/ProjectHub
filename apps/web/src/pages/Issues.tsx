@@ -48,6 +48,7 @@ export default function IssuesPage() {
     handleSelectAll,
     handleSelectIssue,
     handleBulkAction,
+    handleBulkConvertToTask,
     handleSort,
     handleResetFilters,
     handlePageChange,
@@ -182,6 +183,7 @@ export default function IssuesPage() {
             selectedIssues={selectedIssues}
             setSelectedIssues={setSelectedIssues}
             handleBulkAction={handleBulkAction}
+            handleBulkConvertToTask={handleBulkConvertToTask}
             users={users}
             projectMembers={projectMembers}
             issues={issues}

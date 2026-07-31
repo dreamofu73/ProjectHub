@@ -10,6 +10,10 @@ import type { Project } from 'shared/types';
 
 interface NewTaskPanelProps {
   project: Project;
+  /** 설정하면 이 일감의 하위 일감으로 생성된다. */
+  parentTaskId?: string | null;
+  /** 상위 일감 제목 (헤더 표시용). */
+  parentTaskTitle?: string;
   onClose: () => void;
   onCreated: () => void;
 }
@@ -29,7 +33,7 @@ function memberName(m: Member): string {
   return fullName || m.login;
 }
 
-export function NewTaskPanel({ project, onClose, onCreated }: NewTaskPanelProps) {
+export function NewTaskPanel({ project, parentTaskId, parentTaskTitle, onClose, onCreated }: NewTaskPanelProps) {
   const { t } = useLanguage();
   const { showToast } = useToast();
   const { members } = useProjectMembers(project.id);
@@ -70,6 +74,7 @@ export function NewTaskPanel({ project, onClose, onCreated }: NewTaskPanelProps)
           planned_start_date: plannedStartDate || null,
           planned_end_date: plannedEndDate || null,
           progress,
+          parent_task_id: parentTaskId || null,
         }),
       });
 
@@ -94,9 +99,16 @@ export function NewTaskPanel({ project, onClose, onCreated }: NewTaskPanelProps)
   return (
     <div className="flex flex-col h-full select-none bg-[var(--bg-surface)] text-[var(--text-primary)]">
       <div className="px-6 py-5 border-b border-[var(--border)] shrink-0 bg-[var(--bg-surface-2)]/50 flex items-center justify-between">
-        <h2 className="text-lg font-extrabold text-[var(--text-primary)] leading-snug">
-          {t('addNewTask')}
-        </h2>
+        <div className="min-w-0">
+          <h2 className="text-lg font-extrabold text-[var(--text-primary)] leading-snug">
+            {parentTaskId ? t('addSubtask') : t('addNewTask')}
+          </h2>
+          {parentTaskId && parentTaskTitle && (
+            <p className="text-xs text-[var(--text-muted)] mt-0.5 truncate">
+              {t('parentTask')}: {parentTaskTitle}
+            </p>
+          )}
+        </div>
         <button type="button" onClick={onClose} className="p-2 rounded-lg border border-[var(--border)] bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-2)] cursor-pointer">
           <X size={16} />
         </button>

@@ -309,6 +309,7 @@ async fn create_project_tables(pool: &AnyPool, kind: DbKind) {
             .col(int_nn("progress", 0))
             .col(int_required("author_id"))
             .col(int_null("assignee_id"))
+            .col(int_null("parent_task_id"))
             .col(text_nn("created_at"))
             .col(text_nn("updated_at"))
             .foreign_key(&mut fk(
@@ -323,6 +324,14 @@ async fn create_project_tables(pool: &AnyPool, kind: DbKind) {
                 "tasks",
                 "assignee_id",
                 "users",
+                "id",
+                ForeignKeyAction::SetNull,
+            ))
+            // 상위 일감이 삭제되면 하위 일감은 최상위로 승격된다.
+            .foreign_key(&mut fk(
+                "tasks",
+                "parent_task_id",
+                "tasks",
                 "id",
                 ForeignKeyAction::SetNull,
             ))
@@ -1102,6 +1111,9 @@ async fn apply_legacy_upgrades(pool: &AnyPool) {
     add_column(pool, "posts", int_nn("is_pinned", 0)).await;
     add_column(pool, "posts", int_nn("view_count", 0)).await;
 
+    // 일감 계층 구조 (구버전 DB 따라잡기)
+    add_column(pool, "tasks", int_null("parent_task_id")).await;
+
     add_column(pool, "messages", text("edited_at")).await;
 
     add_column(pool, "wiki_pages", key_string("uuid")).await;
@@ -1153,6 +1165,8 @@ async fn create_indexes(pool: &AnyPool) {
     create_index(pool, index("idx_milestones_project", "milestones", &["project_id", "status"]))
         .await;
     create_index(pool, index("idx_issues_milestone", "issues", &["milestone_id"])).await;
+    create_index(pool, index("idx_tasks_project", "tasks", &["project_id"])).await;
+    create_index(pool, index("idx_tasks_parent", "tasks", &["parent_task_id"])).await;
     create_index(pool, index("idx_activity_logs_recent", "activity_logs", &["created_at"])).await;
     create_index(pool, index("idx_activity_logs_user", "activity_logs", &["user_id"])).await;
     create_index(pool, index("idx_icf_project", "issue_custom_fields", &["project_id"])).await;

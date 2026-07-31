@@ -149,19 +149,24 @@ export function TaskDetailPanel({ taskId, project, isArchived, onClose, onUpdate
 
   return (
     <div className="flex flex-col h-full bg-[var(--bg-surface)]">
-      <div className="px-6 py-5 border-b border-[var(--border)] flex items-center justify-between">
-        <h2 className="text-lg font-extrabold">{isEditMode ? t('editTask') : task.title}</h2>
-        <div className="flex gap-2">
+      {/* ── Header ── */}
+      <div className="px-6 py-4 border-b border-[var(--border)] flex items-center justify-between shrink-0">
+        <h2 className="text-sm font-bold text-[var(--text-primary)] flex items-center gap-2">
+          {isEditMode ? t('editTask') : task.title}
+        </h2>
+        <div className="flex gap-1.5">
           {!isEditMode && !isArchived && (
             <>
-              <Button variant="secondary" icon={Edit3} onClick={enterEditMode}>{t('edit')}</Button>
-              <Button variant="danger" icon={Trash2} onClick={() => setDeleteConfirmOpen(true)}>{t('delete')}</Button>
+              <Button variant="secondary" icon={Edit3} onClick={enterEditMode} size="sm">{t('edit')}</Button>
+              <Button variant="danger" icon={Trash2} onClick={() => setDeleteConfirmOpen(true)} size="sm">{t('delete')}</Button>
             </>
           )}
-          <Button variant="secondary" icon={X} onClick={onClose}>{t('close')}</Button>
+          <Button variant="secondary" icon={X} onClick={onClose} size="sm">{t('close')}</Button>
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto p-6 space-y-4">
+
+      {/* ── Content ── */}
+      <div className="flex-1 overflow-y-auto p-6 space-y-5">
         {isEditMode ? (
           <>
             <Input
@@ -214,9 +219,9 @@ export function TaskDetailPanel({ taskId, project, isArchived, onClose, onUpdate
             </div>
             <Input label={t('progress')} type="number" min="0" max="100" value={editData.progress ?? 0} onChange={(e) => setEditData({ ...editData, progress: Math.max(0, Math.min(100, Number(e.target.value))) })} fullWidth />
             <div className="space-y-1.5">
-              <label className="block text-sm font-semibold text-[var(--text-secondary)]">{t('description')}</label>
+              <label className="block text-xs font-bold text-[var(--text-secondary)]">{t('description')}</label>
               <textarea
-                className="form-control w-full min-h-[100px] resize-y"
+                className="w-full min-h-[100px] px-3.5 py-2 border border-[var(--border)] rounded-xl bg-[var(--bg-surface)] text-xs focus:outline-none focus:ring-1 focus:ring-[var(--primary)]/50 focus:border-[var(--primary)] resize-y"
                 value={editData.description || ''}
                 onChange={(e) => setEditData({ ...editData, description: e.target.value })}
               />
@@ -228,16 +233,48 @@ export function TaskDetailPanel({ taskId, project, isArchived, onClose, onUpdate
           </>
         ) : (
           <>
-            <p><strong>{t('task_type')}:</strong> {task.task_type}</p>
-            <p><strong>{t('task_category')}:</strong> {task.task_category}</p>
-            <p><strong>{t('status')}:</strong> <TaskStatusBadge status={task.status} /></p>
-            <p><strong>{t('assignee')}:</strong> {assigneeDisplay || t('unassigned')}</p>
-            <p><strong>{t('progress')}:</strong> {task.progress}%</p>
-            <p><strong>{t('planned_start_date')}:</strong> {task.planned_start_date || '-'}</p>
-            <p><strong>{t('planned_end_date')}:</strong> {task.planned_end_date || '-'}</p>
-            <p><strong>{t('actual_start_date')}:</strong> {task.actual_start_date || '-'}</p>
-            <p><strong>{t('actual_end_date')}:</strong> {task.actual_end_date || '-'}</p>
-            <p><strong>{t('description')}:</strong> {task.description || '-'}</p>
+            <div className="space-y-3 text-sm">
+              <div className="flex gap-2">
+                <span className="font-bold text-[var(--text-secondary)] w-32">{t('task_type')}:</span>
+                <span className="text-[var(--text-primary)]">{task.task_type}</span>
+              </div>
+              <div className="flex gap-2">
+                <span className="font-bold text-[var(--text-secondary)] w-32">{t('task_category')}:</span>
+                <span className="text-[var(--text-primary)]">{task.task_category}</span>
+              </div>
+              <div className="flex gap-2">
+                <span className="font-bold text-[var(--text-secondary)] w-32">{t('status')}:</span>
+                <TaskStatusBadge status={task.status} />
+              </div>
+              <div className="flex gap-2">
+                <span className="font-bold text-[var(--text-secondary)] w-32">{t('assignee')}:</span>
+                <span className="text-[var(--text-primary)]">{assigneeDisplay || t('unassigned')}</span>
+              </div>
+              <div className="flex gap-2">
+                <span className="font-bold text-[var(--text-secondary)] w-32">{t('progress')}:</span>
+                <span className="text-[var(--text-primary)]">{task.progress}%</span>
+              </div>
+              <div className="flex gap-2">
+                <span className="font-bold text-[var(--text-secondary)] w-32">{t('planned_start_date')}:</span>
+                <span className="text-[var(--text-primary)]">{task.planned_start_date || '-'}</span>
+              </div>
+              <div className="flex gap-2">
+                <span className="font-bold text-[var(--text-secondary)] w-32">{t('planned_end_date')}:</span>
+                <span className="text-[var(--text-primary)]">{task.planned_end_date || '-'}</span>
+              </div>
+              <div className="flex gap-2">
+                <span className="font-bold text-[var(--text-secondary)] w-32">{t('actual_start_date')}:</span>
+                <span className="text-[var(--text-primary)]">{task.actual_start_date || '-'}</span>
+              </div>
+              <div className="flex gap-2">
+                <span className="font-bold text-[var(--text-secondary)] w-32">{t('actual_end_date')}:</span>
+                <span className="text-[var(--text-primary)]">{task.actual_end_date || '-'}</span>
+              </div>
+              <div className="flex flex-col gap-2 pt-2 border-t border-[var(--border)]">
+                <span className="font-bold text-[var(--text-secondary)]">{t('description')}</span>
+                <div className="text-[var(--text-primary)] whitespace-pre-wrap">{task.description || '-'}</div>
+              </div>
+            </div>
           </>
         )}
       </div>

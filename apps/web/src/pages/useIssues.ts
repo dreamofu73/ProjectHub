@@ -129,6 +129,49 @@ export function useIssues() {
     );
   };
 
+  const handleBulkConvertToTask = async (projectId: string) => {
+    if (selectedIssues.length === 0) return;
+    if (!window.confirm(`선택한 ${selectedIssues.length}개의 이슈를 일감(Task)으로 일괄 등록하시겠습니까?`)) return;
+    
+    try {
+      const issuesToConvert = issues.filter(i => selectedIssues.includes(i.id));
+      let successCount = 0;
+      
+      for (const issue of issuesToConvert) {
+        const res = await api('/api/tasks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            project_id: projectId,
+            title: issue.subject,
+            description: issue.description || '',
+            status: 'todo',
+            priority: issue.priority || 'normal',
+            start_date: null,
+            due_date: issue.due_date || null,
+            parent_id: null,
+          }),
+        });
+        if (res.ok) {
+          successCount++;
+          // 이슈 상태를 resolved로 변경 (옵션)
+          await api(`/api/issues/${issue.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'resolved' }),
+          });
+        }
+      }
+      
+      alert(`${successCount}개의 이슈가 일감으로 등록되었습니다.`);
+      setSelectedIssues([]);
+      fetchIssues();
+    } catch (err) {
+      console.error('Failed to convert issues to tasks:', err);
+      alert('일부 이슈를 일감으로 변환하는 중 오류가 발생했습니다.');
+    }
+  };
+
   const handleBulkAction = async (type: 'status' | 'assignee' | 'due_date', value: string) => {
     if (selectedIssues.length === 0 || !value) return;
     if (!window.confirm(t('bulkUpdateConfirm').replace('{count}', selectedIssues.length.toString()))) return;
@@ -214,6 +257,7 @@ export function useIssues() {
     handleSelectAll,
     handleSelectIssue,
     handleBulkAction,
+    handleBulkConvertToTask,
     handleSort,
     handleResetFilters,
     handlePageChange,

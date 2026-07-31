@@ -29,7 +29,7 @@ function buildWikiTree(pages: WikiPage[]): WikiPageNode[] {
   return roots;
 }
 
-function WikiTreeItem({ page, location, isSidebarCollapsed, navigate, t }: { page: WikiPageNode, location: any, isSidebarCollapsed: boolean, navigate: any, t: any }) {
+function WikiTreeItem({ page, location, isSidebarCollapsed, navigate, t, depth = 0 }: { page: WikiPageNode, location: any, isSidebarCollapsed: boolean, navigate: any, t: any, depth?: number }) {
   const [isExpanded, setIsExpanded] = useState(true);
   const hasChildren = page.children.length > 0;
   const isActive = location.search.includes(`id=${page.id}`);
@@ -38,44 +38,50 @@ function WikiTreeItem({ page, location, isSidebarCollapsed, navigate, t }: { pag
     <>
       <li className="sidebar-nav-item">
         <Tooltip content={page.title} disabled={!isSidebarCollapsed} position="right">
-          <div className="flex items-center justify-between group">
+          <div 
+            className={`flex items-center justify-between group w-full py-1.5 pr-2 rounded-md cursor-pointer transition-colors ${isActive ? 'bg-[var(--sidebar-link-active-bg)] text-[var(--sidebar-link-active-color)] font-medium' : 'hover:bg-[var(--sidebar-link-hover-bg)] text-[var(--sidebar-link-color)] hover:text-[var(--sidebar-link-hover-color)]'}`}
+            style={{ paddingLeft: `${0.5 + depth * 1.5}rem` }}
+          >
             <div className="flex items-center flex-1 min-w-0">
               {hasChildren && (
                 <button
                   onClick={(e) => {
                     e.preventDefault();
+                    e.stopPropagation();
                     setIsExpanded(!isExpanded);
                   }}
-                  className="p-0.5 hover:bg-slate-200 dark:hover:bg-slate-800 rounded text-slate-400 border-none bg-transparent cursor-pointer"
+                  className={`p-0.5 rounded border-none bg-transparent cursor-pointer flex-shrink-0 ${isActive ? 'text-[var(--sidebar-link-active-color)] hover:bg-black/10 dark:hover:bg-white/10' : 'text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800'}`}
                 >
-                  {isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+                  {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                 </button>
               )}
-              {!hasChildren && <div className="w-4" />}
+              {!hasChildren && <div className="w-5" />}
               <Link
                 to={`${location.pathname.split('?')[0]}?id=${page.id}`}
-                className={`sidebar-nav-link flex-1 truncate ${isActive ? 'active' : ''} ${isSidebarCollapsed ? 'justify-center px-1' : ''}`}
+                className={`flex flex-1 items-center gap-2 truncate ${isSidebarCollapsed ? 'justify-center' : ''}`}
+                style={{ textDecoration: 'none', color: 'inherit' }}
               >
                 <FileText size={16} className={`shrink-0 ${isActive ? 'opacity-100' : 'opacity-60'}`} />
-                {!isSidebarCollapsed && <span className="truncate ml-2">{page.title}</span>}
+                {!isSidebarCollapsed && <span className="truncate">{page.title}</span>}
               </Link>
             </div>
             {!isSidebarCollapsed && (
               <Link
                 to={`${location.pathname.split('?')[0]}?id=new&parent_id=${page.id}`}
-                className="p-1 opacity-0 group-hover:opacity-100 hover:bg-slate-200 dark:hover:bg-slate-800 rounded text-slate-400 hover:text-[var(--primary)] border-none bg-transparent cursor-pointer flex items-center"
+                className={`p-1 ml-auto opacity-0 group-hover:opacity-100 rounded border-none bg-transparent cursor-pointer flex items-center transition-opacity ${isActive ? 'text-[var(--sidebar-link-active-color)] hover:bg-black/10 dark:hover:bg-white/10' : 'text-slate-400 hover:text-[var(--primary)] hover:bg-slate-200 dark:hover:bg-slate-800'}`}
                 title="하위 페이지 생성"
+                onClick={(e) => e.stopPropagation()}
               >
-                <Plus size={12} />
+                <Plus size={14} />
               </Link>
             )}
           </div>
         </Tooltip>
       </li>
       {isExpanded && hasChildren && (
-        <ul className="pl-4">
+        <ul className="flex flex-col gap-0.5">
           {page.children.map(child => (
-            <WikiTreeItem key={child.id} page={child} location={location} isSidebarCollapsed={isSidebarCollapsed} navigate={navigate} t={t} />
+            <WikiTreeItem key={child.id} page={child} location={location} isSidebarCollapsed={isSidebarCollapsed} navigate={navigate} t={t} depth={depth + 1} />
           ))}
         </ul>
       )}

@@ -17,6 +17,51 @@ use calamine::{open_workbook_from_rs, DataType, Reader, Xlsx};
 use std::io::Cursor;
 use sea_query::{Asterisk, Expr, ExprTrait, JoinType, Order, Query as SeaQuery, SelectStatement};
 
+/// 상위 일감 체인을 따라 올라갈 때 허용하는 최대 깊이.
+/// 기존 데이터가 손상되어 순환이 있더라도 무한 루프에 빠지지 않도록 하는 안전장치.
+const MAX_TASK_DEPTH: usize = 20;
+
+/// `parent_id`가 `task_id`(신규 생성 시 `None`)의 상위 일감이 될 수 있는지 검증한다.
+/// 상위 일감은 존재해야 하고, 같은 프로젝트에 속해야 하며, 순환을 만들지 않아야 한다.
+async fn validate_parent_task(
+    pool: &Arc<AnyPool>,
+    project_id: i64,
+    task_id: Option<i64>,
+    parent_id: i64,
+) -> Result<(), (StatusCode, Json<Value>)> {
+    let mut current = Some(parent_id);
+    let mut depth = 0usize;
+
+    while let Some(id) = current {
+        if task_id == Some(id) {
+            return Err((StatusCode::BAD_REQUEST, Json(json!({"success": false, "error": "A task cannot be its own ancestor"}))));
+        }
+        depth += 1;
+        if depth > MAX_TASK_DEPTH {
+            return Err((StatusCode::BAD_REQUEST, Json(json!({"success": false, "error": "Task hierarchy is too deep"}))));
+        }
+
+        let stmt = SeaQuery::select()
+            .columns(["project_id", "parent_task_id"])
+            .from("tasks")
+            .and_where(Expr::col("id").eq(id))
+            .to_owned();
+        let row = crate::db::fetch_optional(pool, &stmt)
+            .await
+            .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()}))))?
+            .ok_or((StatusCode::BAD_REQUEST, Json(json!({"success": false, "error": "Parent task not found"}))))?;
+
+        let row_project: i64 = row.get("project_id");
+        if row_project != project_id {
+            return Err((StatusCode::BAD_REQUEST, Json(json!({"success": false, "error": "Parent task must belong to the same project"}))));
+        }
+
+        current = row.get::<Option<i64>, _>("parent_task_id");
+    }
+
+    Ok(())
+}
+
 pub fn router() -> crate::routes::ProtectedRoutes {
     crate::routes::ProtectedRoutes::from_router(
         Router::new()
@@ -206,6 +251,7 @@ async fn get_tasks(
             "progress": t.get::<i64, _>("progress"),
             "author_id": t.get::<i64, _>("author_id").to_string(),
             "assignee_id": t.get::<Option<i64>, _>("assignee_id").map(|v| v.to_string()),
+            "parent_task_id": t.get::<Option<i64>, _>("parent_task_id").map(|v| v.to_string()),
             "assignee_login": login,
             "assignee_name": assignee_name,
             "project_name": t.get::<String, _>("project_name"),
@@ -268,6 +314,14 @@ async fn create_task(
             return Err((StatusCode::BAD_REQUEST, Json(json!({"success": false, "error": "planned_end_date must be on or after planned_start_date"}))));
         }
     }
+    if let (Some(start), Some(end)) = (&req.actual_start_date, &req.actual_end_date) {
+        if start > end {
+            return Err((StatusCode::BAD_REQUEST, Json(json!({"success": false, "error": "actual_end_date must be on or after actual_start_date"}))));
+        }
+    }
+    if let Some(parent_id) = req.parent_task_id {
+        validate_parent_task(&pool, req.project_id, None, parent_id).await?;
+    }
 
     let now = crate::db::now_string();
     let task_id = crate::db::new_id();
@@ -276,7 +330,7 @@ async fn create_task(
         .columns([
             "id", "project_id", "title", "description", "task_type", "task_category", "status",
             "planned_start_date", "planned_end_date", "actual_start_date", "actual_end_date",
-            "progress", "author_id", "assignee_id", "created_at", "updated_at"
+            "progress", "author_id", "assignee_id", "parent_task_id", "created_at", "updated_at"
         ])
         .values_panic([
             task_id.into(),
@@ -293,6 +347,7 @@ async fn create_task(
             req.progress.unwrap_or(0).into(),
             user.id.into(),
             req.assignee_id.into(),
+            req.parent_task_id.into(),
             now.clone().into(),
             now.into()
         ])
@@ -348,6 +403,7 @@ fn task_row_to_json(t: &sqlx::any::AnyRow) -> Value {
         "progress": t.get::<i64, _>("progress"),
         "author_id": t.get::<i64, _>("author_id").to_string(),
         "assignee_id": t.get::<Option<i64>, _>("assignee_id").map(|v| v.to_string()),
+        "parent_task_id": t.get::<Option<i64>, _>("parent_task_id").map(|v| v.to_string()),
         "assignee_name": assignee_name,
         "project_name": t.get::<String, _>("project_name"),
         "project_identifier": t.get::<String, _>("project_identifier"),
@@ -427,6 +483,14 @@ async fn update_task(
             return Err((StatusCode::BAD_REQUEST, Json(json!({"success": false, "error": "planned_end_date must be on or after planned_start_date"}))));
         }
     }
+    if let (Some(Some(start)), Some(Some(end))) = (&req.actual_start_date, &req.actual_end_date) {
+        if start > end {
+            return Err((StatusCode::BAD_REQUEST, Json(json!({"success": false, "error": "actual_end_date must be on or after actual_start_date"}))));
+        }
+    }
+    if let Some(Some(parent_id)) = req.parent_task_id {
+        validate_parent_task(&pool, project_id, Some(id), parent_id).await?;
+    }
 
     let mut update_stmt = SeaQuery::update();
     update_stmt.table("tasks")
@@ -465,6 +529,11 @@ async fn update_task(
     match req.assignee_id {
         Some(None) => { update_stmt.value("assignee_id", None::<i64>); }
         Some(Some(v)) => { update_stmt.value("assignee_id", v); }
+        None => {}
+    }
+    match req.parent_task_id {
+        Some(None) => { update_stmt.value("parent_task_id", None::<i64>); }
+        Some(Some(v)) => { update_stmt.value("parent_task_id", v); }
         None => {}
     }
 
@@ -613,6 +682,17 @@ async fn delete_task(
             _ => return Err((StatusCode::FORBIDDEN, Json(json!({"success": false, "error": "권한이 없습니다."})))),
         }
     }
+
+    // 하위 일감은 함께 지우지 않고 최상위로 승격시킨다.
+    // (구버전 DB는 ALTER 로 컬럼만 추가되어 self FK 가 없으므로 명시적으로 처리한다.)
+    let promote_stmt = SeaQuery::update()
+        .table("tasks")
+        .value("parent_task_id", None::<i64>)
+        .and_where(Expr::col("parent_task_id").eq(id))
+        .to_owned();
+    crate::db::execute(&pool, &promote_stmt)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()}))))?;
 
     let stmt = SeaQuery::delete()
         .from_table("tasks")

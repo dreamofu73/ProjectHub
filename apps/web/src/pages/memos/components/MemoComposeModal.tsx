@@ -1,7 +1,8 @@
 import { Send, X, Award, Search, Paperclip, File, RefreshCw } from 'lucide-react';
 import type { User } from 'shared/types';
 import { Button } from 'ui/Button';
-import { HTMLEditor } from 'ui/HTMLEditor';
+import { HTMLEditor, createHTMLEditorLabels } from 'ui/HTMLEditor';
+import { useLanguage } from '../../../context/LanguageContext';
 
 interface MemoComposeModalProps {
   isOpen: boolean;
@@ -42,6 +43,7 @@ export function MemoComposeModal({
   sending,
   handleSendMemo
 }: MemoComposeModalProps) {
+  const { t, language } = useLanguage();
   if (!isOpen) return null;
 
   return (
@@ -155,6 +157,7 @@ export function MemoComposeModal({
                   value={content}
                   onChange={setContent}
                   height={320}
+                  labels={createHTMLEditorLabels(t, language)}
                 />
               </div>
             </div>

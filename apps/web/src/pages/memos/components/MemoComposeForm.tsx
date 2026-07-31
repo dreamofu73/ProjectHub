@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { Send, X, Award, Search, Paperclip, File, RefreshCw, Users } from 'lucide-react';
 import { Button } from 'ui/Button';
-import { HTMLEditor } from 'ui/HTMLEditor';
+import { HTMLEditor, createHTMLEditorLabels } from 'ui/HTMLEditor';
+import { useLanguage } from '../../../context/LanguageContext';
 import { AddressBookPicker } from './AddressBookPickerModal';
 import type { User } from 'shared/types';
 
@@ -55,6 +56,7 @@ export function MemoComposeForm({
   t,
 }: MemoComposeFormProps) {
   const [isAddressBookOpen, setIsAddressBookOpen] = useState(false);
+  const { language } = useLanguage();
 
   // Group recipients by groupName for display
   const groupedRecipients = useMemo(() => {
@@ -217,7 +219,7 @@ export function MemoComposeForm({
         <div className="space-y-1.5 flex-1 flex flex-col">
           <label className="text-xs font-bold text-[var(--text-secondary)]">내용 <span className="text-red-500">*</span></label>
           <div className="flex-1 flex flex-col min-h-[250px]">
-            <HTMLEditor value={content} onChange={setContent} height={280} />
+            <HTMLEditor value={content} onChange={setContent} height={280} labels={createHTMLEditorLabels(t, language)} />
           </div>
         </div>
 

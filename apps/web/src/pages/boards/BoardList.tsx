@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { api, fetchBlobUrl } from 'shared/lib/api';
 import { useDebounce } from 'shared/hooks/useDebounce';
+import { sanitizeHtml } from 'shared/lib/sanitize';
 import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from 'ui/Toast';
 import { Pagination } from 'ui/Pagination';
@@ -536,7 +537,7 @@ export default function GlobalBoardList() {
           <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar flex flex-col">
             <div
               className="p-5 text-sm leading-relaxed break-words text-[var(--text-primary)] prose dark:prose-invert max-w-none"
-              dangerouslySetInnerHTML={{ __html: postDetail.content || '' }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(postDetail.content || '') }}
             />
             {postAttachments.length > 0 && (
               <div className="px-5 pb-5">

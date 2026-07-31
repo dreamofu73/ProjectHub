@@ -14,7 +14,7 @@ interface IssuesToolbarProps {
   projectFilterVal: string;
   updateFilter: (key: string, value: string) => void;
   projects: Array<{ identifier: string; name: string }>;
-  project: { identifier: string; name: string } | null;
+  project: { id: number | string; identifier: string; name: string } | null;
   isArchived?: boolean;
 
   // Search
@@ -30,6 +30,7 @@ interface IssuesToolbarProps {
 
   // Bulk actions
   handleBulkAction: (type: 'status' | 'assignee' | 'due_date', value: string) => void;
+  handleBulkConvertToTask: (projectId: string) => void;
   users: Array<{ id: string; firstname: string; lastname: string }>;
   projectMembers: Array<{ project_id: string; user_id: string }>;
   issues: Array<{ id: string; project_id: string }>;
@@ -72,6 +73,7 @@ export function IssuesToolbar({
   selectedIssues,
   setSelectedIssues,
   handleBulkAction,
+  handleBulkConvertToTask,
   users,
   projectMembers,
   issues,
@@ -301,6 +303,17 @@ export function IssuesToolbar({
           <span className="text-xs font-bold text-[var(--primary)] shrink-0 min-w-[3rem]">
             {selectedIssues.length} {t('issues') || '개'}
           </span>
+
+          {/* 일감으로 일괄 등록 */}
+          {project && (
+            <button
+              type="button"
+              onClick={() => handleBulkConvertToTask(project.id.toString())}
+              className="flex items-center gap-1 px-2.5 py-1.5 border border-indigo-200 dark:border-indigo-900/50 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded text-xs font-semibold transition-all cursor-pointer bg-[var(--bg-surface)] h-8"
+            >
+              일감으로 등록
+            </button>
+          )}
 
           {/* 상태 변경 드롭다운 */}
           <div className="relative">

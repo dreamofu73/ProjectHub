@@ -1,6 +1,6 @@
 {
   "$schema": "https://unpkg.com/oh-my-opencode-slim@latest/oh-my-opencode-slim.schema.json",
-  "preset": "mix",
+  "preset": "google",
   "presets": {
     "opencode": {
       "orchestrator": {
@@ -145,7 +145,7 @@
         ]
       },
       "fixer": {
-        "model": "google/gemini-2.5-pro",
+        "model": "google/antigravity-gemini-3.1-pro",
         "variant": "high",
         "skills": [
           "rust-best-practices",

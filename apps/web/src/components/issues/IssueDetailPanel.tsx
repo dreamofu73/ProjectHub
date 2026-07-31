@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { X, MessageSquare, Clock, Trash2, Edit3 } from 'lucide-react';
+import { X, MessageSquare, Clock, Trash2, Edit3, Paperclip } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from 'ui/Toast';
 import { Badge } from 'ui/Badge';
 import { api } from 'shared/lib/api';
 import { IssueComments } from './IssueComments';
+import { FileUploader } from 'ui/FileUploader';
+import { uploadFilesWithProgress } from 'shared/lib/upload';
 
-import type { Issue, Comment, Member } from 'shared/types';
+import type { Issue, Comment, Member, Attachment } from 'shared/types';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -48,6 +50,10 @@ export function IssueDetailPanel({
   const [isEditMode, setIsEditMode] = useState(false);
   const [editSubject, setEditSubject] = useState('');
   const [editDescription, setEditDescription] = useState('');
+  const [editFiles, setEditFiles] = useState<File[]>([]);
+  const [existingAttachments, setExistingAttachments] = useState<Attachment[]>([]);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
   const [isUpdatingIssue, setIsUpdatingIssue] = useState(false);
   const [isUpdatingField, setIsUpdatingField] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -88,6 +94,7 @@ export function IssueDetailPanel({
         setData(json.data);
         setEditSubject(json.data.issue.subject);
         setEditDescription(json.data.issue.description || '');
+        setExistingAttachments(json.data.issue.attachments || []);
         setError('');
       } else {
         setError(json.error || '이슈를 가져오지 못했습니다.');
@@ -156,10 +163,29 @@ export function IssueDetailPanel({
     if (!issueId) return;
     setIsUpdatingIssue(true);
     try {
+      let attachmentIds: string[] = existingAttachments.map(a => String(a.id));
+      if (editFiles.length > 0) {
+        setIsUploading(true);
+        setUploadProgress(0);
+        const result: any = await uploadFilesWithProgress(
+          '/api/attachments',
+          editFiles,
+          {},
+          (progress) => setUploadProgress(progress),
+        );
+        if (result.success && result.data?.attachments) {
+          const newIds = result.data.attachments.map((a: any) => String(a.id));
+          attachmentIds = [...attachmentIds, ...newIds];
+        }
+        setIsUploading(false);
+      }
+
+      const payload = { ...updates, attachment_ids: attachmentIds };
+
       const res = await api(`/api/issues/${issueId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates),
+        body: JSON.stringify(payload),
       });
       if (res.ok) {
         await fetchData();
@@ -312,8 +338,39 @@ export function IssueDetailPanel({
                   className="form-control text-sm w-full"
                   value={editDescription}
                   onChange={(e) => setEditDescription(e.target.value)}
-                  placeholder="이슈 설명 (Markdown 지원)"
+                  placeholder="이슈 설명"
                 />
+                <div className="mt-2 space-y-2">
+                  {existingAttachments.length > 0 && (
+                    <div className="space-y-1">
+                      <p className="text-xs font-semibold text-[var(--text-secondary)]">기존 첨부파일</p>
+                      <ul className="text-sm space-y-1">
+                        {existingAttachments.map(att => (
+                          <li key={att.id} className="flex items-center gap-2 text-[var(--text-primary)] bg-[var(--bg-surface-2)] p-1.5 rounded">
+                            <Paperclip size={14} className="text-[var(--text-muted)]" />
+                            <span className="flex-1 truncate">{att.filename}</span>
+                            <button
+                              type="button"
+                              onClick={() => setExistingAttachments(prev => prev.filter(a => a.id !== att.id))}
+                              className="text-[var(--text-muted)] hover:text-red-500 cursor-pointer"
+                            >
+                              <X size={14} />
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  <FileUploader files={editFiles} onChange={setEditFiles} maxSizeMB={100} />
+                  {isUploading && (
+                    <div className="w-full bg-[var(--border)] rounded-full h-1.5 overflow-hidden">
+                      <div
+                        className="bg-[var(--primary)] h-full transition-all duration-300 rounded-full"
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    </div>
+                  )}
+                </div>
                 <div className="flex gap-2 justify-end mt-1">
                   <button
                     type="button"
@@ -568,7 +625,7 @@ export function IssueDetailPanel({
       >
         {/* Description */}
         {!isEditMode && (
-          <div>
+          <div className="space-y-4">
             <div className="text-sm leading-relaxed text-[var(--text-secondary)] whitespace-pre-wrap">
               {issue.description || (
                 <span className="text-[var(--text-muted)] italic">
@@ -576,6 +633,33 @@ export function IssueDetailPanel({
                 </span>
               )}
             </div>
+            
+            {/* Attachments */}
+            {data.issue.attachments && data.issue.attachments.length > 0 && (
+              <div className="space-y-2 pt-2 border-t border-[var(--border)]">
+                <h4 className="text-xs font-bold text-[var(--text-secondary)] flex items-center gap-1.5">
+                  <Paperclip size={12} /> 첨부파일 ({data.issue.attachments.length})
+                </h4>
+                <div className="flex flex-col gap-1.5">
+                  {data.issue.attachments.map((att) => (
+                    <div key={att.id} className="flex items-center gap-2 bg-[var(--bg-surface-2)] border border-[var(--border)] p-2 rounded-lg">
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-[var(--text-primary)] truncate">{att.filename}</div>
+                        <div className="text-xs text-[var(--text-muted)]">{(att.filesize / 1024).toFixed(1)} KB</div>
+                      </div>
+                      <a 
+                        href={`/api/attachments/${att.id}`} 
+                        download={att.filename}
+                        className="text-xs font-bold text-[var(--primary)] bg-[var(--primary-bg)] px-2 py-1 rounded hover:opacity-80 transition-opacity"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        다운로드
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 

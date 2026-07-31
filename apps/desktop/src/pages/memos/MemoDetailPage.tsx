@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Paperclip, Download, RefreshCw } from 'lucide-react';
 import { api } from 'shared/lib/api';
+import { sanitizeHtml } from 'shared/lib/sanitize';
 import { useToast } from 'ui/Toast';
 import type { Memo } from 'shared/types';
 
@@ -162,7 +163,7 @@ export default function MemoDetailPage() {
         <div className="px-6 py-5 space-y-4">
           <div
             className="memo-detail-content text-[var(--text-secondary)] text-xs leading-relaxed whitespace-normal break-words overflow-x-auto select-text prose dark:prose-invert max-w-none"
-            dangerouslySetInnerHTML={{ __html: memo.content }}
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(memo.content) }}
           />
 
           {/* 첨부파일 */}

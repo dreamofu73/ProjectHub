@@ -4,7 +4,7 @@ import { ArrowLeft, Save, Paperclip, FileText, File, X, AlertCircle } from 'luci
 import { uploadFilesWithProgress } from 'shared/lib/upload';
 import { useToast } from 'ui/Toast';
 import { api } from 'shared/lib/api';
-import { HTMLEditor } from 'ui/HTMLEditor';
+import { HTMLEditor, createHTMLEditorLabels } from 'ui/HTMLEditor';
 import { ConfirmDialog } from 'ui/ConfirmDialog';
 import { useLanguage } from '../context/LanguageContext';
 import type { Attachment } from 'shared/types';
@@ -13,7 +13,7 @@ export default function PostForm() {
   const { id, boardType, postId } = useParams<{ id?: string; boardType?: string; postId?: string }>();
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
 
   const isEdit = !!postId;
@@ -327,7 +327,7 @@ export default function PostForm() {
 
         {/* ── 내용 ── */}
         <div className="flex-1 flex flex-col min-h-[300px]">
-          <HTMLEditor value={content} onChange={(v) => { setContent(v); setDirty(true); }} height={380} />
+          <HTMLEditor value={content} onChange={(v) => { setContent(v); setDirty(true); }} height={380} labels={createHTMLEditorLabels(t, language)} />
         </div>
 
         {/* ── 기존 첨부파일 (수정 모드) ── */}

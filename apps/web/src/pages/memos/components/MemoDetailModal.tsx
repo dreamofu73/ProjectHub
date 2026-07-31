@@ -1,4 +1,5 @@
 import { Paperclip, Download, X } from 'lucide-react';
+import { sanitizeHtml } from 'shared/lib/sanitize';
 import type { Memo, CustomFolder, FolderType } from 'shared/types';
 
 interface MemoDetailModalProps {
@@ -139,7 +140,7 @@ export function MemoDetailModal({
         
         <div 
           className="memo-detail-content text-[var(--text-secondary)] text-xs leading-relaxed whitespace-normal break-words overflow-x-auto select-text prose dark:prose-invert max-w-none pb-4"
-          dangerouslySetInnerHTML={{ __html: memo.content }}
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(memo.content) }}
         />
 
         {/* 첨부파일 영역 */}
