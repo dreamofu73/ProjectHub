@@ -6,6 +6,7 @@ import type { User } from 'shared/types';
 export function useChat(activeRoom: { id: string; name: string } | null, currentUser: User | null) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const lastSeenIds = useRef<Record<string, number>>({});
 
   useEffect(() => {
@@ -24,7 +25,8 @@ export function useChat(activeRoom: { id: string; name: string } | null, current
   }, []);
 
   const fetchMessages = useCallback(async () => {
-    if (!activeRoom) return;
+    if (!activeRoom) { setMessages([]); return; }
+    setIsLoadingMessages(true);
     try {
       const res = await api(`/api/chat?room_id=${activeRoom.id}`);
       const json = await res.json();
@@ -38,6 +40,7 @@ export function useChat(activeRoom: { id: string; name: string } | null, current
         }
       }
     } catch (err) { console.error(err); }
+    finally { setIsLoadingMessages(false); }
   }, [activeRoom, currentUser?.id]);
 
   return {
@@ -47,6 +50,7 @@ export function useChat(activeRoom: { id: string; name: string } | null, current
     setChatRooms,
     fetchChatRooms,
     fetchMessages,
+    isLoadingMessages,
     lastSeenIds
   };
 }

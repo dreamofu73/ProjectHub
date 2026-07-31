@@ -1096,6 +1096,8 @@ async fn apply_legacy_upgrades(pool: &AnyPool) {
     add_column(pool, "issues", text("actual_start_date")).await;
     add_column(pool, "issues", text("actual_end_date")).await;
 
+    add_column(pool, "messages", text("edited_at")).await;
+
     add_column(pool, "wiki_pages", key_string("uuid")).await;
 }
 

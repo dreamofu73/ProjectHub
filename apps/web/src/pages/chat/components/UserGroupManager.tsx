@@ -15,6 +15,7 @@ import {
 import { Card, CardBody, CardHeader } from 'ui/Card';
 import { Button } from 'ui/Button';
 import { api } from 'shared/lib/api';
+import { ConfirmDialog } from 'ui/ConfirmDialog';
 import type { UserInfo, UserGroup, UserGroupMember } from 'shared/types';
 
 interface UserGroupManagerProps {
@@ -47,6 +48,7 @@ export function UserGroupManager({
   const [expandedMemberSearch, setExpandedMemberSearch] = useState(false);
   const [expandedMemberResults, setExpandedMemberResults] = useState<UserInfo[]>([]);
   const [isAddingMembers, setIsAddingMembers] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchGroups = useCallback(async () => {
@@ -128,9 +130,12 @@ export function UserGroupManager({
     }
   };
 
-  const handleDeleteGroup = async (groupId: string, e: React.MouseEvent) => {
+  const handleDeleteGroup = (groupId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!window.confirm(t('chatGroupDeleteConfirm'))) return;
+    setConfirmDeleteId(groupId);
+  };
+
+  const doDeleteGroup = async (groupId: string) => {
     try {
       const res = await api(`/api/chat/user-groups/${groupId}`, {
         method: 'DELETE',
@@ -279,6 +284,16 @@ export function UserGroupManager({
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <ConfirmDialog
+        isOpen={!!confirmDeleteId}
+        title={t('delete')}
+        message={t('chatGroupDeleteConfirm')}
+        confirmLabel={t('delete')}
+        cancelLabel={t('cancel')}
+        danger
+        onConfirm={() => { const id = confirmDeleteId; setConfirmDeleteId(null); if (id) doDeleteGroup(id); }}
+        onCancel={() => setConfirmDeleteId(null)}
+      />
       <div
         className="fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm animate-fade-in"
         onClick={onClose}

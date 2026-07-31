@@ -6,12 +6,12 @@ interface ChatFileAttachmentProps {
   fileId: string;
   filename: string;
   isMe: boolean;
-  onPreview: (url: string, title: string) => void;
-  showToast: (msg: string, type: 'success' | 'error' | 'info') => void;
+  onPreview: (fileId: string, filename: string) => void;
+  showToast?: (msg: string, type: 'success' | 'error' | 'info') => void;
   t: (key: string) => string;
 }
 
-export const ChatFileAttachment = ({ fileId, filename, isMe, onPreview, showToast, t }: ChatFileAttachmentProps) => {
+export const ChatFileAttachment = ({ fileId, filename, isMe, onPreview, t }: ChatFileAttachmentProps) => {
   const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(filename);
   const fileUrl = `/api/attachments/${fileId}`;
   const [thumbUrl, setThumbUrl] = useState<string | null>(null);
@@ -43,15 +43,7 @@ export const ChatFileAttachment = ({ fileId, filename, isMe, onPreview, showToas
   if (isImage) {
     return (
       <div
-        onClick={async () => { 
-          try {
-            const fullUrl = await fetchBlobUrl(fileUrl);
-            onPreview(fullUrl, filename); 
-          } catch (err) {
-            console.error('Chat preview error:', err);
-            showToast(t('chatPreviewFail') || '미리보기를 불러올 수 없습니다.', 'error');
-          }
-        }}
+        onClick={() => onPreview(fileId, filename)}
         className={`cursor-pointer rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-800 ${isMe ? 'rounded-br-sm' : 'rounded-bl-sm'}`}
         style={{ width: '220px' }}
       >

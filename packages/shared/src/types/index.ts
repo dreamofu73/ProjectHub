@@ -171,6 +171,7 @@ export interface Message {
   author_login: string;
   content: string;
   created_at: string;
+  edited_at?: string | null;
 }
 
 export interface UserGroup {

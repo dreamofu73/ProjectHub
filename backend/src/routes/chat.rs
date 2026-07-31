@@ -24,7 +24,7 @@ pub fn router() -> crate::routes::ProtectedRoutes {
             .route("/chat/rooms/:room_id/leave", post(leave_chat_room))
             .route("/chat", get(get_messages))
             .route("/chat", post(send_message))
-            .route("/chat/:id", delete(delete_chat_message)),
+            .route("/chat/:id", delete(delete_chat_message).put(update_chat_message)),
     )
 }
 
@@ -195,7 +195,8 @@ async fn get_messages(
             "author_login": login,
             "author_name": author_name,
             "content": r.get::<String, _>("content"),
-            "created_at": r.get::<String, _>("created_at")
+            "created_at": r.get::<String, _>("created_at"),
+            "edited_at": r.get::<Option<String>, _>("edited_at")
         })
     }).collect();
 
@@ -263,7 +264,8 @@ async fn send_message(
                     "author_login": login,
                     "author_name": author_name,
                     "content": msg.get::<String, _>("content"),
-                    "created_at": msg.get::<String, _>("created_at")
+                    "created_at": msg.get::<String, _>("created_at"),
+                    "edited_at": msg.get::<Option<String>, _>("edited_at")
                 }
             });
             let _ = broadcast_tx.send(message_json.to_string());
@@ -337,6 +339,73 @@ async fn delete_chat_message(
         "data": { "id": id.to_string(), "room_id": msg_room_id.to_string() }
     });
     let _ = broadcast_tx.send(delete_json.to_string());
+
+    Ok(Json(json!({ "success": true })))
+}
+
+async fn update_chat_message(
+    Path(id_str): Path<String>,
+    user: AuthUser,
+    Extension(pool): Extension<Arc<AnyPool>>,
+    Extension(broadcast_tx): Extension<Arc<broadcast::Sender<String>>>,
+    axum::Json(message_data): axum::Json<Value>,
+) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    let id = crate::serde_utils::parse_path_id(&id_str)?;
+    let content = message_data
+        .get("content")
+        .and_then(|v| v.as_str())
+        .map(|s| s.trim())
+        .filter(|s| !s.is_empty())
+        .ok_or_else(|| (StatusCode::BAD_REQUEST, Json(json!({"success": false, "error": "content is required"}))))?;
+
+    // 기존 메시지 조회 (작성자/타입 검증)
+    let stmt = SeaQuery::select()
+        .columns([sea_query::Alias::new("author_id"), sea_query::Alias::new("content")])
+        .from(sea_query::Alias::new("messages"))
+        .and_where(Expr::col(sea_query::Alias::new("id")).eq(id))
+        .to_owned();
+    let row = crate::db::fetch_optional(&pool, &stmt)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()}))))?
+        .ok_or_else(|| (StatusCode::NOT_FOUND, Json(json!({"success": false, "error": "Message not found"}))))?;
+
+    let author_id: i64 = row.get("author_id");
+    let existing: String = row.get("content");
+    if author_id != user.id {
+        return Err((StatusCode::FORBIDDEN, Json(json!({"success": false, "error": "Not allowed"}))));
+    }
+    if existing.starts_with("[FILE:") {
+        return Err((StatusCode::BAD_REQUEST, Json(json!({"success": false, "error": "Cannot edit file message"}))));
+    }
+
+    let stmt = SeaQuery::update()
+        .table(sea_query::Alias::new("messages"))
+        .value("content", content)
+        .value("edited_at", crate::db::now_string())
+        .and_where(Expr::col(sea_query::Alias::new("id")).eq(id))
+        .to_owned();
+    crate::db::execute(&pool, &stmt)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()}))))?;
+
+    // 갱신된 메시지를 브로드캐스트하여 실시간 반영
+    let stmt = SeaQuery::select()
+        .column((sea_query::Alias::new("m"), Asterisk))
+        .from_as(sea_query::Alias::new("messages"), sea_query::Alias::new("m"))
+        .and_where(Expr::col((sea_query::Alias::new("m"), sea_query::Alias::new("id"))).eq(id))
+        .to_owned();
+    if let Ok(Some(msg)) = crate::db::fetch_optional(&pool, &stmt).await {
+        let edit_json = json!({
+            "type": "edit_message",
+            "data": {
+                "id": msg.get::<i64, _>("id").to_string(),
+                "room_id": msg.get::<i64, _>("room_id").to_string(),
+                "content": msg.get::<String, _>("content"),
+                "edited_at": msg.get::<Option<String>, _>("edited_at")
+            }
+        });
+        let _ = broadcast_tx.send(edit_json.to_string());
+    }
 
     Ok(Json(json!({ "success": true })))
 }
