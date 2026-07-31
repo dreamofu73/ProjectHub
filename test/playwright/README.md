@@ -1,137 +1,137 @@
-# ProjectHub E2E 테스트 가이드
+# ProjectHub E2E Test Guide
 
-이 디렉터리는 [Playwright](https://playwright.dev/)를 사용하여 ProjectHub 웹 애플리케이션의 End-to-End 테스트를 수행합니다.
+This directory runs End-to-End tests against the ProjectHub web application using [Playwright](https://playwright.dev/).
 
 ---
 
-## 사전 요구 사항
+## Prerequisites
 
-### 1. 필수 소프트웨어
+### 1. Required software
 
-| 소프트웨어 | 버전 | 설치 방법 |
-|-----------|------|----------|
+| Software | Version | How to install |
+|----------|---------|----------------|
 | Node.js | 18+ | [nodejs.org](https://nodejs.org) |
-| npm | 9+ | Node.js에 포함 |
-| 백엔드 서버 | - | `./scripts/web/dev.sh` 또는 `./scripts/dev-with-db.sh postgres` |
+| npm | 9+ | Bundled with Node.js |
+| Backend server | - | `./scripts/web/dev.sh` or `./scripts/dev-with-db.sh postgres` |
 
-### 2. 개발 서버 실행
+### 2. Start the dev servers
 
-테스트를 실행하려면 **백엔드 서버**(포트 8000)와 **프론트엔드 개발 서버**(포트 5173)가 모두 실행 중이어야 합니다.
+Both the **backend server** (port 8000) and the **frontend dev server** (port 5173) must be running before the tests.
 
 ```bash
-# 터미널 1: 백엔드 + 프론트엔드 동시 실행
+# Terminal 1: run backend and frontend together
 ./scripts/web/dev.sh
 
-# 또는 PostgreSQL 사용 시
+# Or, when using PostgreSQL
 ./scripts/dev-with-db.sh postgres
 ```
 
-> **참고:** `playwright.config.ts`에 `webServer` 설정이 포함되어 있어, Vite 개발 서버는 테스트 시작 시 자동으로 기동됩니다. 단, 이미 실행 중인 dev 서버가 있다면 이를 재사용합니다.
+> **Note:** `playwright.config.ts` contains a `webServer` block, so the Vite dev server starts automatically when the tests run. An already-running dev server is reused instead.
 
 ---
 
-## 설치 및 설정
+## Installation and setup
 
 ```bash
-# 1. 테스트 의존성 설치
+# 1. Install test dependencies
 cd test/playwright
 npm install
 
-# 2. Playwright 브라우저 설치 (최초 1회)
+# 2. Install the Playwright browser (first time only)
 npx playwright install chromium
 ```
 
 ---
 
-## 테스트 실행
+## Running tests
 
-### 전체 테스트 실행
+### Run everything
 
 ```bash
 cd test/playwright
 npm test
 ```
 
-### 특정 스펙만 실행
+### Run a single spec
 
 ```bash
-npm test -- auth.spec.ts           # 인증 테스트
-npm test -- dashboard.spec.ts      # 대시보드 테스트
-npm test -- projects.spec.ts       # 프로젝트 관리 테스트
-npm test -- issues.spec.ts         # 이슈 트래킹 테스트
-npm test -- wiki.spec.ts           # 위키 테스트
-npm test -- boards.spec.ts         # 게시판 테스트
-npm test -- admin.spec.ts          # 관리자 테스트
+npm test -- auth.spec.ts           # authentication
+npm test -- dashboard.spec.ts      # dashboard
+npm test -- projects.spec.ts       # project management
+npm test -- issues.spec.ts         # issue tracking
+npm test -- wiki.spec.ts           # wiki
+npm test -- boards.spec.ts         # boards
+npm test -- admin.spec.ts          # admin
 ```
 
-### 브라우저 창 표시 (디버깅)
+### Show the browser window (debugging)
 
 ```bash
-npm test -- --headed               # 브라우저 창을 보면서 실행
-npm test -- --debug                # 디버그 모드 (Paused)
-npm test -- --ui                   # Playwright UI 모드
+npm test -- --headed               # run with a visible browser window
+npm test -- --debug                # debug mode (paused)
+npm test -- --ui                   # Playwright UI mode
 ```
 
-### 특정 테스트만 실행
+### Run a specific test
 
 ```bash
-npm test -- -g "로그인"            # 테스트 이름으로 필터링
-npm test -- -g "프로젝트 생성"      # 한국어 테스트 이름 지원
+npm test -- -g "로그인"            # filter by test name
+npm test -- -g "프로젝트 생성"      # Korean test names are supported
 ```
 
 ---
 
-## 테스트 구조
+## Test layout
 
 ```
 test/playwright/
-├── playwright.config.ts      # Playwright 설정
-├── package.json              # 테스트 의존성
+├── playwright.config.ts      # Playwright configuration
+├── package.json              # Test dependencies
 ├── fixtures/
-│   ├── global.setup.ts       # 글로벌 인증 설정 (admin 로그인)
-│   └── helpers.ts            # 유틸리티 함수
+│   ├── global.setup.ts       # Global auth setup (admin sign-in)
+│   └── helpers.ts            # Utility functions
 ├── tests/
-│   ├── auth.spec.ts          # 인증 (로그인/로그아웃)
-│   ├── dashboard.spec.ts     # 대시보드 위젯 및 내비게이션
-│   ├── projects.spec.ts      # 프로젝트 CRUD
-│   ├── issues.spec.ts        # 이슈 트래킹
-│   ├── wiki.spec.ts          # 위키 (글로벌/프로젝트)
-│   ├── boards.spec.ts        # 게시판 (공지/자유/질문)
-│   ├── admin.spec.ts         # 관리자 페이지
-│   ├── other-features.spec.ts    # 채팅, 쪽지, 주소록
-│   └── project-features.spec.ts  # 칸반, 일감, 멤버
-└── README.md                 # 이 문서
+│   ├── auth.spec.ts          # Authentication (sign in/out)
+│   ├── dashboard.spec.ts     # Dashboard widgets and navigation
+│   ├── projects.spec.ts      # Project CRUD
+│   ├── issues.spec.ts        # Issue tracking
+│   ├── wiki.spec.ts          # Wiki (global/project)
+│   ├── boards.spec.ts        # Boards (notice/free/question)
+│   ├── admin.spec.ts         # Admin pages
+│   ├── other-features.spec.ts    # Chat, memos, address book
+│   └── project-features.spec.ts  # Kanban, tasks, members
+└── README.md                 # This document
 ```
 
 ---
 
-## 인증 방식
+## Authentication
 
-모든 테스트는 `fixtures/global.setup.ts`에 의해 자동으로 인증됩니다.
+Every test is authenticated automatically by `fixtures/global.setup.ts`.
 
-1. `setup` 프로젝트가 먼저 실행되어 admin 계정으로 로그인
-2. 로그인 성공 시 인증 상태(`storageState`)를 `fixtures/.auth/admin.json`에 저장
-3. `chromium` 프로젝트의 모든 테스트는 저장된 인증 상태를 자동으로 로드
+1. The `setup` project runs first and signs in with the admin account.
+2. On success the authentication state (`storageState`) is written to `fixtures/.auth/admin.json`.
+3. All tests in the `chromium` project load that saved state automatically.
 
-> **기본 자격 증명:** `admin` / `urpsys12!@`
+> **Default credentials:** `admin` / `urpsys12!@`
 
 ---
 
-## 리포트 확인
+## Reports
 
 ```bash
-npm run report    # HTML 리포트를 브라우저에서 열기
+npm run report    # open the HTML report in a browser
 ```
 
-리포트는 `test/playwright/report/` 디렉터리에 생성됩니다.
+Reports are generated in `test/playwright/report/`.
 
 ---
 
-## 커스터마이징
+## Customisation
 
-### 새 테스트 추가
+### Adding a test
 
-`tests/` 디렉터리에 새 `.spec.ts` 파일을 생성하면 자동으로 인식됩니다.
+Create a new `.spec.ts` file under `tests/` and it is picked up automatically.
 
 ```typescript
 import { test, expect } from '@playwright/test';
@@ -144,9 +144,9 @@ test.describe('내 기능 테스트', () => {
 });
 ```
 
-### 유틸리티 함수 사용
+### Using the helpers
 
-`fixtures/helpers.ts`에 정의된 유틸리티를 사용할 수 있습니다.
+Utilities defined in `fixtures/helpers.ts` are available to every test.
 
 ```typescript
 import { randomString, waitForPageLoad } from '../fixtures/helpers';
@@ -157,34 +157,34 @@ test('데이터 생성 테스트', async ({ page }) => {
 });
 ```
 
-### 환경 변수
+### Environment variables
 
-| 변수 | 설명 | 기본값 |
-|------|------|--------|
-| `CI` | CI 환경에서 실행 시 재시도 및 직렬 실행 활성화 | `false` |
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `CI` | Enables retries and serial execution in CI | `false` |
 
 ---
 
-## 문제 해결
+## Troubleshooting
 
-### 브라우저 설치 오류
+### Browser installation errors
 
 ```bash
 npx playwright install --with-deps chromium
 ```
 
-### 서버 연결 오류
+### Server connection errors
 
 ```bash
-# 백엔드 서버 확인
+# Check the backend server
 curl http://localhost:8000/api/auth/login
 
-# 프론트엔드 서버 확인
+# Check the frontend server
 curl http://localhost:5173
 ```
 
-### 테스트 실패 시
+### When a test fails
 
-1. `--headed` 모드로 실행하여 브라우저 화면 확인
-2. `--debug` 모드로 실행하여 단계별 디버깅
-3. `report/` 디렉터리의 HTML 리포트에서 스크린샷 및 트레이스 확인
+1. Run with `--headed` to watch the browser.
+2. Run with `--debug` to step through the test.
+3. Inspect the screenshots and traces in the HTML report under `report/`.

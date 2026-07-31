@@ -1,104 +1,105 @@
-# Project Hub (PMS) 개발 표준 가드레일 (CLAUDE.md)
+# Project Hub (PMS) Development Standards (CLAUDE.md)
 
-이 프로젝트는 **Rust (Axum) 백엔드**와 **React Vite (TypeScript) 프런트엔드(Web/Desktop)**로 구성된 프로젝트 관리 시스템입니다. 프로젝트의 일관된 코드 품질과 단일 바이너리 빌드 호환성을 유지하기 위해 표준 가드레일을 역할별로 분리하여 관리합니다.
+This project is a project management system built with a **Rust (Axum) backend** and **React Vite (TypeScript) frontends (Web/Desktop)**. To keep code quality consistent and preserve single-binary build compatibility, the standards are split per area.
 
 > [!IMPORTANT]
-> 분야별 구체적인 개발 가이드라인은 다음 개별 파일을 반드시 참조하십시오:
-> - **백엔드 개발 규칙**: [backend/CLAUDE.md](backend/CLAUDE.md)
-> - **웹 프런트엔드 개발 규칙**: [apps/web/CLAUDE.md](apps/web/CLAUDE.md)
-> - **데스크톱 앱 개발 규칙**: [apps/desktop/CLAUDE.md](apps/desktop/CLAUDE.md)
+> Always consult the area-specific guidelines below:
+> - **Backend rules**: [backend/CLAUDE.md](backend/CLAUDE.md)
+> - **Web frontend rules**: [apps/web/CLAUDE.md](apps/web/CLAUDE.md)
+> - **Desktop app rules**: [apps/desktop/CLAUDE.md](apps/desktop/CLAUDE.md)
 
 ---
 
-## 1. AI 에이전트 행동 및 작업 관리 규칙
+## 1. Agent Behaviour and Task Management
 
-### ⚡ 코드 수정 자율성 규칙
-- **사전 승인 생략**: 소스코드 수정이나 파일 생성/변경이 필요한 경우, 매번 사용자에게 변경 허가를 묻거나 승인을 대기하지 않고 **직접 툴을 호출하여 즉시 코드를 반영**한 뒤 결과만 간결하게 보고하세요.
-- **자율적 구현**: 구현 세부 사항에 대한 확신이 있는 경우, 질문 단계를 생략하고 현대적 모던 웹 표준 및 기법에 따라 자율적으로 코드를 갱신합니다.
+### ⚡ Autonomous code changes
+- **No pre-approval**: When source changes or file creation are required, do not ask for permission or wait for approval each time. Call the tools directly, apply the change, and report the result concisely.
+- **Implement autonomously**: When you are confident about the implementation details, skip the clarification step and update the code according to modern web standards and techniques.
 
-### 🔍 코드 검색 및 탐색 규칙 (CodeGraph)
-- **단순 텍스트 검색 지양 및 CodeGraph 우선 사용**: 코드베이스를 파악하거나 특정 심볼(함수, 클래스, 변수 등)을 찾을 때, 단순 텍스트 기반의 `grep`, `find`, `cat` 또는 파일 전체 읽기(`Read`)를 수행하기 **전에 반드시 CodeGraph를 사용하여 함수의 의존성과 호출 관계를 먼저 구조적으로 분석**하세요.
-- **MCP 툴 활용**: `codegraph_explore` 툴을 사용하여 자연어 질문이나 심볼 이름을 검색하면, 관련 코드의 원문과 더불어 호출 경로(Call path) 및 의존성(Blast radius)을 한 번에 파악할 수 있어 무분별한 텍스트 검색으로 인한 컨텍스트 낭비를 막아줍니다.
-- **쉘 명령어 활용**: MCP 툴 사용이 여의치 않은 경우, 터미널에서 `codegraph explore "<검색어>"` 명령어를 실행하여 동일한 결과를 얻을 수 있습니다.
+### 🔍 Code search and navigation (CodeGraph)
+- **Prefer CodeGraph over plain text search**: Before running text-based `grep`, `find`, `cat`, or reading whole files (`Read`) to understand the codebase or locate a symbol (function, class, variable), **analyse dependencies and call relationships structurally with CodeGraph first**.
+- **MCP tool**: `codegraph_explore` takes a natural-language question or symbol name and returns the source of the relevant code together with call paths and blast radius in a single call, which avoids the context waste of scattershot text search.
+- **Shell command**: When the MCP tool is unavailable, `codegraph explore "<query>"` in the terminal produces the same result.
 
-### 🧪 브라우저 테스트 최소화 규칙
-- **브라우저 테스트는 최후 수단으로만 사용**합니다. 코드 변경 후 검증은 아래 우선순위에 따라 수행합니다:
-  1. **정적 분석 우선**: 프론트엔드는 Vite 빌드(`npm run build --workspaces`), 백엔드는 Rust(`cargo check`) 등 컴파일·타입 검사로 1차 검증합니다.
-  2. **로그/터미널 확인**: 백엔드 API 동작은 `curl` 또는 터미널 로그로 확인합니다.
-  3. **브라우저 테스트 허용 범위**: 다음 경우에만 제한적으로 사용합니다.
-     - 시각적 UI 레이아웃·애니메이션 확인이 반드시 필요한 경우
-     - 복잡한 사용자 인터랙션(드래그, 멀티스텝 플로우 등) 검증이 필요한 경우
-- **생략 가능 케이스**: 로직 버그 수정, 타입 오류 수정, 스타일 소폭 조정, API 연동 로직 변경 등 코드 분석만으로 정확성을 판단할 수 있는 작업은 브라우저 없이 완료합니다.
+### 🧪 Minimise browser testing
+- **Browser testing is a last resort.** Verify changes in this order:
+  1. **Static analysis first**: Vite build (`npm run build --workspaces`) for the frontend and `cargo check` for the backend — compile and type checks come first.
+  2. **Logs and terminal**: Verify backend API behaviour with `curl` or terminal logs.
+  3. **When browser testing is allowed**: Only in these cases.
+     - Visual UI layout or animation must be confirmed
+     - Complex user interactions (drag, multi-step flows) need verification
+- **Skip it when**: Logic bug fixes, type errors, minor style tweaks, or API wiring changes whose correctness can be judged from the code alone.
 
-### 📝 커밋 메시지 규칙
-- **작성 언어는 영문**: 모든 git 커밋 메시지(제목·본문)는 **영문**으로 작성합니다. 대화·보고 및 `docs/` 산출물 문서는 계속 한국어를 사용합니다.
-- **형식**: Conventional Commits(`feat:`, `fix:`, `refactor:`, `docs:`, `test:`, `chore:`, `perf:`, `ci:`)를 따르고, 본문은 변경 이유와 범위를 항목별로 정리합니다.
-- **작성자 정보**: 커밋 author/committer는 저장소 로컬 git 설정값(`dreamofu <dreamofu73@gmail.com>`)을 사용합니다.
-- **AI 흔적 금지**: `Co-Authored-By: Claude ...` 같은 트레일러나 AI·에이전트·세션에 대한 언급을 커밋 메시지에 남기지 않습니다.
+### 📝 Commit message rules
+- **Write in English**: All git commit messages (subject and body) are written in **English**. Conversations, reports, and `docs/` artifacts remain in Korean.
+- **Format**: Follow Conventional Commits (`feat:`, `fix:`, `refactor:`, `docs:`, `test:`, `chore:`, `perf:`, `ci:`) and use the body to list the reason and scope of the change.
+- **Authorship**: The commit author and committer come from the repository-local git configuration (`dreamofu <dreamofu73@gmail.com>`).
+- **No attribution trailers**: Do not leave trailers such as `Co-Authored-By: ...` or references to agents, models, or sessions in commit messages.
 
-### 📁 아티팩트 및 산출물 관리 규칙
-- **산출물 저장 위치**: 세션 진행 중 생성되는 모든 `walkthrough.md`, `task.md`, `plan.md` 등 산출물 파일은 글로벌 디렉터리가 아닌, 현재 워크스페이스의 [docs](docs) 경로에 요청 별로 생성하고 지속적으로 업데이트하세요. (해당 디렉터리가 없다면 자동으로 생성한 뒤 파일을 배치하세요)
-- **작성 언어**: 모든 문서는 **한국어**를 사용하여 작성합니다.
-- **일회성 스크립트 및 임시 코드 관리**: 데이터 마이그레이션, 리팩토링, 자동화 스크립트 등 작업을 위해 임시로 생성하는 코드는 반드시 프로젝트 루트의 `tmp/` 디렉터리 내에 생성하여 작업하세요. (해당 디렉터리가 없다면 생성 후 사용) 작업이 완료된 이후에는 생성했던 임시 파일들을 반드시 삭제하여 프로젝트 루트를 깔끔하게 유지하세요.
+### 📁 Artifact management
+- **Where artifacts go**: Every artifact produced during a session (`walkthrough.md`, `task.md`, `plan.md`, and so on) belongs under this workspace's [docs](docs) directory, one file per request, updated as the work proceeds — never in a global directory. Create the directory if it does not exist.
+- **Document language**: Guideline documents committed to the repository (this file, `backend/CLAUDE.md`, `apps/*/CLAUDE.md`, `PROJECT.md`, `apps/web/docs/guides/*`, `test/*/README.md`) are written in **English**. Session artifacts under `docs/` are written in **Korean**.
+- **Keep both READMEs in sync**: `README.md` (English) and `README.ko.md` (Korean) are translations of the same content. Whenever one changes, update the other in the same commit so they never drift apart.
+- **Throwaway scripts**: Temporary code for data migration, refactoring, or automation must be created inside the project root's `tmp/` directory (create it if needed). Delete those files once the work is done so the project root stays clean.
 
 ---
 
-## 2. 프로젝트 실행 및 설정 규칙
+## 2. Running and Configuring the Project
 
-### 🌐 웹 앱 스크립트
+### 🌐 Web app scripts
 
-| 단계 | 스크립트 (정식) | 래퍼 (하위 호환) | 설명 |
-|------|----------------|-----------------|------|
-| 개발 서버 | `./scripts/web/dev.sh` | `./scripts/web-dev.sh` | 백엔드 + Vite dev 동시 기동 (HMR 포함) |
-| 소스 빌드 | `./scripts/web/build.sh` | `./scripts/web-build.sh` | frontend 빌드 → Rust release 빌드 → `dist/web/pms` 생성 |
-| 실행 | `./scripts/web/run.sh` | `./scripts/web-run.sh` | `dist/web/pms` 프로덕션 바이너리 포그라운드 실행 |
-| 배포 패키지 | `./scripts/web/release.sh [VERSION]` | `./scripts/web-release.sh [VERSION]` | `release/pms-web-<ver>-<os>-<arch>.tgz/.zip` 생성 |
+| Stage | Script (canonical) | Wrapper (legacy) | Description |
+|-------|--------------------|------------------|-------------|
+| Dev server | `./scripts/web/dev.sh` | `./scripts/web-dev.sh` | Starts backend + Vite dev together (with HMR) |
+| Build | `./scripts/web/build.sh` | `./scripts/web-build.sh` | Frontend build → Rust release build → produces `dist/web/pms` |
+| Run | `./scripts/web/run.sh` | `./scripts/web-run.sh` | Runs the `dist/web/pms` production binary in the foreground |
+| Release package | `./scripts/web/release.sh [VERSION]` | `./scripts/web-release.sh [VERSION]` | Produces `release/pms-web-<ver>-<os>-<arch>.tgz/.zip` |
 
 ```bash
-# 개발 워크플로우
-./scripts/web/dev.sh                         # 개발 서버 기동
+# Development workflow
+./scripts/web/dev.sh                         # start the dev server
 
-# 빌드 → 실행 워크플로우
-./scripts/web/build.sh                       # 빌드 (dist/web/pms 생성)
-./scripts/web/run.sh                         # 실행
+# Build → run workflow
+./scripts/web/build.sh                       # build (produces dist/web/pms)
+./scripts/web/run.sh                         # run
 
-# 배포 패키지 생성
-VERSION=1.2.0 ./scripts/web/release.sh      # release/ 디렉터리에 아카이브 생성
+# Create a release package
+VERSION=1.2.0 ./scripts/web/release.sh      # writes an archive into release/
 ```
 
 ---
 
-### 🖥️ 데스크톱 앱 스크립트 (Tauri)
+### 🖥️ Desktop app scripts (Tauri)
 
-| 단계 | 스크립트 (정식) | 래퍼 (하위 호환) | 설명 |
-|------|----------------|-----------------|------|
-| 개발 서버 | `./scripts/desktop/dev.sh` | `./scripts/desktop-dev.sh` | 백엔드 + Tauri dev 동시 기동 |
-| 소스 빌드 | `./scripts/desktop/build.sh` | `./scripts/desktop-build.sh` | frontend 빌드 → Tauri 릴리즈 번들 → `dist/desktop/bundle/` 생성 |
-| 실행 | `./scripts/desktop/run.sh` | `./scripts/desktop-run.sh` | 빌드된 네이티브 앱 실행 |
-| 배포 패키지 | `./scripts/desktop/release.sh [VERSION]` | `./scripts/desktop-release.sh [VERSION]` | `release/pms-desktop-<ver>.[tgz\|zip\|dmg\|deb\|msi]` 생성 |
+| Stage | Script (canonical) | Wrapper (legacy) | Description |
+|-------|--------------------|------------------|-------------|
+| Dev server | `./scripts/desktop/dev.sh` | `./scripts/desktop-dev.sh` | Starts backend + Tauri dev together |
+| Build | `./scripts/desktop/build.sh` | `./scripts/desktop-build.sh` | Frontend build → Tauri release bundle → produces `dist/desktop/bundle/` |
+| Run | `./scripts/desktop/run.sh` | `./scripts/desktop-run.sh` | Runs the built native app |
+| Release package | `./scripts/desktop/release.sh [VERSION]` | `./scripts/desktop-release.sh [VERSION]` | Produces `release/pms-desktop-<ver>.[tgz\|zip\|dmg\|deb\|msi]` |
 
 ```bash
-# 개발 워크플로우
-./scripts/desktop/dev.sh                         # Tauri 개발 서버 기동
+# Development workflow
+./scripts/desktop/dev.sh                         # start the Tauri dev server
 
-# 빌드 → 실행 워크플로우
-./scripts/desktop/build.sh                       # Tauri 번들 빌드 (dist/desktop/bundle/ 생성)
-./scripts/desktop/run.sh                         # 네이티브 앱 실행
+# Build → run workflow
+./scripts/desktop/build.sh                       # build the Tauri bundle (dist/desktop/bundle/)
+./scripts/desktop/run.sh                         # run the native app
 
-# 배포 패키지 생성
-VERSION=1.2.0 ./scripts/desktop/release.sh      # 플랫폼별 인스톨러 + 아카이브 생성
+# Create a release package
+VERSION=1.2.0 ./scripts/desktop/release.sh      # per-platform installer + archive
 ```
 
 > [!NOTE]
-> 데스크톱 빌드에는 Rust 툴체인과 플랫폼별 네이티브 빌드 도구가 필요합니다.
+> Desktop builds require the Rust toolchain plus platform-specific native build tools.
 > macOS: Xcode Command Line Tools / Linux: libwebkit2gtk-4.0-dev, libssl-dev
 
 ---
 
-### ⚙️ 설정 파일 관리 (config.toml)
-- 루트 `config.toml`이 없으면 백엔드 부트스트랩 시 자동 생성됩니다.
-- **주요 설정 키**: `port`, `jwt_secret`, `database_url`, `upload_dir`, `admin_username`, `admin_password`, `allowed_extensions`, `log_max_size_mb`, `log_max_files`.
-- **보안 필수 조치**: 실제 운영 서버 배포 시 `jwt_secret`과 `admin_password`는 **반드시 안전한 임의의 값으로 변경**해야 합니다.
+### ⚙️ Configuration file (config.toml)
+- If the root `config.toml` is missing, the backend creates it during bootstrap.
+- **Key settings**: `port`, `jwt_secret`, `database_url`, `upload_dir`, `admin_username`, `admin_password`, `allowed_extensions`, `log_max_size_mb`, `log_max_files`.
+- **Security requirement**: Before deploying to a real server, `jwt_secret` and `admin_password` **must** be replaced with strong random values.
 
 <!-- CODEGRAPH_START -->
 ## CodeGraph

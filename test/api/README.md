@@ -1,106 +1,106 @@
 # ProjectHub API Test Suite (TypeScript)
 
-TypeScript/Vitest 기반의 백엔드 API 통합 테스트 스위트입니다. 기존 Bash 스크립트(`run.sh`)를 TypeScript로 재작성하여 타입 안전성, IDE 지원, 더 나은 디버깅을 제공합니다.
+A backend API integration test suite built on TypeScript and Vitest. It replaces the previous Bash script (`run.sh`) to provide type safety, IDE support, and better debugging.
 
 ---
 
-## 📁 구조
+## 📁 Layout
 
 ```
 test/api/
-├── package.json          # 의존성 및 스크립트
-├── tsconfig.json         # TypeScript 설정
-├── vitest.config.ts      # Vitest 설정
+├── package.json          # Dependencies and scripts
+├── tsconfig.json         # TypeScript configuration
+├── vitest.config.ts      # Vitest configuration
 ├── src/
 │   ├── types/
-│   │   └── index.ts      # 백엔드 API 응답 타입 정의 (전체 19개 도메인)
+│   │   └── index.ts      # Backend API response types (all 19 domains)
 │   ├── client/
-│   │   └── api-client.ts # 타입 안전한 API 클라이언트
+│   │   └── api-client.ts # Type-safe API client
 │   └── utils/
-│       └── helpers.ts    # 테스트 헬퍼 함수들
+│       └── helpers.ts    # Test helper functions
 ├── tests/
-│   ├── setup.ts          # 전역 설정/티어다운, 팩토리, 모킹
-│   ├── auth.test.ts      # 인증 테스트
-│   ├── users.test.ts     # 사용자 관리
-│   ├── projects.test.ts  # 프로젝트 CRUD
-│   ├── issues.test.ts    # 이슈 CRUD
-│   ├── custom-fields.test.ts  # 커스텀 필드
-│   ├── milestones.test.ts     # 마일스톤
-│   ├── wiki.test.ts          # 위키
-│   ├── posts.test.ts         # 게시글
-│   ├── comments.test.ts      # 댓글 (게시글/이슈)
-│   ├── groups.test.ts        # 그룹
-│   ├── address-book.test.ts  # 주소록
-│   ├── tasks.test.ts         # 태스크
-│   ├── memos.test.ts         # 메모
-│   ├── notifications.test.ts # 알림
-│   ├── search.test.ts        # 검색
-│   ├── dashboard.test.ts     # 대시보드
-│   ├── gantt.test.ts         # 간트 차트
-│   ├── admin-org.test.ts     # 관리자 - 조직도
-│   ├── admin-scheduler.test.ts # 관리자 - 스케줄러
-│   ├── admin-logs.test.ts    # 관리자 - 로그
-│   └── cleanup.test.ts       # 정리 테스트
-└── README.md             # 이 문서
+│   ├── setup.ts          # Global setup/teardown, factories, mocks
+│   ├── auth.test.ts      # Authentication
+│   ├── users.test.ts     # User management
+│   ├── projects.test.ts  # Project CRUD
+│   ├── issues.test.ts    # Issue CRUD
+│   ├── custom-fields.test.ts  # Custom fields
+│   ├── milestones.test.ts     # Milestones
+│   ├── wiki.test.ts          # Wiki
+│   ├── posts.test.ts         # Posts
+│   ├── comments.test.ts      # Comments (posts/issues)
+│   ├── groups.test.ts        # Groups
+│   ├── address-book.test.ts  # Address book
+│   ├── tasks.test.ts         # Tasks
+│   ├── memos.test.ts         # Memos
+│   ├── notifications.test.ts # Notifications
+│   ├── search.test.ts        # Search
+│   ├── dashboard.test.ts     # Dashboard
+│   ├── gantt.test.ts         # Gantt chart
+│   ├── admin-org.test.ts     # Admin - organisation
+│   ├── admin-scheduler.test.ts # Admin - scheduler
+│   ├── admin-logs.test.ts    # Admin - logs
+│   └── cleanup.test.ts       # Cleanup
+└── README.md             # This document
 ```
 
 ---
 
-## 🚀 빠른 시작
+## 🚀 Quick start
 
-### 1. 의존성 설치
+### 1. Install dependencies
 
 ```bash
 cd test/api
 npm install
 ```
 
-### 2. 백엔드 서버 실행 확인
+### 2. Make sure the backend is running
 
-테스트 전 백엔드 서버가 실행 중이어야 합니다:
+The backend server must be running before the tests:
 
 ```bash
-# 개발 서버 (포트 8000)
+# Dev server (port 8000)
 ./scripts/web-dev.sh
 
-# 또는 프로덕션 빌드 후 실행
+# Or build and run the production binary
 ./scripts/web-build.sh && ./scripts/web-run.sh
 ```
 
-### 3. 테스트 실행
+### 3. Run the tests
 
 ```bash
-# 전체 테스트 실행
+# Run everything
 npm test
 
-# 감시 모드 (파일 변경 시 재실행)
+# Watch mode (re-runs on file changes)
 npm run test:watch
 
-# UI 모드 (브라우저에서 테스트 결과 확인)
+# UI mode (view results in a browser)
 npm run test:ui
 
-# 커버리지 리포트
+# Coverage report
 npm run test:coverage
 
-# 타입 체크만
+# Type check only
 npm run typecheck
 ```
 
 ---
 
-## ⚙️ 환경 변수
+## ⚙️ Environment variables
 
-`.env` 파일 또는 환경 변수로 설정 가능:
+Configure through a `.env` file or the environment:
 
-| 변수 | 기본값 | 설명 |
-|------|--------|------|
-| `API_BASE_URL` | `http://localhost:8000` | 백엔드 API 베이스 URL |
-| `ADMIN_USER` | `admin` | 관리자 아이디 |
-| `ADMIN_PASS` | `admin123` | 관리자 비밀번호 |
-| `TEST_USER` | `testuser` | 테스트 사용자 아이디 |
-| `TEST_PASS` | `testpass123` | 테스트 사용자 비밀번호 |
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `API_BASE_URL` | `http://localhost:8000` | Backend API base URL |
+| `ADMIN_USER` | `admin` | Admin login |
+| `ADMIN_PASS` | `admin123` | Admin password |
+| `TEST_USER` | `testuser` | Test user login |
+| `TEST_PASS` | `testpass123` | Test user password |
 
-**예시 `.env` 파일:**
+**Example `.env`:**
 
 ```env
 API_BASE_URL=http://localhost:8000
@@ -112,9 +112,9 @@ TEST_PASS=testpass123
 
 ---
 
-## 📝 테스트 작성 가이드
+## 📝 Writing tests
 
-### 기본 테스트 구조
+### Basic structure
 
 ```typescript
 // tests/projects.test.ts
@@ -160,54 +160,54 @@ describe('Projects API', () => {
 });
 ```
 
-### 팩토리 사용
+### Using factories
 
 ```typescript
 import { factories } from './setup';
 
-// 랜덤한 고유 이름 생성
-const project = factories.project({ 
-  name: 'Custom Name',  // name만 오버라이드, 나머지는 자동 생성
+// Generates a unique random name
+const project = factories.project({
+  name: 'Custom Name',  // override only name; the rest is generated
   identifier: 'custom-id',
 });
 
-// 이슈 생성 시 프로젝트 ID 필수
-const issue = factories.issue(projectId, { 
+// Creating an issue requires a project ID
+const issue = factories.issue(projectId, {
   subject: 'Critical Bug',
   priority: 'high',
 });
 ```
 
-### 헬퍼 함수
+### Helper functions
 
 ```typescript
-import { 
-  expectSuccess,      // 성공 응답 검증 + 데이터 반환
-  assertHasId,        // 객체에 id 필수 존재 확인
-  assertArrayNotEmpty, // 배열이 비어있지 않음 확인
-  assertFieldExists,  // 특정 필드 존재 확인
-  generateRandomString, // 고유 문자열 생성
-  generateRandomEmail,  // 고유 이메일 생성
+import {
+  expectSuccess,      // assert a successful response and return its data
+  assertHasId,        // assert the object has an id
+  assertArrayNotEmpty, // assert the array is not empty
+  assertFieldExists,  // assert a specific field exists
+  generateRandomString, // generate a unique string
+  generateRandomEmail,  // generate a unique email
 } from './setup';
 ```
 
 ---
 
-## 🔧 API 클라이언트 사용법
+## 🔧 Using the API client
 
-### 직접 사용 (테스트 외부에서)
+### Direct use (outside of tests)
 
 ```typescript
 import { ApiClient } from './src/client/api-client';
 
 const api = new ApiClient({ baseUrl: 'http://localhost:8000' });
 
-// 로그인
+// Sign in
 const login = await api.login('admin', 'admin123');
 if (login.success) {
   api.setToken(login.data!.token);
-  
-  // 프로젝트 생성
+
+  // Create a project
   const project = await api.createProject({
     name: 'New Project',
     identifier: 'newproj',
@@ -215,10 +215,10 @@ if (login.success) {
 }
 ```
 
-### 주요 메서드 (전체 19개 도메인)
+### Main methods (all 19 domains)
 
-| 도메인 | 주요 메서드 |
-|--------|-------------|
+| Domain | Methods |
+|--------|---------|
 | **Auth** | `login()`, `register()`, `getCurrentUser()` |
 | **Users** | `listUsers()`, `getUser()`, `createUser()`, `updateUser()`, `deleteUser()` |
 | **Projects** | `listProjects()`, `getProject()`, `createProject()`, `updateProject()`, `deleteProject()`, `listProjectMembers()`, `addProjectMember()` |
@@ -244,48 +244,48 @@ if (login.success) {
 
 ---
 
-## 🧪 테스트 실행 옵션
+## 🧪 Run options
 
-### 특정 테스트 파일만 실행
+### Run a single test file
 
 ```bash
-# 프로젝트 테스트만
+# Projects only
 npx vitest run tests/projects.test.ts
 
-# 패턴 매칭
+# Pattern matching
 npx vitest run -t "should create"
 ```
 
-### 병렬 실행 제어
+### Control parallelism
 
 ```bash
-# 순차 실행 (디버깅용)
+# Serial execution (for debugging)
 npx vitest run --pool=forks --poolOptions.forks.singleFork
 
-# 최대 병렬 수 제한
+# Cap the number of threads
 npx vitest run --poolOptions.threads.maxThreads=4
 ```
 
-### 리포터 변경
+### Change the reporter
 
 ```bash
-# 기본 리포터
+# Default reporter
 npx vitest run --reporter=verbose
 
-# JSON 리포트 (CI 연동용)
+# JSON report (for CI)
 npx vitest run --reporter=json --outputFile=results.json
 
-# JUnit XML (Jenkins 등)
+# JUnit XML (Jenkins and friends)
 npx vitest run --reporter=junit --outputFile=junit.xml
 ```
 
 ---
 
-## 🔍 디버깅 팁
+## 🔍 Debugging tips
 
-### 1. VS Code 디버거 연동
+### 1. VS Code debugger
 
-`.vscode/launch.json`에 추가:
+Add to `.vscode/launch.json`:
 
 ```json
 {
@@ -299,7 +299,7 @@ npx vitest run --reporter=junit --outputFile=junit.xml
 }
 ```
 
-### 2. 콘솔 로그 출력
+### 2. Console logging
 
 ```typescript
 it('should debug response', async () => {
@@ -309,24 +309,24 @@ it('should debug response', async () => {
 });
 ```
 
-### 3. 테스트 타임아웃 조정
+### 3. Adjusting timeouts
 
 ```typescript
-// 개별 테스트
+// Per test
 it('slow test', async () => {
   // ...
-}, 60000); // 60초
+}, 60000); // 60 seconds
 
-// 전역 (vitest.config.ts)
+// Globally (vitest.config.ts)
 testTimeout: 30000,
 hookTimeout: 30000,
 ```
 
 ---
 
-## 📊 CI/CD 연동
+## 📊 CI/CD integration
 
-### GitHub Actions 예시
+### GitHub Actions example
 
 ```yaml
 # .github/workflows/api-tests.yml
@@ -338,35 +338,35 @@ jobs:
   api-tests:
     runs-on: ubuntu-latest
     services:
-      # 필요시 DB 등 서비스 컨테이너 추가
+      # Add service containers (such as a database) if needed
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: test/api/package-lock.json
-      
+
       - name: Install dependencies
         run: cd test/api && npm ci
-      
+
       - name: Start backend
         run: |
-          # 백엔드 빌드 및 실행 (별도 job 권장)
+          # Build and run the backend (a separate job is recommended)
           cd ${{ github.workspace }}
           ./scripts/web-build.sh
           ./scripts/web-run.sh &
-          sleep 10  # 서버 시작 대기
-      
+          sleep 10  # wait for the server to start
+
       - name: Run API tests
         run: cd test/api && npm test
         env:
           API_BASE_URL: http://localhost:8000
           ADMIN_USER: admin
           ADMIN_PASS: ${{ secrets.ADMIN_PASSWORD }}
-      
+
       - name: Upload coverage
         uses: codecov/codecov-action@v3
         with:
@@ -375,62 +375,62 @@ jobs:
 
 ---
 
-## 🐛 알려진 이슈 및 해결
+## 🐛 Known issues and fixes
 
-### 1. `vitest/config` 모듈 없음 에러
+### 1. `vitest/config` module not found
 
 ```bash
 npm install -D vitest@latest
 ```
 
-### 2. 타입 에러: `ApiResponse` 등 찾을 수 없음
+### 2. Type error: cannot find `ApiResponse` and friends
 
 ```bash
-# tsconfig.json의 paths 확인
+# Check the paths in tsconfig.json
 # "baseUrl": ".", "paths": { "@/*": ["src/*"] }
 ```
 
-### 3. 백엔드 연결 실패
+### 3. Backend connection failure
 
-- 백엔드 서버가 실행 중인지 확인 (`curl http://localhost:8000/api/auth/login`)
-- `API_BASE_URL` 환경 변수 확인
-- 방화벽/프록시 설정 확인
+- Confirm the backend is running (`curl http://localhost:8000/api/auth/login`)
+- Check the `API_BASE_URL` environment variable
+- Check firewall and proxy settings
 
-### 4. 테스트 간 의존성 문제
+### 4. Inter-test dependencies
 
-- `beforeAll`/`afterAll`에서 공유 상태(`testContext`) 관리
-- 각 테스트는 독립적으로 실행되어야 함
-- 필요시 `cleanup.test.ts`에서 정리
+- Manage shared state (`testContext`) in `beforeAll`/`afterAll`
+- Each test must be able to run independently
+- Clean up in `cleanup.test.ts` when necessary
 
 ---
 
-## 📚 참고 자료
+## 📚 References
 
-- [Vitest 문서](https://vitest.dev/)
-- [TypeScript 핸드북](https://www.typescriptlang.org/docs/)
+- [Vitest documentation](https://vitest.dev/)
+- [TypeScript handbook](https://www.typescriptlang.org/docs/)
 - [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API)
-- [ProjectHub 백엔드 라우트](backend/src/routes/)
+- [ProjectHub backend routes](backend/src/routes/)
 
 ---
 
-## 🤝 기여 가이드
+## 🤝 Contributing
 
-1. 새 API 엔드포인트 추가 시:
-   - `src/types/index.ts`에 타입 정의 추가
-   - `src/client/api-client.ts`에 메서드 추가
-   - `tests/` 하위에 테스트 파일 생성
+1. When adding a new API endpoint:
+   - Add the type definitions to `src/types/index.ts`
+   - Add the method to `src/client/api-client.ts`
+   - Create a test file under `tests/`
 
-2. 타입 안전성 유지:
-   - `any` 사용 지양
-   - 제네릭 활용
-   - 엄격한 null 체크
+2. Keep it type-safe:
+   - Avoid `any`
+   - Use generics
+   - Keep strict null checks
 
-3. 테스트 명명 규칙:
-   - `should <동작> when <조건>`
-   - 예: `should create project when valid data provided`
+3. Test naming convention:
+   - `should <behaviour> when <condition>`
+   - Example: `should create project when valid data provided`
 
 ---
 
-## 📄 라이선스
+## 📄 License
 
-ProjectHub 프로젝트와 동일 라이선스 적용.
+Same license as the ProjectHub project.

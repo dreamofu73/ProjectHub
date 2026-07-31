@@ -1,53 +1,53 @@
-# 04. 화면 패턴 규칙
+# 04. Screen Patterns
 
-모든 목록 화면은 **쪽지(Memos) 화면**을 표준 레퍼런스로 삼아 설계 및 구현해야 합니다.
+Every list screen must be designed and implemented using the **Memos screen** as the reference standard.
 
-> 레퍼런스 구현 파일: `frontend/src/pages/memos/Memos.tsx`, `MemoList.tsx`, `MemoToolbar.tsx`
+> Reference implementation: `frontend/src/pages/memos/Memos.tsx`, `MemoList.tsx`, `MemoToolbar.tsx`
 
-## 1. 목록 화면 공통 규칙
+## 1. Common rules for list screens
 
-### 1.1. 서버 사이드 페이지네이션
-- **페이지당 기본 10개**: 초기 로딩 시 `pageSize = 10`으로 고정하며, 사용자가 `[10, 20, 30, 50, 100]` 옵션 중 선택 변경 가능합니다.
-- **상태 분리**: `page`와 `pageSize`는 컴포넌트 state(또는 커스텀 훅)로 관리하고, API 호출 시 파라미터로 전달합니다. `searchParams` 연동이 필요한 화면은 URL에 `page`/`limit`을 반영합니다.
-- **공통 컴포넌트**: 목록 영역 내부 하단에 `<Pagination>` 컴포넌트를 배치하고, `border-t border-[var(--border)] shrink-0` 클래스로 목록과 시각적으로 분리합니다.
-- **blockSize**: `pageSizeOptions`가 충분히 표시될 수 있도록 기본 `blockSize={10}` 이상을 사용합니다. `pageSize`가 작은 경우(5 이하)에만 `blockSize={5}`로 조정 가능합니다.
+### 1.1. Server-side pagination
+- **10 items per page by default**: `pageSize = 10` on initial load; users can switch between `[10, 20, 30, 50, 100]`.
+- **Separate state**: Keep `page` and `pageSize` in component state (or a custom hook) and pass them as API parameters. Screens that need `searchParams` integration reflect `page`/`limit` in the URL.
+- **Shared component**: Place the `<Pagination>` component at the bottom of the list area and separate it visually with `border-t border-[var(--border)] shrink-0`.
+- **blockSize**: Use `blockSize={10}` or larger so that `pageSizeOptions` fits. Only reduce it to `blockSize={5}` when `pageSize` is small (5 or less).
 
-### 1.2. 마스터-디테일 분할 뷰 레이아웃 (Split Layout)
-목록과 상세를 같은 화면에서 동시에 보는 **마스터-디테일 패턴**을 기본으로 사용합니다.
+### 1.2. Master-detail split layout
+Showing the list and the detail on the same screen — the **master-detail pattern** — is the default.
 
-- **3가지 분할 모드**: 툴바 우측에 토글 버튼 그룹(아이콘)을 배치하여 사용자가 선택합니다.
-  - **`columns` (세로 분할)**: 목록(좌) + 상세(우) — 기본값. `<Columns>` 아이콘 사용.
-  - **`rows` (가로 분할)**: 목록(상) + 상세(하). `<Rows>` 아이콘 사용.
-  - **`list` (목록 + 우측 패널)**: 목록은 전체 너비를 사용하며, 항목 클릭 시 오른쪽에서 상세 패널이 슬라이드 인. `<Menu>` 아이콘 사용.
-- **드래그 리사이저**: `columns`/`rows` 모드에서 목록과 상세 사이에 `1px` 두께의 리사이저 바를 렌더링합니다. 마우스 드래그로 분할 비율(%)을 조절하며, `mousedown → mousemove → mouseup` 이벤트로 구현합니다.
-- **비율 영속화**: `leftWidth`(columns 비율), `topHeight`(rows 비율), `splitLayout` 값을 `localStorage`에 저장하여 페이지 재방문 시 복원합니다.
-- **`list` 모드 상세 패널 상세**:
-  - `position: fixed`로 우측에 고정, 너비 `w-1/2` (전체 화면의 50%), 패널 영역 벗어난 콘텐츠는 `overflow-hidden`으로 가림.
-  - 패널 내부는 `flex-col` 구조: 제목/메타데이터 영역은 `shrink-0`으로 상단 고정, 설명/댓글 영역은 `flex-1 overflow-y-auto min-h-0`으로 스크롤.
-  - **모달리스(Modal-less) 동작**: 백드롭 없이 패널이 열려 있어도 목록과의 상호작용(체크박스 선택, 검색, 필터 변경, 페이지네이션) 가능.
-  - **닫기 버튼**: 상세 패널 우측 상단에 '닫기(X)' 버튼을 배치하여 패널을 닫을 수 있도록 구현.
-  - **슬라이드 인 애니메이션**: `animate-slide-in-right` 클래스 사용.
-  - **DOM 언마운트**: 패널 닫힘 시 DOM에서 완전히 제거됨 (조건부 렌더링).
-- **페이지 레이아웃 오버플로 차단**: 분할 뷰 페이지 마운트 시 `document.body.style.overflow = 'hidden'`을 설정하고, 언마운트 시 원복합니다.
+- **Three split modes**, selected through an icon toggle group on the right side of the toolbar:
+  - **`columns` (vertical split)**: list (left) + detail (right) — the default. Uses the `<Columns>` icon.
+  - **`rows` (horizontal split)**: list (top) + detail (bottom). Uses the `<Rows>` icon.
+  - **`list` (list + right panel)**: the list takes the full width, and clicking an item slides a detail panel in from the right. Uses the `<Menu>` icon.
+- **Drag resizer**: In `columns`/`rows` mode, render a `1px` resizer bar between list and detail. The split ratio (%) is adjusted by dragging, implemented with `mousedown → mousemove → mouseup`.
+- **Persist the ratio**: Store `leftWidth` (columns ratio), `topHeight` (rows ratio), and `splitLayout` in `localStorage` and restore them when the page is revisited.
+- **Detail panel in `list` mode**:
+  - `position: fixed` on the right, width `w-1/2` (50% of the screen), with content outside the panel clipped by `overflow-hidden`.
+  - The panel is a `flex-col`: the title/metadata area stays pinned with `shrink-0`, while the description/comments area scrolls with `flex-1 overflow-y-auto min-h-0`.
+  - **Modal-less behaviour**: There is no backdrop, so the list stays interactive while the panel is open (checkbox selection, search, filter changes, pagination).
+  - **Close button**: Place a close (X) button at the top right of the detail panel.
+  - **Slide-in animation**: Use the `animate-slide-in-right` class.
+  - **DOM unmount**: The panel is removed from the DOM entirely when closed (conditional rendering).
+- **Block page overflow**: When a split-view page mounts, set `document.body.style.overflow = 'hidden'` and restore the previous value on unmount.
 
-### 1.3. 검색 및 클라이언트 사이드 필터링
-- **카테고리 + 텍스트 조합 검색**: 검색 카테고리 `<select>`와 텍스트 `<input>`을 나란히 배치합니다.
-- **빠른 필터 셀렉트**: 툴바 우측에 `<select>`를 배치하여 단일 클릭으로 조건 필터링합니다.
+### 1.3. Search and client-side filtering
+- **Category + text search**: Place the category `<select>` and the text `<input>` side by side.
+- **Quick filter select**: Place a `<select>` on the right of the toolbar for one-click filtering.
 
-### 1.4. 드롭다운 그룹형 배치 액션 툴바
-체크박스 다중 선택 + 드롭다운으로 그룹화된 배치 액션을 툴바 좌측에 인라인으로 배치합니다. 화면 하단 슬라이드 업 방식(BulkActionBar)은 사용하지 않습니다.
+### 1.4. Grouped bulk-action toolbar
+Combine multi-select checkboxes with a dropdown that groups the bulk actions, rendered inline on the left of the toolbar. Do not use a bottom slide-up bar (BulkActionBar).
 
-### 1.5. 테이블 스크롤 컨테이너 구조
-테이블 컴포넌트 자체에 `table-container` + `max-h-[calc(100vh-290px)] overflow-y-auto`를 부여하여 페이지 헤더/툴바는 고정되고 테이블 행만 스크롤되게 구성합니다.
+### 1.5. Table scroll container
+Give the table component `table-container` + `max-h-[calc(100vh-290px)] overflow-y-auto` so the page header and toolbar stay fixed while only the table rows scroll.
 
-## 2. 상세 화면 구성 규칙
+## 2. Detail screen rules
 
-- **우측 패널 연동**: 목록에서 항목 클릭 시 우측 슬라이드-오버 패널에 상세 화면을 표시합니다. 패널 너비는 전체 화면의 50%(`w-1/2`)이며, 상하단에 여백을 두어(`top-[calc(var(--header-height)+1rem)] bottom-4`) 플로팅 느낌을 줍니다. 패널은 `flex-col` 레이아웃으로 제목/메타데이터 영역은 상단에 고정(`shrink-0`)되고, 설명/댓글 영역은 하단에서 스크롤됩니다(`flex-1 overflow-y-auto min-h-0`).
-- **상세 화면 다국어 처리**: 모든 텍스트는 반드시 `t()`를 통해 출력해야 합니다.
-- **데이터 표시 규칙**: API 데이터는 `t()`로 처리하지 않으며, 날짜/시간은 `formatDate()` 또는 `formatDateTime()`을 사용합니다.
+- **Right panel integration**: Clicking a list item shows the detail in a right-hand slide-over panel. The panel is 50% of the screen (`w-1/2`) with vertical spacing (`top-[calc(var(--header-height)+1rem)] bottom-4`) to give it a floating feel. It uses a `flex-col` layout: the title/metadata area is pinned at the top (`shrink-0`) while the description/comments area scrolls (`flex-1 overflow-y-auto min-h-0`).
+- **Translated detail screens**: Every piece of text must be rendered through `t()`.
+- **Data display**: API data is not passed through `t()`; dates and times use `formatDate()` or `formatDateTime()`.
 
-## 3. 기능별 특화 패턴
+## 3. Feature-specific patterns
 
-- **주소록(Address Book)**: 인라인 폼을 사용하여 주소록 항목을 선택하고 즉시 편집할 수 있도록 구현합니다.
-- **로그(Logs)**: 실시간 폴링(Polling)을 사용하여 로그 데이터를 주기적으로 업데이트하고 화면에 표시합니다.
-- **스케줄러(Scheduler)**: 분할 뷰를 사용하여 좌측에는 스케줄 목록, 우측에는 상세 일정 및 편집 폼을 배치합니다.
+- **Address book**: Use an inline form so an entry can be selected and edited immediately.
+- **Logs**: Use polling to refresh log data periodically and render it on screen.
+- **Scheduler**: Use the split view with the schedule list on the left and the detail plus edit form on the right.

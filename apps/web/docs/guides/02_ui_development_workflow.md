@@ -1,39 +1,39 @@
-# 02. UI 개발 워크플로우 및 스타일 규칙
+# 02. UI Development Workflow and Styling
 
-## 1. 프론트엔드 UI 개발 워크플로우 (UI Development Workflow)
+## 1. Frontend UI development workflow
 
-새로운 화면이나 복잡한 UI 컴포넌트를 개발할 때는 반드시 다음 3단계 흐름을 따릅니다.
+Always follow this three-step flow when building a new screen or a complex UI component.
 
-**[사용자 UI 요구사항]**
-- **요구사항 정의서 관리**: 사용자 UI 요구사항과 화면 구성을 정의하는 마크다운(`.md`) 파일은 반드시 프로젝트 루트의 `uiux/` 디렉토리에 저장하고 지속적으로 업데이트해야 합니다.
-- **1 단계**: Mermaid MCP가 흐름도 및 컴포넌트 구조(Mmd 텍스트)를 초고속 생성 (토큰 소모 최소화)
-- **2 단계**: AI가 생성된 Mermaid 명세를 기반으로 레이아웃과 계층 구조를 완벽하게 이해
-- **3 단계**: 이해한 구조를 바탕으로 Tailwind CSS, Magic UI 코드를 사용해 에러 없는 실제 화면 코드로 구현
+**[User UI requirements]**
+- **Requirement documents**: Markdown (`.md`) files that define user UI requirements and screen composition must live in the project root's `uiux/` directory and be kept up to date.
+- **Step 1**: Mermaid MCP generates the flow chart and component structure (Mermaid text) very quickly, keeping token usage low.
+- **Step 2**: The agent reads the generated Mermaid spec and fully understands the layout and hierarchy.
+- **Step 3**: Based on that structure, implement the actual screen with Tailwind CSS and Magic UI code, without errors.
 
-## 2. 스타일 및 UI 규칙
+## 2. Styling and UI rules
 
-- **Tailwind CSS v4 사용**: CSS 스타일링은 Tailwind CSS를 활용합니다.
-- **디자인 토큰 준수**: 공통 브랜딩 디자인 톤앤매너 및 테마 스타일은 `src/index.css`에 정의된 디자인 토큰 변수(`var(--bg-surface)`, `var(--text-primary)`, `var(--border)`, `var(--primary)` 등)를 사용하며, 임의로 하드코딩된 색상이나 레이아웃 유틸리티 사용은 지양합니다.
-- **공통 컴포넌트 및 아이콘**:
-  - UI 컴포넌트 개발 시 `frontend/src/components/ui/` 폴더 내 재사용 가능한 컴포넌트들(`Button`, `Input`, `Card`, `Toast`, `Pagination`, `FileUploader`, `HTMLEditor` 등)을 최대한 재활용하십시오.
-  - 아이콘 사용 시 `lucide-react`를 일관되게 사용하십시오.
-- **공통 레이아웃**: `src/components/Layout.tsx`(메인 셸) + `src/components/layout/`(Header, Sidebar, ProfileDialog, PreferencesDialog)를 활용합니다.
-- **모달 다이얼로그 사용 금지** ⚠️:
-  - 화면 내 기능(생성, 수정, 삭제, 설정 등)은 **절대 모달 다이얼로그(`fixed inset-0 bg-black/50` 오버레이)를 사용하지 않고**, 다음 두 방식 중 하나로 구현합니다.
-  - **인라인 폼**: 마스터-디테일 분할 뷰에서 우측 상세 패널을 폼으로 전환하여 동일한 화면 내에서 입력합니다. 예: 조직관리 부서 추가/수정
-  - **팝업 화면**: `react-router-dom` 경로 기반 페이지(`/new`, `/edit`, `/:id/settings` 등)로 이동하여 전체 화면에서 입력하고, 완료 후 목록 페이지로 `navigate(-1)` 또는 `navigate('/list')`로 복귀합니다.
-  - 예외: 시스템 레벨의 긴급 알림(세션 만료, 치명적 오류 등)에만 모달을 허용합니다.
-  - 기존 코드에 모달 다이얼로그가 있다면 점진적으로 제거하고, 인라인 폼 또는 팝업 화면으로 전환합니다.
-  - 이 규칙은 모바일 대응, 접근성, 일관된 UX를 위해 적용됩니다.
-- **인라인 패널 외부 클릭 시 닫힘 규칙** ⚠️:
-  - 인라인 폼/패널(예: 주소록 선택기, 드롭다운 메뉴, 검색 결과창)은 **패널 외부 영역을 클릭하면 자동으로 닫히도록** 구현해야 합니다.
-  - 구현 방식: `useEffect` + `document.addEventListener('click', handler)`로 패널 컨테이너의 `ref`를 기준으로 `contains()` 검사하여 외부 클릭을 감지합니다.
-  - 예외: 패널 내에서 포커스가 필요한 입력 필드가 있는 경우, 외부 클릭 시 닫힘과 함께 포커스가 사라져도 무방합니다.
-  - 예외: 마스터-디테일 분할 뷰의 우측 상세 패널(인라인 폼)처럼 주 입력 공간으로 사용되는 패널은 외부 클릭으로 닫히지 않으며, 별도의 '취소' 버튼으로만 닫힙니다.
-  - 이 규칙은 인라인 패널이 모달을 대체하는 만큼 사용자가 의도치 않게 열린 패널을 쉽게 닫을 수 있도록 하기 위함입니다.
-- **ESC 키 동작 규칙** ⌨️:
-  - 인라인 폼/패널, 팝업 화면, 드롭다운 등 사용자가 열린 상태에서 **ESC 키를 누르면 '취소' 버튼과 동일한 동작(닫기/뒤로가기)**을 수행해야 합니다.
-  - 구현 방식: `useEffect`에서 `keydown` 이벤트 리스너를 등록하여 `e.key === 'Escape'` 감지 시 취소 핸들러를 호출합니다.
-  - 팝업 화면(경로 기반)의 경우 `navigate(-1)`로 동작시킵니다.
-  - 예외: ESC 키 동작이 시스템 기본 동작(예: 브라우저 전체화면 종료)과 충돌하는 경우는 제외합니다.
-  - 이 규칙은 키보드 접근성과 사용자 경험 일관성을 위해 적용됩니다.
+- **Tailwind CSS v4**: Use Tailwind CSS for styling.
+- **Follow the design tokens**: Shared branding, tone, and theme styles come from the design token variables defined in `src/index.css` (`var(--bg-surface)`, `var(--text-primary)`, `var(--border)`, `var(--primary)`, and so on). Avoid hardcoded colours and ad-hoc layout utilities.
+- **Shared components and icons**:
+  - When building UI, reuse the components in `frontend/src/components/ui/` (`Button`, `Input`, `Card`, `Toast`, `Pagination`, `FileUploader`, `HTMLEditor`, and others) as much as possible.
+  - Use `lucide-react` consistently for icons.
+- **Shared layout**: Use `src/components/Layout.tsx` (main shell) together with `src/components/layout/` (Header, Sidebar, ProfileDialog, PreferencesDialog).
+- **No modal dialogs** ⚠️:
+  - In-screen actions (create, edit, delete, settings) must **never** use a modal dialog (a `fixed inset-0 bg-black/50` overlay). Use one of the two approaches below instead.
+  - **Inline form**: In a master-detail split view, switch the right-hand detail panel into a form so input happens on the same screen. Example: adding or editing a department in organisation management.
+  - **Popup screen**: Navigate to a `react-router-dom` route (`/new`, `/edit`, `/:id/settings`, and so on), take input full-screen, and return to the list with `navigate(-1)` or `navigate('/list')`.
+  - Exception: Modals are allowed only for system-level urgent notices (session expiry, fatal errors).
+  - Remove modal dialogs from existing code incrementally, converting them into inline forms or popup screens.
+  - This rule exists for mobile support, accessibility, and a consistent UX.
+- **Close inline panels on outside click** ⚠️:
+  - Inline forms and panels (address book picker, dropdown menu, search result panel, and so on) must **close automatically when the user clicks outside the panel**.
+  - Implementation: register `document.addEventListener('click', handler)` in a `useEffect` and detect outside clicks with `contains()` against the panel container `ref`.
+  - Exception: If the panel contains an input that needs focus, losing focus along with the close is acceptable.
+  - Exception: A panel used as the primary input surface — such as the right-hand detail panel (inline form) of a master-detail split view — does not close on outside click; it closes only through its own Cancel button.
+  - Since inline panels replace modals, this rule ensures users can dismiss an unintentionally opened panel easily.
+- **ESC key behaviour** ⌨️:
+  - While an inline form, panel, popup screen, or dropdown is open, pressing **ESC must behave exactly like the Cancel button** (close or go back).
+  - Implementation: register a `keydown` listener in `useEffect` and call the cancel handler when `e.key === 'Escape'`.
+  - For route-based popup screens, run `navigate(-1)`.
+  - Exception: Cases where ESC conflicts with a native browser behaviour (such as exiting full screen).
+  - This rule exists for keyboard accessibility and a consistent user experience.
