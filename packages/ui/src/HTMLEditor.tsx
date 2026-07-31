@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useEditor, EditorContent, mergeAttributes } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
@@ -196,6 +197,7 @@ import { TableHeader } from '@tiptap/extension-table-header';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import BulletList from '@tiptap/extension-bullet-list';
+import { Button } from './Button';
 import { Indent } from './IndentExtension';
 import { LineHeight } from './LineHeightExtension';
 
@@ -365,6 +367,8 @@ export function HTMLEditor({ value, onChange, height = 400, disabled = false }: 
   const [isSizeDropdownOpen, setIsSizeDropdownOpen] = useState(false);
   const [isAlignDropdownOpen, setIsAlignDropdownOpen] = useState(false);
   const [isListDropdownOpen, setIsListDropdownOpen] = useState(false);
+  // 링크/이미지 URL 입력 다이얼로그 (네이티브 window.prompt 대체)
+  const [urlPrompt, setUrlPrompt] = useState<{ mode: 'link' | 'image'; value: string } | null>(null);
   const [isLineHeightDropdownOpen, setIsLineHeightDropdownOpen] = useState(false);
   const [isTableSelectorOpen, setIsTableSelectorOpen] = useState(false);
   const [isSpecialCharOpen, setIsSpecialCharOpen] = useState(false);
@@ -787,18 +791,25 @@ export function HTMLEditor({ value, onChange, height = 400, disabled = false }: 
     editor.chain().focus().setCellAttribute('style', newStyle).run();
   };
 
+  // 네이티브 window.prompt 대체 — 앱 일관성 URL 입력 다이얼로그
   const addLink = () => {
     if (!editor) return;
-    const url = window.prompt('연결할 URL 주소를 입력하세요:', 'https://');
-    if (url) {
-      editor.chain().focus().setLink({ href: url }).run();
-    }
+    setUrlPrompt({ mode: 'link', value: 'https://' });
   };
 
   const addImage = () => {
     if (!editor) return;
-    const url = window.prompt('삽입할 이미지 URL 주소를 입력하세요:', 'https://');
-    if (url) {
+    setUrlPrompt({ mode: 'image', value: 'https://' });
+  };
+
+  const submitUrlPrompt = () => {
+    if (!editor || !urlPrompt) return;
+    const url = urlPrompt.value.trim();
+    setUrlPrompt(null);
+    if (!url || url === 'https://') return;
+    if (urlPrompt.mode === 'link') {
+      editor.chain().focus().setLink({ href: url }).run();
+    } else {
       editor.chain().focus().setImage({ src: url }).run();
     }
   };
@@ -1524,6 +1535,34 @@ export function HTMLEditor({ value, onChange, height = 400, disabled = false }: 
           </div>
         )}
       </div>
+
+      {urlPrompt && createPortal(
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={urlPrompt.mode === 'link' ? '링크 삽입' : '이미지 삽입'}>
+          <div className="fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm animate-fade-in" onClick={() => setUrlPrompt(null)} />
+          <form
+            onSubmit={(e) => { e.preventDefault(); submitUrlPrompt(); }}
+            onKeyDown={(e) => { if (e.key === 'Escape') { e.preventDefault(); setUrlPrompt(null); } }}
+            className="relative w-full max-w-sm bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 z-10 animate-zoom-in overflow-hidden p-5 flex flex-col gap-3"
+          >
+            <label className="text-sm font-bold text-slate-900 dark:text-white" htmlFor="html-editor-url-input">
+              {urlPrompt.mode === 'link' ? '연결할 URL 주소를 입력하세요' : '삽입할 이미지 URL 주소를 입력하세요'}
+            </label>
+            <input
+              id="html-editor-url-input"
+              type="url"
+              autoFocus
+              value={urlPrompt.value}
+              onChange={(e) => setUrlPrompt(prev => (prev ? { ...prev, value: e.target.value } : prev))}
+              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/60"
+            />
+            <div className="flex gap-2 pt-1">
+              <Button type="button" variant="secondary" onClick={() => setUrlPrompt(null)} className="flex-1">취소</Button>
+              <Button type="submit" variant="primary" className="flex-1">확인</Button>
+            </div>
+          </form>
+        </div>,
+        document.body,
+      )}
     </div>
   );
 }

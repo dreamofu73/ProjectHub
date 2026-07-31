@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { Upload, X, FileText } from 'lucide-react';
+import { useToast } from './Toast';
 
 export interface FileUploaderProps {
   files: File[];
@@ -12,6 +13,7 @@ export interface FileUploaderProps {
 export function FileUploader({ files, onChange, maxFiles = 10, maxSizeMB = 50, className = '' }: FileUploaderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
+  const { showToast } = useToast();
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -42,7 +44,7 @@ export function FileUploader({ files, onChange, maxFiles = 10, maxSizeMB = 50, c
   const handleFiles = (newFiles: File[]) => {
     const validFiles = newFiles.filter(file => file.size <= maxSizeMB * 1024 * 1024);
     if (validFiles.length < newFiles.length) {
-      alert(`일부 파일이 최대 크기(${maxSizeMB}MB)를 초과하여 제외되었습니다.`);
+      showToast(`일부 파일이 최대 크기(${maxSizeMB}MB)를 초과하여 제외되었습니다.`, 'error');
     }
     const totalFiles = [...files, ...validFiles].slice(0, maxFiles);
     onChange(totalFiles);

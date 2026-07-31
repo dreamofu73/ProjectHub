@@ -18,12 +18,15 @@ export default function PostForm() {
 
   const isEdit = !!postId;
   const isGlobal = !!boardType;
+  const isAdmin = currentUser.role === 'admin';
   const projectId = isGlobal ? null : String(id || '0');
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [category, setCategory] = useState(isGlobal ? boardType : 'general');
   const [popupStartDate, setPopupStartDate] = useState("");
+  // 공지 상단 고정 (관리자 전용)
+  const [isPinned, setIsPinned] = useState(false);
   const [popupEndDate, setPopupEndDate] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [existingAttachments, setExistingAttachments] = useState<Attachment[]>([]);
@@ -33,6 +36,8 @@ export default function PostForm() {
   const [error, setError] = useState('');
   const [dirty, setDirty] = useState(false);
   const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
+  // 첨부 삭제 확인 다이얼로그 (네이티브 confirm 대체)
+  const [pendingAttachmentDelete, setPendingAttachmentDelete] = useState<string | null>(null);
   const titleRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -66,6 +71,7 @@ export default function PostForm() {
         setContent(json.data.content);
         setCategory(json.data.category);
         setPopupStartDate(json.data.popup_start_date || "");
+        setIsPinned(!!json.data.is_pinned);
         setPopupEndDate(json.data.popup_end_date || "");
       } else {
         showToast(t('postLoadFail') || '게시글을 불러오지 못했습니다.', 'error');
@@ -92,7 +98,7 @@ export default function PostForm() {
   };
 
   const handleDeleteAttachment = async (id: string) => {
-    if (!window.confirm(t('confirmDeleteAttachment') || '첨부파일을 삭제하시겠습니까?')) return;
+    setPendingAttachmentDelete(null);
     try {
       const res = await api(`/api/attachments/${id}`, { method: 'DELETE' });
       const json = await res.json();
@@ -149,11 +155,14 @@ export default function PostForm() {
         category: string;
         popup_start_date: string;
         popup_end_date: string;
+        is_pinned: boolean;
         project_id?: string | null;
       }
-      const body: PostPayload = isEdit 
-        ? { title, content, category, popup_start_date: popupStartDate, popup_end_date: popupEndDate }
-        : { project_id: projectId, title, content, category, popup_start_date: popupStartDate, popup_end_date: popupEndDate };
+      // 상단 고정은 공지에서만 의미가 있고, 서버에서도 관리자 권한을 재확인합니다.
+      const pinnedValue = isNotice && isAdmin ? isPinned : false;
+      const body: PostPayload = isEdit
+        ? { title, content, category, popup_start_date: popupStartDate, popup_end_date: popupEndDate, is_pinned: pinnedValue }
+        : { project_id: projectId, title, content, category, popup_start_date: popupStartDate, popup_end_date: popupEndDate, is_pinned: pinnedValue };
 
       const res = await api(url, {
         method,
@@ -298,6 +307,22 @@ export default function PostForm() {
               </div>
             </div>
           )}
+
+          {isNotice && isAdmin && (
+            <div className="space-y-1.5">
+              <span className="text-xs font-bold text-[var(--text-secondary)]">{t('pinPost')}</span>
+              <label className="flex items-center gap-2 h-9.5 px-3.5 border border-[var(--border)] rounded-xl bg-[var(--bg-surface)] cursor-pointer focus-within:ring-2 focus-within:ring-[var(--primary)]/50">
+                <input
+                  type="checkbox"
+                  checked={isPinned}
+                  disabled={saving}
+                  onChange={(e) => { setIsPinned(e.target.checked); setDirty(true); }}
+                  className="w-3.5 h-3.5 accent-[var(--primary)] cursor-pointer"
+                />
+                <span className="text-xs font-medium text-[var(--text-primary)]">{t('pinPost')}</span>
+              </label>
+            </div>
+          )}
         </div>
 
         {/* ── 내용 ── */}
@@ -321,7 +346,7 @@ export default function PostForm() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => handleDeleteAttachment(a.id)}
+                    onClick={() => setPendingAttachmentDelete(a.id)}
                     className="p-1 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950/20 rounded-lg text-[var(--text-muted)] transition-all border-none bg-transparent cursor-pointer"
                   >
                     <X size={13} />
@@ -428,6 +453,17 @@ export default function PostForm() {
         danger
         onConfirm={() => { setLeaveConfirmOpen(false); setDirty(false); doNavigateBack(); }}
         onCancel={() => setLeaveConfirmOpen(false)}
+      />
+
+      <ConfirmDialog
+        isOpen={pendingAttachmentDelete !== null}
+        title={t('delete')}
+        message={t('confirmDeleteAttachment')}
+        confirmLabel={t('delete')}
+        cancelLabel={t('cancel')}
+        danger
+        onConfirm={() => { if (pendingAttachmentDelete) handleDeleteAttachment(pendingAttachmentDelete); }}
+        onCancel={() => setPendingAttachmentDelete(null)}
       />
     </div>
   );

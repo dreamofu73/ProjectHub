@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Trash2, Edit2, Calendar, User, Clock } from 'lucide-react';
+import { ArrowLeft, Trash2, Edit2, Calendar, User, Clock, Eye, Pin, ChevronUp, ChevronDown } from 'lucide-react';
 import { Card, CardBody } from 'ui/Card';
 import { Button } from 'ui/Button';
 import { AttachmentList } from 'ui/AttachmentList';
+import { ConfirmDialog } from 'ui/ConfirmDialog';
 import { useLanguage } from '../context/LanguageContext';
 import { useToast } from 'ui/Toast';
 import { api, fetchBlobUrl } from 'shared/lib/api';
 import { PostComments } from '../components/boards/PostComments';
 
-import type { Post, Attachment } from 'shared/types';
+import type { Post, Attachment, AdjacentPosts } from 'shared/types';
 
 export default function PostDetailPage() {
   const { formatDate, formatTime, t } = useLanguage();
@@ -24,19 +25,29 @@ export default function PostDetailPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [downloadingAll, setDownloadingAll] = useState(false);
+  // 삭제 확인 다이얼로그 (네이티브 confirm 대체)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  // 이전/다음 글 네비게이션
+  const [adjacent, setAdjacent] = useState<AdjacentPosts>({ prev: null, next: null });
 
   const userStr = localStorage.getItem('user');
   const user = userStr ? JSON.parse(userStr) : null;
 
-  useEffect(() => {
-    fetchPost();
-    fetchAttachments();
-  }, [postId]);
+  const fetchAdjacent = async () => {
+    try {
+      const res = await api(`/api/posts/${postId}/adjacent`);
+      const json = await res.json();
+      if (json.success) setAdjacent(json.data);
+    } catch (err) {
+      console.error('Failed to fetch adjacent posts:', err);
+    }
+  };
 
   const fetchPost = async () => {
     setLoadError(false);
     try {
-      const res = await api(`/api/posts/${postId}`);
+      // count_view=true — 상세 화면 진입 시에만 조회수를 증가시킵니다(작성/수정 폼 제외).
+      const res = await api(`/api/posts/${postId}?count_view=true`);
       const json = await res.json();
       if (json.success) {
         setPost(json.data);
@@ -66,6 +77,14 @@ export default function PostDetailPage() {
     }
   };
 
+  // 데이터 로더 선언 이후에 효과를 등록합니다(선언 전 참조 방지).
+  useEffect(() => {
+    fetchPost();
+    fetchAttachments();
+    fetchAdjacent();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [postId]);
+
   const navigateBack = () => {
     if (isGlobal) {
       navigate(`/boards/${boardType}`);
@@ -75,7 +94,7 @@ export default function PostDetailPage() {
   };
 
   const handleDelete = async () => {
-    if (!window.confirm('이 게시글을 삭제하시겠습니까?')) return;
+    setDeleteConfirmOpen(false);
     try {
       const res = await api(`/api/posts/${postId}`, { method: 'DELETE' });
       if (res.ok) {
@@ -159,7 +178,7 @@ export default function PostDetailPage() {
             <Link to={isGlobal ? `/boards/${boardType}/${postId}/edit` : `/projects/${id}/board/${postId}/edit`}>
               <Button variant="outline" size="sm" icon={Edit2}>수정</Button>
             </Link>
-            <Button variant="danger" size="sm" icon={Trash2} onClick={handleDelete}>삭제</Button>
+            <Button variant="danger" size="sm" icon={Trash2} onClick={() => setDeleteConfirmOpen(true)}>삭제</Button>
           </div>
         )}
       </div>
@@ -193,6 +212,16 @@ export default function PostDetailPage() {
               <Clock size={14} />
               <span>{formatTime(post.created_at)}</span>
             </div>
+            <div className="flex items-center gap-1.5">
+              <Eye size={14} />
+              <span>{t('views')} {post.view_count ?? 0}</span>
+            </div>
+            {post.is_pinned && (
+              <div className="flex items-center gap-1.5 text-primary font-semibold">
+                <Pin size={14} />
+                <span>{t('pinned')}</span>
+              </div>
+            )}
             {post.category === 'notice' && (post.popup_start_date || post.popup_end_date) && (
               <div className="flex items-center gap-1.5 text-danger font-semibold">
                 <Calendar size={14} />
@@ -220,6 +249,29 @@ export default function PostDetailPage() {
         </CardBody>
       </Card>
 
+      {/* 이전 / 다음 글 네비게이션 */}
+      {(adjacent.prev || adjacent.next) && (
+        <nav
+          aria-label={`${t('prevPost')} / ${t('nextPost')}`}
+          className="bg-[var(--bg-surface)] border border-[var(--border)] rounded-2xl shadow-sm divide-y divide-[var(--border)] overflow-hidden"
+        >
+          {([['prev', adjacent.prev, ChevronUp, t('prevPost')], ['next', adjacent.next, ChevronDown, t('nextPost')]] as const).map(
+            ([key, item, Icon, label]) => item && (
+              <button
+                key={key}
+                type="button"
+                onClick={() => navigate(isGlobal ? `/boards/${boardType}/${item.id}` : `/projects/${id}/board/${item.id}`)}
+                className="w-full flex items-center gap-3 px-5 py-3 text-left bg-transparent border-none cursor-pointer hover:bg-[var(--bg-surface-2)]/60 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--primary)]/60"
+              >
+                <Icon size={14} className="text-[var(--text-muted)] shrink-0" aria-hidden="true" />
+                <span className="text-xs font-bold text-[var(--text-muted)] w-16 shrink-0">{label}</span>
+                <span className="text-sm text-[var(--text-primary)] font-semibold truncate">{item.title}</span>
+              </button>
+            )
+          )}
+        </nav>
+      )}
+
       {/* Comments Section */}
       {post && (
         <div className="bg-[var(--bg-surface)] border border-[var(--border)] rounded-2xl shadow-sm p-6">
@@ -230,6 +282,17 @@ export default function PostDetailPage() {
           />
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={deleteConfirmOpen}
+        title={t('delete')}
+        message={t('confirmDeletePost')}
+        confirmLabel={t('delete')}
+        cancelLabel={t('cancel')}
+        danger
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteConfirmOpen(false)}
+      />
     </div>
   );
 }

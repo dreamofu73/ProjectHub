@@ -4,12 +4,15 @@ import {
   Plus, Search, RefreshCw, ChevronUp, ChevronDown, ChevronsUpDown,
   Trash2, CheckSquare, Square, Minus, FileText,
   Rows, Columns, Menu, User, Calendar, Clock, Edit2, X,
+  Pin, Paperclip,
 } from 'lucide-react';
 import { api, fetchBlobUrl } from 'shared/lib/api';
+import { useDebounce } from 'shared/hooks/useDebounce';
 import { useLanguage } from '../context/LanguageContext';
 import { useToast } from 'ui/Toast';
 import { Pagination } from 'ui/Pagination';
-import { AttachmentList } from 'ui/AttachmentList';
+import { AttachmentList, formatFileSize } from 'ui/AttachmentList';
+import { ConfirmDialog } from 'ui/ConfirmDialog';
 import { PostComments } from '../components/boards/PostComments';
 import type { Post, Attachment } from 'shared/types';
 
@@ -22,6 +25,10 @@ interface BoardPost {
   created_at: string;
   content: string;
   comment_count?: number;
+  is_pinned?: boolean;
+  view_count?: number;
+  attachment_count?: number;
+  attachment_total_size?: number;
 }
 
 type SortKey = keyof BoardPost;
@@ -29,6 +36,10 @@ type SearchCategory = 'title' | 'title_content' | 'author';
 type SplitLayout = 'columns' | 'rows' | 'list';
 
 const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100];
+
+// 정렬 헤더 버튼 공통 스타일 (헤더 셀 전체를 차지하는 실제 button)
+const SORT_BUTTON_CLASS = 'w-full flex items-center gap-1 bg-transparent border-none p-0 text-xs font-bold text-[var(--text-muted)] cursor-pointer rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/60';
+const SKELETON_ROW_COUNT = 8;
 
 export default function ProjectBoardPage() {
   const { formatDate, formatTime, t } = useLanguage();
@@ -43,6 +54,7 @@ export default function ProjectBoardPage() {
 
   // ── 목록 상태 ──────────────────────────────────────────────────────
   const [posts, setPosts] = useState<BoardPost[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchCategory, setSearchCategory] = useState<SearchCategory>('title');
@@ -51,6 +63,8 @@ export default function ProjectBoardPage() {
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'asc' | 'desc' }>({ key: 'id', direction: 'desc' });
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [activeDropdown, setActiveDropdown] = useState<'delete' | null>(null);
+  // 삭제 확인 다이얼로그 (네이티브 confirm 대체)
+  const [pendingDelete, setPendingDelete] = useState<'single' | 'batch' | null>(null);
 
   // ── 분할 뷰 상태 ────────────────────────────────────────────────────
   const [splitLayout, setSplitLayout] = useState<SplitLayout>(() => {
@@ -105,15 +119,32 @@ export default function ProjectBoardPage() {
     setSelectedIds(new Set());
   };
 
-  // ── 데이터 fetch ────────────────────────────────────────────────────
+  // 검색 디바운스 — 매 키 입력마다 서버 요청이 나가지 않도록 지연시킵니다.
+  const debouncedSearchTerm = useDebounce(searchTerm, 250);
+  const activeSearchTerm = debouncedSearchTerm.trim();
+
+  // ── 데이터 fetch — 검색/정렬/페이징을 모두 서버에 위임 ────────────────
   const fetchPosts = useCallback(async () => {
     if (!id) return;
     setLoading(true);
     try {
-      const res = await api(`/api/posts?project_id=${id}`);
+      const query = new URLSearchParams({
+        project_id: id,
+        page: String(currentPage),
+        page_size: String(pageSize),
+        sort_by: sortConfig.key,
+        sort_dir: sortConfig.direction,
+      });
+      if (activeCategory !== 'all') query.set('category', activeCategory);
+      if (activeSearchTerm) {
+        query.set('search', activeSearchTerm);
+        query.set('search_in', searchCategory);
+      }
+      const res = await api(`/api/posts?${query.toString()}`);
       const json = await res.json();
       if (json.success) {
         setPosts(json.data || []);
+        setTotalCount(json.meta?.total ?? (json.data || []).length);
         setSelectedIds(new Set());
       }
     } catch (err) {
@@ -121,7 +152,7 @@ export default function ProjectBoardPage() {
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, activeCategory, currentPage, pageSize, sortConfig, activeSearchTerm, searchCategory]);
 
   useEffect(() => {
     fetchPosts();
@@ -158,30 +189,8 @@ export default function ProjectBoardPage() {
     localStorage.setItem('projectBoard_splitLayout', splitLayout);
   }, [splitLayout]);
 
-  // ── 필터링 + 정렬 ──────────────────────────────────────────────────
-  const filteredPosts = posts
-    .filter(post => {
-      if (activeCategory !== 'all' && post.category !== activeCategory) return false;
-      if (!searchTerm.trim()) return true;
-      const term = searchTerm.toLowerCase();
-      switch (searchCategory) {
-        case 'title':         return post.title.toLowerCase().includes(term);
-        case 'title_content': return post.title.toLowerCase().includes(term) || (post.content || '').toLowerCase().includes(term);
-        case 'author':        return post.author_name.toLowerCase().includes(term);
-        default: return true;
-      }
-    })
-    .sort((a, b) => {
-      const { key, direction } = sortConfig;
-      const valA = a[key] ?? '';
-      const valB = b[key] ?? '';
-      if (valA < valB) return direction === 'asc' ? -1 : 1;
-      if (valA > valB) return direction === 'asc' ? 1 : -1;
-      return 0;
-    });
-
-  const totalCount = filteredPosts.length;
-  const pagedPosts = filteredPosts.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  // 서버가 이미 검색·정렬·페이징을 마친 결과를 그대로 렌더합니다.
+  const pagedPosts = posts;
 
   // ── 상세 패널 열기 ──────────────────────────────────────────────────
   const handleOpenDetail = async (post: BoardPost) => {
@@ -216,6 +225,7 @@ export default function ProjectBoardPage() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
+      if (pendingDelete) return; // 확인 다이얼로그가 ESC를 처리
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable)) return;
       if (selectedPost) {
@@ -227,12 +237,12 @@ export default function ProjectBoardPage() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedPost]);
+  }, [selectedPost, pendingDelete]);
 
   // ── 삭제 ────────────────────────────────────────────────────────────
   const handleDeleteInPanel = async () => {
+    setPendingDelete(null);
     if (!postDetail) return;
-    if (!window.confirm('이 게시글을 삭제하시겠습니까?')) return;
     try {
       const res = await api(`/api/posts/${postDetail.id}`, { method: 'DELETE' });
       if (res.ok) {
@@ -298,11 +308,17 @@ export default function ProjectBoardPage() {
     setCurrentPage(1);
   };
 
-  const SortIcon = ({ columnKey }: { columnKey: SortKey }) => {
+  // 렌더 중 컴포넌트를 새로 만들지 않도록 일반 렌더 함수로 유지합니다.
+  const renderSortIcon = (columnKey: SortKey) => {
     if (sortConfig.key !== columnKey) return <ChevronsUpDown size={11} className="text-[var(--text-muted)] opacity-50" />;
     return sortConfig.direction === 'asc'
       ? <ChevronUp size={11} className="text-[var(--primary)]" />
       : <ChevronDown size={11} className="text-[var(--primary)]" />;
+  };
+
+  const getAriaSort = (columnKey: SortKey): 'ascending' | 'descending' | 'none' => {
+    if (sortConfig.key !== columnKey) return 'none';
+    return sortConfig.direction === 'asc' ? 'ascending' : 'descending';
   };
 
   // ── 체크박스 ────────────────────────────────────────────────────────
@@ -314,8 +330,7 @@ export default function ProjectBoardPage() {
     else setSelectedIds(new Set(pagedPosts.map(p => p.id)));
   };
 
-  const toggleSelectRow = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const toggleSelectRow = (id: string) => {
     setSelectedIds(prev => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
@@ -325,8 +340,8 @@ export default function ProjectBoardPage() {
 
   // ── 일괄 삭제 ──────────────────────────────────────────────────────
   const handleBatchDelete = async () => {
+    setPendingDelete(null);
     if (selectedIds.size === 0) return;
-    if (!window.confirm(`선택한 ${selectedIds.size}개의 게시글을 삭제하시겠습니까?`)) return;
     try {
       await Promise.all(Array.from(selectedIds).map(postId => api(`/api/posts/${postId}`, { method: 'DELETE' })));
       showToast(`${selectedIds.size}개의 게시글을 삭제했습니다.`, 'success');
@@ -380,9 +395,8 @@ export default function ProjectBoardPage() {
   }, [leftWidth, topHeight, splitLayout]);
 
   // ── 컬럼 수 ─────────────────────────────────────────────────────────
-  const colSpan = splitLayout === 'list'
-    ? (isAdmin ? 6 : 5)
-    : (isAdmin ? 5 : 4);
+  // list: #·제목·분류·작성자·첨부·댓글·조회·작성일 / split: #·분류·제목·날짜
+  const colSpan = (isAdmin ? 1 : 0) + (splitLayout === 'list' ? 8 : 4);
 
   // ── 상세 패널 내용 렌더링 (inline / slide-over 공용) ──────────────
   const renderDetailContent = () => {
@@ -417,7 +431,7 @@ export default function ProjectBoardPage() {
                     {t('edit')}
                   </button>
                   <button
-                    onClick={handleDeleteInPanel}
+                    onClick={() => setPendingDelete('single')}
                     className="flex items-center gap-1 px-2 py-1.5 border border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-950/20 rounded text-red-500 transition-all cursor-pointer bg-[var(--bg-surface)] text-xs font-semibold"
                   >
                     <Trash2 size={11} />
@@ -538,7 +552,8 @@ export default function ProjectBoardPage() {
           <select
             value={searchCategory}
             onChange={(e) => { setSearchCategory(e.target.value as SearchCategory); setCurrentPage(1); }}
-            className="h-8 px-2 border border-[var(--border)] rounded bg-[var(--bg-surface)] text-xs focus:outline-none text-[var(--text-primary)] cursor-pointer font-medium"
+            aria-label={t('search')}
+            className="h-8 px-2 border border-[var(--border)] rounded bg-[var(--bg-surface)] text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/60 focus-visible:border-[var(--primary)] text-[var(--text-primary)] cursor-pointer font-medium"
           >
             <option value="title">{t('title') || '제목'}</option>
             <option value="title_content">{`${t('title') || '제목'}+${t('content') || '내용'}`}</option>
@@ -548,10 +563,11 @@ export default function ProjectBoardPage() {
           <div className="relative">
             <input
               type="text"
-              placeholder="검색..."
+              placeholder={`${t('search')}...`}
+              aria-label={t('search')}
               value={searchTerm}
               onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-              className="pl-2 pr-7 py-1 h-8 w-44 border border-[var(--border)] rounded bg-[var(--bg-surface)] text-xs focus:outline-none text-[var(--text-primary)]"
+              className="pl-2 pr-7 py-1 h-8 w-44 border border-[var(--border)] rounded bg-[var(--bg-surface)] text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/60 focus-visible:border-[var(--primary)] text-[var(--text-primary)]"
             />
             <span className="absolute right-1 top-1/2 -translate-y-1/2 p-1 text-[var(--text-muted)]">
               <Search size={12} />
@@ -573,7 +589,7 @@ export default function ProjectBoardPage() {
                 {activeDropdown === 'delete' && (
                   <div className="absolute left-0 mt-1 w-40 bg-[var(--bg-surface)] border border-[var(--border)] rounded shadow-lg z-30 py-1 animate-in fade-in slide-in-from-top-1 duration-150">
                     <button
-                      onClick={handleBatchDelete}
+                      onClick={() => { setActiveDropdown(null); setPendingDelete('batch'); }}
                       className="w-full text-left px-3 py-2 text-xs hover:bg-red-50 dark:hover:bg-red-950/20 text-red-500 flex items-center gap-2 cursor-pointer border-none bg-transparent font-medium"
                     >
                       <Trash2 size={11} className="opacity-70" />
@@ -639,83 +655,112 @@ export default function ProjectBoardPage() {
               <thead>
                 <tr className="border-b border-[var(--border)] text-xs font-bold text-[var(--text-muted)] bg-[var(--bg-surface-2)]/50">
                   {isAdmin && (
-                    <th className="w-10 p-2 text-center">
-                      <div
-                        className="flex items-center justify-center cursor-pointer p-1 rounded hover:bg-[var(--bg-surface-2)]"
-                        onClick={toggleSelectAll}
-                        title={allSelected ? '선택해제' : '전체선택'}
+                    <th scope="col" className="w-10 p-2 text-center">
+                      <label
+                        className="flex items-center justify-center cursor-pointer p-1 rounded hover:bg-[var(--bg-surface-2)] focus-within:ring-2 focus-within:ring-[var(--primary)]/60"
+                        title={allSelected ? t('deselectAll') : t('selectAll')}
                       >
+                        <input
+                          type="checkbox"
+                          className="sr-only"
+                          checked={allSelected}
+                          ref={(el) => { if (el) el.indeterminate = !allSelected && someSelected; }}
+                          onChange={toggleSelectAll}
+                          aria-label={allSelected ? t('deselectAll') : t('selectAll')}
+                        />
                         {allSelected
                           ? <CheckSquare size={14} className="text-[var(--primary)]" />
                           : someSelected
                             ? <Minus size={14} className="text-[var(--primary)]" />
                             : <Square size={14} className="text-[var(--text-muted)] opacity-60" />
                         }
-                      </div>
+                      </label>
                     </th>
                   )}
-                  <th
-                    className="w-12 p-2 text-center cursor-pointer select-none hover:bg-[var(--bg-surface-2)] transition-colors"
-                    onClick={() => handleSort('id')}
-                  >
-                    <span className="flex items-center justify-center gap-1"># <SortIcon columnKey="id" /></span>
+                  <th scope="col" aria-sort={getAriaSort('id')} className="w-12 p-2 text-center select-none hover:bg-[var(--bg-surface-2)] transition-colors">
+                    <button type="button" onClick={() => handleSort('id')} className={`${SORT_BUTTON_CLASS} justify-center`}>
+                      # {renderSortIcon('id')}
+                    </button>
                   </th>
                   {/* 분류 컬럼 (split 모드에서만) */}
                   {splitLayout !== 'list' && (
-                    <th className="w-16 p-2 text-center">분류</th>
+                    <th scope="col" className="w-16 p-2 text-center">분류</th>
                   )}
-                  <th
-                    className="p-2 pl-3 cursor-pointer select-none hover:bg-[var(--bg-surface-2)] transition-colors"
-                    onClick={() => handleSort('title')}
-                  >
-                    <span className="flex items-center gap-1">{t('title') || '제목'} <SortIcon columnKey="title" /></span>
+                  <th scope="col" aria-sort={getAriaSort('title')} className="p-2 pl-3 select-none hover:bg-[var(--bg-surface-2)] transition-colors">
+                    <button type="button" onClick={() => handleSort('title')} className={SORT_BUTTON_CLASS}>
+                      {t('title') || '제목'} {renderSortIcon('title')}
+                    </button>
                   </th>
                   {splitLayout === 'list' && (
                     <>
-                      <th
-                        className="w-16 p-2 text-center cursor-pointer select-none hover:bg-[var(--bg-surface-2)] transition-colors"
-                        onClick={() => handleSort('category')}
-                      >
-                        <span className="flex items-center justify-center gap-1">분류 <SortIcon columnKey="category" /></span>
+                      <th scope="col" aria-sort={getAriaSort('category')} className="w-16 p-2 text-center select-none hover:bg-[var(--bg-surface-2)] transition-colors">
+                        <button type="button" onClick={() => handleSort('category')} className={`${SORT_BUTTON_CLASS} justify-center`}>
+                          분류 {renderSortIcon('category')}
+                        </button>
                       </th>
-                      <th
-                        className="w-20 p-2 text-center cursor-pointer select-none hover:bg-[var(--bg-surface-2)] transition-colors"
-                        onClick={() => handleSort('author_name')}
-                      >
-                        <span className="flex items-center justify-center gap-1">{t('author') || '작성자'} <SortIcon columnKey="author_name" /></span>
+                      <th scope="col" aria-sort={getAriaSort('author_name')} className="w-20 p-2 text-center select-none hover:bg-[var(--bg-surface-2)] transition-colors">
+                        <button type="button" onClick={() => handleSort('author_name')} className={`${SORT_BUTTON_CLASS} justify-center`}>
+                          {t('author') || '작성자'} {renderSortIcon('author_name')}
+                        </button>
                       </th>
-                      <th
-                        className="w-10 p-2 text-center cursor-pointer select-none hover:bg-[var(--bg-surface-2)] transition-colors"
-                        onClick={() => handleSort('comment_count')}
-                      >
-                        <span className="flex items-center justify-center gap-1">{t('comments') || '댓글'} <SortIcon columnKey="comment_count" /></span>
+                      <th scope="col" className="w-14 p-2 text-center">
+                        <span className="flex items-center justify-center gap-1">
+                          <Paperclip size={11} aria-hidden="true" />
+                          {t('attachmentsLabel')}
+                        </span>
                       </th>
-                      <th
-                        className="w-28 p-2 text-right pr-4 cursor-pointer select-none hover:bg-[var(--bg-surface-2)] transition-colors"
-                        onClick={() => handleSort('created_at')}
-                      >
-                        <span className="flex items-center justify-end gap-1">{t('created_at') || '작성일'} <SortIcon columnKey="created_at" /></span>
+                      <th scope="col" aria-sort={getAriaSort('comment_count')} className="w-10 p-2 text-center select-none hover:bg-[var(--bg-surface-2)] transition-colors">
+                        <button type="button" onClick={() => handleSort('comment_count')} className={`${SORT_BUTTON_CLASS} justify-center`}>
+                          {t('comments') || '댓글'} {renderSortIcon('comment_count')}
+                        </button>
+                      </th>
+                      <th scope="col" aria-sort={getAriaSort('view_count')} className="w-14 p-2 text-center select-none hover:bg-[var(--bg-surface-2)] transition-colors">
+                        <button type="button" onClick={() => handleSort('view_count')} className={`${SORT_BUTTON_CLASS} justify-center`}>
+                          {t('views')} {renderSortIcon('view_count')}
+                        </button>
+                      </th>
+                      <th scope="col" aria-sort={getAriaSort('created_at')} className="w-28 p-2 pr-4 select-none hover:bg-[var(--bg-surface-2)] transition-colors">
+                        <button type="button" onClick={() => handleSort('created_at')} className={`${SORT_BUTTON_CLASS} justify-end`}>
+                          {t('created_at') || '작성일'} {renderSortIcon('created_at')}
+                        </button>
                       </th>
                     </>
                   )}
                   {splitLayout !== 'list' && (
-                    <th
-                      className="w-20 p-2 text-right pr-3 cursor-pointer select-none hover:bg-[var(--bg-surface-2)] transition-colors"
-                      onClick={() => handleSort('created_at')}
-                    >
-                      <span className="flex items-center justify-end gap-1">날짜 <SortIcon columnKey="created_at" /></span>
+                    <th scope="col" aria-sort={getAriaSort('created_at')} className="w-20 p-2 pr-3 select-none hover:bg-[var(--bg-surface-2)] transition-colors">
+                      <button type="button" onClick={() => handleSort('created_at')} className={`${SORT_BUTTON_CLASS} justify-end`}>
+                        날짜 {renderSortIcon('created_at')}
+                      </button>
                     </th>
                   )}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[var(--border)]">
+              <tbody className="divide-y divide-[var(--border)]" aria-busy={loading}>
                 {loading ? (
-                  <tr>
-                    <td colSpan={colSpan} className="py-20 text-center text-[var(--text-muted)]">
-                      <RefreshCw size={22} className="animate-spin mx-auto mb-2 text-[var(--primary)]" />
-                      <p className="font-medium text-xs mt-2">로딩 중...</p>
-                    </td>
-                  </tr>
+                  Array.from({ length: SKELETON_ROW_COUNT }).map((_, index) => (
+                    <tr key={`skeleton-${index}`} className="animate-pulse" aria-hidden="true">
+                      {isAdmin && (
+                        <td className="p-2"><div className="h-3.5 w-3.5 mx-auto rounded bg-[var(--bg-surface-2)]" /></td>
+                      )}
+                      <td className="p-2"><div className="h-3 w-5 mx-auto rounded bg-[var(--bg-surface-2)]" /></td>
+                      {splitLayout !== 'list' && (
+                        <td className="p-2"><div className="h-4 w-10 mx-auto rounded bg-[var(--bg-surface-2)]" /></td>
+                      )}
+                      <td className="p-2 pl-3">
+                        <div className="h-3 w-3/4 rounded bg-[var(--bg-surface-2)]" />
+                        {splitLayout !== 'list' && <div className="h-2.5 w-1/3 mt-1.5 rounded bg-[var(--bg-surface-2)]" />}
+                      </td>
+                      {splitLayout === 'list' ? (
+                        Array.from({ length: 6 }).map((_, cell) => (
+                          <td key={`skeleton-cell-${cell}`} className="p-2">
+                            <div className="h-3 w-12 mx-auto rounded bg-[var(--bg-surface-2)]" />
+                          </td>
+                        ))
+                      ) : (
+                        <td className="p-2 pr-3"><div className="h-3 w-14 ml-auto rounded bg-[var(--bg-surface-2)]" /></td>
+                      )}
+                    </tr>
+                  ))
                 ) : pagedPosts.length > 0 ? (
                   pagedPosts.map((post, index) => {
                     const ordinal = (currentPage - 1) * pageSize + index + 1;
@@ -730,17 +775,26 @@ export default function ProjectBoardPage() {
                             ? 'bg-[var(--primary)]/10'
                             : isChecked
                               ? 'bg-[var(--primary)]/5'
-                              : 'hover:bg-[var(--bg-surface-2)]/50'
+                              : post.is_pinned
+                                ? 'bg-[var(--bg-surface-2)]/60 hover:bg-[var(--bg-surface-2)]'
+                                : 'hover:bg-[var(--bg-surface-2)]/50'
                         }`}
                       >
                         {isAdmin && (
-                          <td className="p-2 text-center" onClick={(e) => toggleSelectRow(post.id, e)}>
-                            <div className="flex items-center justify-center">
+                          <td className="p-2 text-center" onClick={(e) => e.stopPropagation()}>
+                            <label className="flex items-center justify-center cursor-pointer p-1 rounded focus-within:ring-2 focus-within:ring-[var(--primary)]/60">
+                              <input
+                                type="checkbox"
+                                className="sr-only"
+                                checked={isChecked}
+                                onChange={() => toggleSelectRow(post.id)}
+                                aria-label={`${post.title} — ${t('selectPost')}`}
+                              />
                               {isChecked
                                 ? <CheckSquare size={14} className="text-[var(--primary)]" />
                                 : <Square size={14} className="text-[var(--text-muted)] opacity-65" />
                               }
-                            </div>
+                            </label>
                           </td>
                         )}
                         <td className="p-2 text-center font-mono text-xs text-[var(--text-muted)]">{ordinal}</td>
@@ -748,22 +802,49 @@ export default function ProjectBoardPage() {
                           <td className="p-2 text-center">{getCategoryBadge(post.category)}</td>
                         )}
                         <td className="p-2 pl-3 min-w-0">
-                          {splitLayout !== 'list' ? (
-                            <div className="flex flex-col gap-0.5">
-                              <span className={`text-xs truncate font-semibold ${isActive ? 'text-[var(--primary)]' : 'text-[var(--text-primary)]'}`}>
-                                {post.title}
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); handleOpenDetail(post); }}
+                            className="w-full min-w-0 text-left bg-transparent border-none p-0 cursor-pointer rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/60"
+                          >
+                            {splitLayout !== 'list' ? (
+                              <span className="flex flex-col gap-0.5 min-w-0">
+                                <span className={`flex items-center gap-1 text-xs truncate font-semibold ${isActive ? 'text-[var(--primary)]' : 'text-[var(--text-primary)]'}`}>
+                                  {post.is_pinned && <Pin size={10} className="shrink-0 text-[var(--primary)]" aria-label={t('pinned')} />}
+                                  <span className="truncate">{post.title}</span>
+                                  {!!post.comment_count && (
+                                    <span className="shrink-0 text-xs text-[var(--text-muted)] font-medium">[{post.comment_count}]</span>
+                                  )}
+                                  {!!post.attachment_count && (
+                                    <span className="shrink-0 flex items-center gap-0.5 text-xs text-[var(--text-muted)] font-medium">
+                                      <Paperclip size={10} aria-hidden="true" />{post.attachment_count}
+                                    </span>
+                                  )}
+                                </span>
+                                <span className="text-xs text-[var(--text-muted)] truncate">{post.author_name}</span>
                               </span>
-                              <span className="text-xs text-[var(--text-muted)] truncate">{post.author_name}</span>
-                            </div>
-                          ) : (
-                            <span className="text-xs font-semibold text-[var(--text-primary)] truncate block">{post.title}</span>
-                          )}
+                            ) : (
+                              <span className="flex items-center gap-1 min-w-0">
+                                {post.is_pinned && <Pin size={10} className="shrink-0 text-[var(--primary)]" aria-label={t('pinned')} />}
+                                <span className="text-xs font-semibold text-[var(--text-primary)] truncate">{post.title}</span>
+                              </span>
+                            )}
+                          </button>
                         </td>
                         {splitLayout === 'list' && (
                           <>
                             <td className="p-2 text-center">{getCategoryBadge(post.category)}</td>
                             <td className="p-2 text-center text-xs text-[var(--text-secondary)] font-medium">{post.author_name}</td>
+                            <td className="p-2 text-center text-xs text-[var(--text-muted)] font-medium">
+                              {post.attachment_count ? (
+                                <span className="inline-flex items-center gap-1" title={formatFileSize(post.attachment_total_size || 0)}>
+                                  <Paperclip size={11} aria-hidden="true" />
+                                  {post.attachment_count}
+                                </span>
+                              ) : '-'}
+                            </td>
                             <td className="p-2 text-center text-xs text-[var(--text-muted)] font-medium">{post.comment_count || 0}</td>
+                            <td className="p-2 text-center text-xs text-[var(--text-muted)] font-medium">{post.view_count ?? 0}</td>
                             <td className="p-2 pr-4 text-right text-xs text-[var(--text-muted)] font-medium">{formatDate(post.created_at)}</td>
                           </>
                         )}
@@ -776,7 +857,20 @@ export default function ProjectBoardPage() {
                 ) : (
                   <tr>
                     <td colSpan={colSpan} className="py-24 text-center text-[var(--text-muted)] font-medium text-xs">
-                      {t('noPosts') || '등록된 게시글이 없습니다.'}
+                      {activeSearchTerm ? (
+                        <div className="flex flex-col items-center gap-3">
+                          <p>{t('noSearchResultsFor').replace('{term}', activeSearchTerm)}</p>
+                          <button
+                            type="button"
+                            onClick={() => { setSearchTerm(''); setCurrentPage(1); }}
+                            className="px-3 py-1.5 border border-[var(--border)] rounded-lg bg-[var(--bg-surface)] text-xs font-semibold text-[var(--text-secondary)] hover:bg-[var(--bg-surface-2)] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/60"
+                          >
+                            {t('clearSearch')}
+                          </button>
+                        </div>
+                      ) : (
+                        t('noPosts')
+                      )}
                     </td>
                   </tr>
                 )}
@@ -826,6 +920,19 @@ export default function ProjectBoardPage() {
         </div>
       )}
       </div>
+
+      <ConfirmDialog
+        isOpen={pendingDelete !== null}
+        title={t('delete')}
+        message={pendingDelete === 'batch'
+          ? t('confirmBulkDeletePosts').replace('{count}', String(selectedIds.size))
+          : t('confirmDeletePost')}
+        confirmLabel={t('delete')}
+        cancelLabel={t('cancel')}
+        danger
+        onConfirm={pendingDelete === 'batch' ? handleBatchDelete : handleDeleteInPanel}
+        onCancel={() => setPendingDelete(null)}
+      />
     </div>
   );
 }

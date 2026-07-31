@@ -111,6 +111,15 @@ export function Sidebar() {
     navigate
   } = props;
 
+  // 프로젝트 게시판 내비 — 경로/쿼리 문자열 includes 대신 정확 비교
+  const projectBoardBase: string = location.pathname.match(/^(\/projects\/[^/]+)\/board/)?.[1]
+    ?? location.pathname.split('/board')[0];
+  const boardCategory = new URLSearchParams(location.search).get('category');
+  const isBoardCategoryActive = (category: string | null) =>
+    category === null
+      ? !boardCategory && location.pathname.endsWith('/board')
+      : boardCategory === category;
+
   const [wikiSearchQuery, setWikiSearchQuery] = useState('');
   const wikiTree = useMemo(() => buildWikiTree((wikiList as WikiPage[]) || []), [wikiList]);
 
@@ -508,10 +517,11 @@ export function Sidebar() {
                 <li className="sidebar-nav-item">
                   <Tooltip content={t('all') || '전체'} disabled={!isSidebarCollapsed} position="right">
                     <Link
-                      to={`${location.pathname.split('/board')[0]}/board`}
-                      className={`sidebar-nav-link ${!location.search.includes('category=') && location.pathname.endsWith('/board') ? 'active' : ''} ${isSidebarCollapsed ? 'justify-center px-1' : ''}`}
+                      to={`${projectBoardBase}/board`}
+                      className={`sidebar-nav-link ${isBoardCategoryActive(null) ? 'active' : ''} ${isSidebarCollapsed ? 'justify-center px-1' : ''}`}
+                      aria-current={isBoardCategoryActive(null) ? 'page' : undefined}
                     >
-                      <FileText size={16} className={`shrink-0 ${!location.search.includes('category=') && location.pathname.endsWith('/board') ? 'opacity-100' : 'opacity-60'}`} />
+                      <FileText size={16} className={`shrink-0 ${isBoardCategoryActive(null) ? 'opacity-100' : 'opacity-60'}`} />
                       {!isSidebarCollapsed && <span>{t('all') || '전체'}</span>}
                     </Link>
                   </Tooltip>
@@ -519,10 +529,11 @@ export function Sidebar() {
                 <li className="sidebar-nav-item">
                   <Tooltip content={t('notices') || '공지사항'} disabled={!isSidebarCollapsed} position="right">
                     <Link
-                      to={`${location.pathname.split('/board')[0]}/board?category=notice`}
-                      className={`sidebar-nav-link ${location.search.includes('category=notice') ? 'active' : ''} ${isSidebarCollapsed ? 'justify-center px-1' : ''}`}
+                      to={`${projectBoardBase}/board?category=notice`}
+                      className={`sidebar-nav-link ${isBoardCategoryActive('notice') ? 'active' : ''} ${isSidebarCollapsed ? 'justify-center px-1' : ''}`}
+                      aria-current={isBoardCategoryActive('notice') ? 'page' : undefined}
                     >
-                      <Bell size={16} className={`shrink-0 ${location.search.includes('category=notice') ? 'opacity-100' : 'opacity-60'}`} />
+                      <Bell size={16} className={`shrink-0 ${isBoardCategoryActive('notice') ? 'opacity-100' : 'opacity-60'}`} />
                       {!isSidebarCollapsed && <span>{t('notices') || '공지사항'}</span>}
                     </Link>
                   </Tooltip>
@@ -530,10 +541,11 @@ export function Sidebar() {
                 <li className="sidebar-nav-item">
                   <Tooltip content={t('resources') || '자료실'} disabled={!isSidebarCollapsed} position="right">
                     <Link
-                      to={`${location.pathname.split('/board')[0]}/board?category=resource`}
-                      className={`sidebar-nav-link ${location.search.includes('category=resource') ? 'active' : ''} ${isSidebarCollapsed ? 'justify-center px-1' : ''}`}
+                      to={`${projectBoardBase}/board?category=resource`}
+                      className={`sidebar-nav-link ${isBoardCategoryActive('resource') ? 'active' : ''} ${isSidebarCollapsed ? 'justify-center px-1' : ''}`}
+                      aria-current={isBoardCategoryActive('resource') ? 'page' : undefined}
                     >
-                      <Archive size={16} className={`shrink-0 ${location.search.includes('category=resource') ? 'opacity-100' : 'opacity-60'}`} />
+                      <Archive size={16} className={`shrink-0 ${isBoardCategoryActive('resource') ? 'opacity-100' : 'opacity-60'}`} />
                       {!isSidebarCollapsed && <span>{t('resources') || '자료실'}</span>}
                     </Link>
                   </Tooltip>
@@ -541,10 +553,11 @@ export function Sidebar() {
                 <li className="sidebar-nav-item">
                   <Tooltip content={t('general') || '일반'} disabled={!isSidebarCollapsed} position="right">
                     <Link
-                      to={`${location.pathname.split('/board')[0]}/board?category=general`}
-                      className={`sidebar-nav-link ${location.search.includes('category=general') ? 'active' : ''} ${isSidebarCollapsed ? 'justify-center px-1' : ''}`}
+                      to={`${projectBoardBase}/board?category=general`}
+                      className={`sidebar-nav-link ${isBoardCategoryActive('general') ? 'active' : ''} ${isSidebarCollapsed ? 'justify-center px-1' : ''}`}
+                      aria-current={isBoardCategoryActive('general') ? 'page' : undefined}
                     >
-                      <FileText size={16} className={`shrink-0 ${location.search.includes('category=general') ? 'opacity-100' : 'opacity-60'}`} />
+                      <FileText size={16} className={`shrink-0 ${isBoardCategoryActive('general') ? 'opacity-100' : 'opacity-60'}`} />
                       {!isSidebarCollapsed && <span>{t('general') || '일반'}</span>}
                     </Link>
                   </Tooltip>

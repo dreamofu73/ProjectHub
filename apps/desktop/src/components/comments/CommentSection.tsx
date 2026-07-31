@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { api } from 'shared/lib/api';
 import { useToast } from 'ui/Toast';
+import { ConfirmDialog } from 'ui/ConfirmDialog';
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -110,6 +111,8 @@ export function CommentSection({
   const [editPendingFiles, setEditPendingFiles] = useState<File[]>([]);
   const [editKeptAttachments, setEditKeptAttachments] = useState<CommentAttachment[]>([]);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  // 삭제 확인 다이얼로그 (네이티브 confirm 대체)
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const editFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -241,7 +244,7 @@ export function CommentSection({
   };
 
   const handleDelete = async (commentId: string) => {
-    if (!window.confirm(labels.confirmDelete)) return;
+    setPendingDeleteId(null);
     try {
       const res = await api(getDeleteCommentUrl(commentId), { method: 'DELETE' });
       const json = await res.json();
@@ -397,6 +400,20 @@ export function CommentSection({
     );
   };
 
+  // 삭제 확인 다이얼로그 (compact / full 두 렌더 경로 공용)
+  const deleteConfirmDialog = (
+    <ConfirmDialog
+      isOpen={pendingDeleteId !== null}
+      title={labels.delete}
+      message={labels.confirmDelete}
+      confirmLabel={labels.delete}
+      cancelLabel={labels.cancel}
+      danger
+      onConfirm={() => { if (pendingDeleteId) handleDelete(pendingDeleteId); }}
+      onCancel={() => setPendingDeleteId(null)}
+    />
+  );
+
   // ── Compact mode ─────────────────────────────────────────────────────────
   if (compact) {
     return (
@@ -497,7 +514,7 @@ export function CommentSection({
                                   <Edit2 size={10} />
                                 </button>
                                 <button type="button"
-                                  onClick={() => handleDelete(comment.id)}
+                                  onClick={() => setPendingDeleteId(comment.id)}
                                   className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/20 text-[var(--text-muted)] hover:text-red-500 transition-colors border-none bg-transparent cursor-pointer" title={labels.delete}>
                                   <Trash2 size={10} />
                                 </button>
@@ -559,6 +576,7 @@ export function CommentSection({
             </form>
           </>
         )}
+        {deleteConfirmDialog}
       </div>
     );
   }
@@ -611,7 +629,7 @@ export function CommentSection({
                         <Edit2 size={10} />{labels.edit}
                       </button>
                       <button type="button"
-                        onClick={() => handleDelete(comment.id)}
+                        onClick={() => setPendingDeleteId(comment.id)}
                         className="flex items-center gap-1 px-2 py-1 text-xs border border-red-200 dark:border-red-800/50 rounded-lg text-red-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all cursor-pointer bg-transparent font-medium">
                         <Trash2 size={10} />{labels.delete}
                       </button>
@@ -743,6 +761,7 @@ export function CommentSection({
           </div>
         </div>
       </form>
+      {deleteConfirmDialog}
     </div>
   );
 }

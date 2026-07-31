@@ -261,6 +261,20 @@ export interface Post {
   attachments?: Attachment[];
   popup_start_date?: string | null;
   popup_end_date?: string | null;
+  /** 공지 상단 고정 여부 */
+  is_pinned?: boolean;
+  /** 상세 조회 수 */
+  view_count?: number;
+  /** 목록 응답에 포함되는 첨부 개수 */
+  attachment_count?: number;
+  /** 목록 응답에 포함되는 첨부 총 용량(바이트) */
+  attachment_total_size?: number;
+}
+
+/** 게시글 상세의 이전/다음 글 네비게이션 (`GET /api/posts/:id/adjacent`) */
+export interface AdjacentPosts {
+  prev: { id: string; title: string } | null;
+  next: { id: string; title: string } | null;
 }
 
 export interface Notification {

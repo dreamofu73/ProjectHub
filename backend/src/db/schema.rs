@@ -499,6 +499,8 @@ async fn create_board_tables(pool: &AnyPool, kind: DbKind) {
             .col(text_nn("category"))
             .col(text("popup_start_date"))
             .col(text("popup_end_date"))
+            .col(int_nn("is_pinned", 0))
+            .col(int_nn("view_count", 0))
             .col(text_nn("created_at"))
             .col(text_nn("updated_at"))
             .to_owned(),
@@ -1095,6 +1097,10 @@ async fn apply_legacy_upgrades(pool: &AnyPool) {
     add_column(pool, "issues", text("planned_start_date")).await;
     add_column(pool, "issues", text("actual_start_date")).await;
     add_column(pool, "issues", text("actual_end_date")).await;
+
+    // 게시판: 공지 상단고정 / 조회수 (구버전 DB 따라잡기)
+    add_column(pool, "posts", int_nn("is_pinned", 0)).await;
+    add_column(pool, "posts", int_nn("view_count", 0)).await;
 
     add_column(pool, "messages", text("edited_at")).await;
 

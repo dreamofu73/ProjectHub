@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Paperclip, FileText, Download, Eye, X, Image, File, ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
 import { Button } from './Button';
+import { useToast } from './Toast';
 import { api, fetchBlobUrl } from 'shared/lib/api';
 
 import type { Attachment } from 'shared/types';
@@ -50,7 +51,7 @@ function getFileIcon(category: FileCategory) {
 }
 
 // ─── 다운로드 핸들러 ─────────────────────────────────────────────────────────
-async function handleDownload(e: React.MouseEvent, file: Attachment) {
+async function handleDownload(e: React.MouseEvent, file: Attachment, onError?: (message: string) => void) {
   e.preventDefault();
   e.stopPropagation();
   try {
@@ -63,7 +64,7 @@ async function handleDownload(e: React.MouseEvent, file: Attachment) {
     document.body.removeChild(link);
     setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
   } catch {
-    alert('파일을 다운로드할 수 없습니다.');
+    onError?.('파일을 다운로드할 수 없습니다.');
   }
 }
 
@@ -285,6 +286,9 @@ function PreviewModal({ file, onClose, onDownload }: PreviewModalProps) {
 export function AttachmentList({ attachments, onDownloadAll, onDownloadSelected, className = '' }: AttachmentListProps) {
   const [previewFile, setPreviewFile] = useState<Attachment | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const { showToast } = useToast();
+  // 네이티브 alert 대체 — 다운로드 실패를 앱 토스트로 알림
+  const notifyDownloadError = useCallback((message: string) => showToast(message, 'error'), [showToast]);
 
   if (!attachments || attachments.length === 0) return null;
 
@@ -394,7 +398,7 @@ export function AttachmentList({ attachments, onDownloadAll, onDownloadSelected,
                         type="button"
                         title="다운로드"
                         className="inline-flex w-7 h-7 items-center justify-center rounded-md text-gray-400 hover:text-primary hover:bg-primary-bg transition-colors"
-                        onClick={(e) => handleDownload(e, file)}
+                        onClick={(e) => handleDownload(e, file, notifyDownloadError)}
                       >
                         <Download size={15} />
                       </button>
@@ -412,7 +416,7 @@ export function AttachmentList({ attachments, onDownloadAll, onDownloadSelected,
         <PreviewModal
           file={previewFile}
           onClose={() => setPreviewFile(null)}
-          onDownload={(e) => handleDownload(e, previewFile)}
+          onDownload={(e) => handleDownload(e, previewFile, notifyDownloadError)}
         />
       )}
     </>
