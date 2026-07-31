@@ -7,6 +7,7 @@
       "Grep",
       "Edit(./**)",
       "Write(./**)",
+      "MultiEdit(./**)",
       "NotebookEdit(./**)"
     ],
     "defaultMode": "acceptEdits"
