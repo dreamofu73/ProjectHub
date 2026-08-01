@@ -1185,6 +1185,11 @@ async fn create_indexes(pool: &AnyPool) {
     create_index(pool, unique_index("idx_wiki_pages_uuid", "wiki_pages", &["uuid"])).await;
     create_index(
         pool,
+        unique_index("uq_chat_room_members", "chat_room_members", &["room_id", "user_id"]),
+    )
+    .await;
+    create_index(
+        pool,
         unique_index("uq_user_group_members", "user_group_members", &["group_id", "user_id"]),
     )
     .await;

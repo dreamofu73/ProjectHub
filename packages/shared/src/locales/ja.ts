@@ -650,7 +650,7 @@ const ja: Record<string, string> = {
   unspecified: '未指定',
   // Tasks Page
   addNewTask: '新規タスク追加',
-  task_type: 'タイプ',
+  task_type: 'タスクタイプ',
   task_category: 'カテゴリ',
   planned_dates: '計画日程',
   actual_dates: '実績日程',

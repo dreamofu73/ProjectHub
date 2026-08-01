@@ -647,7 +647,7 @@ const zh: Record<string, string> = {
   unspecified: '未指定',
   // Tasks Page
   addNewTask: '新建任务',
-  task_type: '类型',
+  task_type: '任务类型',
   task_category: '分类',
   planned_dates: '计划日期',
   actual_dates: '实际日期',

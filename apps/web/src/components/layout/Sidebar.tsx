@@ -130,7 +130,7 @@ export function Sidebar() {
   const wikiTree = useMemo(() => buildWikiTree((wikiList as WikiPage[]) || []), [wikiList]);
 
   return (
-    <aside className="sidebar relative overflow-visible h-[calc(100vh-var(--header-height))] sticky top-0 z-40 border-r border-slate-200 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/30" aria-label={t('sidebar') || '사이드바 네비게이션'}>
+    <aside className="sidebar relative overflow-visible h-[calc(100vh-var(--header-height))] sticky top-0 z-40 border-r border-[var(--border)] bg-slate-50/30 dark:bg-slate-900/30" aria-label={t('sidebar') || '사이드바 네비게이션'}>
       <div className={`flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar flex flex-col ${isSidebarCollapsed ? 'p-2' : 'p-4'} pb-14 justify-between h-full`}>
         <div>
           {/* 프로젝트 메뉴 사이드바 (초기화면 / 멤버 / 설정) */}
@@ -392,7 +392,7 @@ export function Sidebar() {
                           placeholder="폴더명..."
                           value={newFolderName}
                           onChange={(e) => setNewFolderName(e.target.value)}
-                          className="w-full h-7 px-2 border border-slate-200 dark:border-slate-800 rounded bg-white dark:bg-slate-950 text-xs focus:outline-none text-foreground"
+                          className="w-full h-7 px-2 border border-[var(--border)] rounded bg-white dark:bg-slate-950 text-xs focus:outline-none text-foreground"
                           autoFocus
                           aria-label="새 폴더 이름 입력"
                         />
@@ -428,7 +428,7 @@ export function Sidebar() {
                                     setEditingFolderId(null);
                                   }
                                 }}
-                                className="w-full h-7 px-2 border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-950 text-xs focus:outline-none text-foreground"
+                                className="w-full h-7 px-2 border border-[var(--border)] rounded-lg bg-white dark:bg-slate-950 text-xs focus:outline-none text-foreground"
                                 autoFocus
                                 aria-label="폴더 이름 변경 입력"
                               />
@@ -475,7 +475,7 @@ export function Sidebar() {
                       </li>
                     ))}
                     {customFolders.length === 0 && !isAddingFolder && (
-                      <li className="text-xs text-slate-400 dark:text-slate-500 pl-3 py-1">생성된 폴더가 없습니다.</li>
+                      <li className="text-xs text-[var(--text-muted)] pl-3 py-1">생성된 폴더가 없습니다.</li>
                     )}
                   </>
                 )}
@@ -576,12 +576,12 @@ export function Sidebar() {
             <div className="sidebar-section animate-in fade-in duration-300">
               {!isSidebarCollapsed && (
                 <div className="flex items-center justify-between px-2 py-1.5 mb-2">
-                  <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider select-none">
+                  <span className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider select-none">
                     {t('channel')}
                   </span>
                   <button
                     onClick={() => window.dispatchEvent(new CustomEvent('open_create_chat_room'))}
-                    className="w-6 h-6 rounded-lg flex items-center justify-center text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border-none bg-transparent cursor-pointer"
+                    className="w-6 h-6 rounded-lg flex items-center justify-center text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-[var(--bg-surface-2)] transition-colors border-none bg-transparent cursor-pointer"
                     title={t('chatNewRoomBtn') || '새 채널 생성'}
                   >
                     <Plus size={14} />
@@ -602,16 +602,16 @@ export function Sidebar() {
                           onClick={() => navigate(`${location.pathname.split('?')[0]}?room=${room.id}`)}
                           className={`relative w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm transition-all cursor-pointer border-none text-left ${
                             isActive
-                              ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-semibold'
-                              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-800 dark:hover:text-slate-200 font-medium bg-transparent'
+                              ? 'bg-[var(--primary)]/10 text-[var(--primary)] font-semibold'
+                              : 'text-[var(--text-secondary)] hover:bg-[var(--bg-surface-2)] hover:text-[var(--text-primary)] font-medium bg-transparent'
                           } ${isSidebarCollapsed ? 'justify-center px-1' : ''}`}
                           aria-current={isActive ? 'true' : undefined}
                           aria-label={`${room.name}${unreadCount > 0 ? `, 안 읽은 메시지 ${unreadCount}개` : ''}`}
                         >
                           {isActive && !isSidebarCollapsed && (
-                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-indigo-500 rounded-r-full" />
+                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-[var(--primary)] rounded-r-full" />
                           )}
-                          <MessageSquare size={14} className={isActive ? 'text-indigo-500 shrink-0' : 'text-slate-400 dark:text-slate-600 shrink-0'} />
+                          <MessageSquare size={14} className={isActive ? 'text-[var(--primary)] shrink-0' : 'text-[var(--text-muted)] shrink-0'} />
                           {!isSidebarCollapsed && <span className="truncate flex-1">{room.name}</span>}
                           {unreadCount > 0 && (
                             <span className={`min-w-[18px] h-[18px] px-1.5 rounded-full bg-rose-500 text-white text-xs font-extrabold flex items-center justify-center shrink-0 ${isSidebarCollapsed ? 'absolute top-0 right-0' : 'ml-auto'}`}>
@@ -626,11 +626,11 @@ export function Sidebar() {
 
                 {chatRooms.length === 0 && !isSidebarCollapsed && (
                   <div className="flex flex-col items-center text-center py-8 px-3 gap-2">
-                    <MessageSquare size={24} className="text-slate-300 dark:text-slate-700" />
-                    <p className="text-xs text-slate-400 dark:text-slate-500">{t('chatNoProjectChannels') || '참여 중인 채널이 없습니다.'}</p>
+                    <MessageSquare size={24} className="text-[var(--text-muted)]" />
+                    <p className="text-xs text-[var(--text-muted)]">{t('chatNoProjectChannels') || '참여 중인 채널이 없습니다.'}</p>
                     <button
                       onClick={() => window.dispatchEvent(new CustomEvent('open_create_chat_room'))}
-                      className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline bg-transparent border-none cursor-pointer font-semibold"
+                      className="text-xs text-[var(--primary)] hover:underline bg-transparent border-none cursor-pointer font-semibold"
                       aria-label={t('addNewChannel') || '새 채널 추가'}
                     >
                       + {t('addNewChannel') || '채널 추가'}
@@ -662,13 +662,13 @@ export function Sidebar() {
 
               {!isSidebarCollapsed && (
                 <div className="relative w-full mb-2">
-                  <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+                  <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
                   <input
                     type="text"
                     placeholder={t('wikiSearchPlaceholder')}
                     value={wikiSearchQuery}
                     onChange={(e) => setWikiSearchQuery(e.target.value)}
-                    className="w-full pl-8 pr-2 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white dark:bg-slate-900 transition-all text-slate-700 dark:text-slate-200"
+                    className="w-full pl-8 pr-2 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-[var(--bg-surface-2)] focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-[var(--primary)] focus:bg-[var(--bg-surface)] transition-all text-slate-700 dark:text-slate-200"
                   />
                 </div>
               )}
@@ -696,7 +696,7 @@ export function Sidebar() {
                   ))
                 )}
                 {((wikiList as WikiPage[]) || []).filter(page => page.title.toLowerCase().includes(wikiSearchQuery.toLowerCase())).length === 0 && !isSidebarCollapsed && (
-                  <div className="text-xs text-slate-400 dark:text-slate-500 text-center py-4">
+                  <div className="text-xs text-[var(--text-muted)] text-center py-4">
                     {wikiSearchQuery ? t('noMatchingWiki') : t('noWikiPagesRegistered')}
                   </div>
                 )}

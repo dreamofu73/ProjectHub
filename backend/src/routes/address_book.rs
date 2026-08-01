@@ -2,7 +2,7 @@ use axum::{
     extract::{Extension, Path},
     response::Json,
     http::StatusCode,
-    routing::{get, put, delete},
+    routing::{get, delete},
     Router,
 };
 use std::sync::Arc;

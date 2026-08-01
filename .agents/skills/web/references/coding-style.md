@@ -1,0 +1,1 @@
+../../../../../.claude/rules/ecc/web/coding-style.md

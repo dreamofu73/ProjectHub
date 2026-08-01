@@ -1,0 +1,1 @@
+../../../../../.claude/rules/ecc/react/coding-style.md

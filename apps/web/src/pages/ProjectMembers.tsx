@@ -54,16 +54,10 @@ export default function ProjectMembersPage() {
   const {
     showAddModal,
     setShowAddModal,
-    addUserSearch,
-    setAddUserSearch,
-    selectedUserIds,
     addRole,
     setAddRole,
     addError,
     adding,
-    filteredAvailable,
-    toggleUserSelection,
-    toggleAllAvailable,
     closeAddModal,
     handleAddMembers,
   } = useAddMemberModal(id, members, allUsers, fetchMembers);
@@ -204,12 +198,8 @@ export default function ProjectMembersPage() {
       <AddMemberModal
         show={showAddModal}
         onClose={closeAddModal}
-        addUserSearch={addUserSearch}
-        setAddUserSearch={setAddUserSearch}
-        selectedUserIds={selectedUserIds}
-        toggleUserSelection={toggleUserSelection}
-        toggleAllAvailable={toggleAllAvailable}
-        filteredAvailable={filteredAvailable}
+        allUsers={allUsers}
+        initialMemberIds={members.map(m => m.user_id)}
         addRole={addRole}
         setAddRole={(role) => setAddRole(role as 'manager' | 'developer' | 'reporter' | 'viewer' | 'lead' | 'overseer')}
         ROLE_OPTIONS={ROLE_OPTIONS}

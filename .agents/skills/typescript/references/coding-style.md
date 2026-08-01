@@ -1,0 +1,1 @@
+../../../../../.claude/rules/ecc/typescript/coding-style.md

@@ -1,0 +1,1 @@
+../../../../../.claude/rules/ecc/web/design-quality.md

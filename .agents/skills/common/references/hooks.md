@@ -1,0 +1,1 @@
+../../../../../.claude/rules/ecc/common/hooks.md

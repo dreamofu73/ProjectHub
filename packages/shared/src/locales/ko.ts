@@ -650,7 +650,7 @@ const ko: Record<string, string> = {
   unspecified: '미지정',
   // Tasks Page
   addNewTask: '새 일감 추가',
-  task_type: '유형',
+  task_type: '작업유형',
   task_category: '카테고리',
   planned_dates: '계획 일정',
   actual_dates: '실제 일정',

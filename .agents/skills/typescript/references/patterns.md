@@ -1,0 +1,1 @@
+../../../../../.claude/rules/ecc/typescript/patterns.md

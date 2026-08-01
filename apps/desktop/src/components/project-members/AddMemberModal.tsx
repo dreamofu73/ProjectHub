@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import { UserPlus, X, Search, Check } from 'lucide-react';
 import { Card, CardBody } from 'ui/Card';
 import { Button } from 'ui/Button';
@@ -49,10 +50,10 @@ export function AddMemberModal({
 
   if (!show) return null;
 
-  return (
+  return createPortal(
     <div
       ref={containerRef}
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-[300] p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="add-member-title"
@@ -181,6 +182,7 @@ export function AddMemberModal({
           </div>
         </CardBody>
       </Card>
-    </div>
+    </div>,
+    document.body
   );
 }

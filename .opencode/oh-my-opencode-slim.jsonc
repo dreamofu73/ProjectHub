@@ -1,6 +1,6 @@
 {
   "$schema": "https://unpkg.com/oh-my-opencode-slim@latest/oh-my-opencode-slim.schema.json",
-  "preset": "google",
+  "preset": "opencode",
   "presets": {
     "opencode": {
       "orchestrator": {
@@ -82,7 +82,7 @@
         "mcps": []
       }
     },
-	"google": {
+    "google": {
       "orchestrator": {
         "model": "google/antigravity-gemini-3.1-pro",
         "skills": [

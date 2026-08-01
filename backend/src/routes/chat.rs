@@ -8,7 +8,7 @@ use axum::{
 use std::sync::Arc;
 use serde_json::{json, Value};
 use sqlx::{AnyPool, Row};
-use sea_query::{Asterisk, Expr, ExprTrait, JoinType, OnConflict, Order, Query as SeaQuery};
+use sea_query::{Asterisk, Expr, ExprTrait, Func, JoinType, OnConflict, Order, Query as SeaQuery};
 use crate::auth::AuthUser;
 use crate::models::ChatRoom;
 use tokio::sync::broadcast;
@@ -21,6 +21,7 @@ pub fn router() -> crate::routes::ProtectedRoutes {
             .route("/chat/rooms", get(get_chat_rooms))
             .route("/chat/rooms/:room_id/members", get(get_chat_room_members))
             .route("/chat/rooms/:room_id/members", post(add_chat_room_member))
+            .route("/chat/rooms/:room_id/members/:user_id", delete(remove_chat_room_member))
             .route("/chat/rooms/:room_id/leave", post(leave_chat_room))
             .route("/chat", get(get_messages))
             .route("/chat", post(send_message))
@@ -151,6 +152,86 @@ async fn add_chat_room_member(
 
 
     Ok(Json(json!({ "success": true })))
+}
+
+async fn remove_chat_room_member(
+    Path((room_id_str, user_id_str)): Path<(String, String)>,
+    current_user: AuthUser,
+    Extension(pool): Extension<Arc<AnyPool>>,
+) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    let room_id = crate::serde_utils::parse_path_id(&room_id_str)?;
+    let target_user_id = crate::serde_utils::parse_path_id(&user_id_str)?;
+
+    // Check if current user is room creator (owner) or removing themselves
+    let stmt = SeaQuery::select()
+        .columns([sea_query::Alias::new("id")])
+        .from(sea_query::Alias::new("chat_rooms"))
+        .and_where(Expr::col(sea_query::Alias::new("id")).eq(room_id))
+        .to_owned();
+
+    let room = crate::db::fetch_optional(&pool, &stmt).await.map_err(|e| {
+        (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()})))
+    })?;
+
+    let room = match room {
+        Some(r) => r,
+        None => return Err((StatusCode::NOT_FOUND, Json(json!({"success": false, "error": "채팅방을 찾을 수 없습니다."})))),
+    };
+
+    let _room = room;
+    // Note: chat_rooms doesn't have creator_id column, need to check chat_room_members for first member
+    // For now, allow users to remove themselves, and room creators to remove others
+    // We'll check if current user is the one being removed, or if they're the room "owner"
+    
+    // Check if target user is in the room
+    let member_stmt = SeaQuery::select()
+        .expr(Func::count(Expr::col("id")))
+        .from("chat_room_members")
+        .and_where(Expr::col("room_id").eq(room_id).into())
+        .and_where(Expr::col("user_id").eq(target_user_id).into())
+        .to_owned();
+
+    let is_member: i64 = crate::db::fetch_scalar(&pool, &member_stmt).await.map_err(|e| {
+        (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()})))
+    })?;
+
+    if is_member == 0 {
+        return Err((StatusCode::NOT_FOUND, Json(json!({"success": false, "error": "해당 사용자는 이 채팅방의 멤버가 아닙니다."}))));
+    }
+
+    // Allow: removing yourself, or if you're the room creator (first member)
+    let is_self = target_user_id == current_user.id;
+    
+    // Check if current user is room creator (first member of the room)
+    let creator_stmt = SeaQuery::select()
+        .column("user_id")
+        .from("chat_room_members")
+        .and_where(Expr::col("room_id").eq(room_id).into())
+        .order_by("joined_at", Order::Asc)
+        .limit(1)
+        .to_owned();
+
+    let creator_row = crate::db::fetch_optional(&pool, &creator_stmt).await.map_err(|e| {
+        (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()})))
+    })?;
+
+    let is_creator = creator_row.map(|r| r.get::<i64, _>("user_id") == current_user.id).unwrap_or(false);
+
+    if !is_self && !is_creator {
+        return Err((StatusCode::FORBIDDEN, Json(json!({"success": false, "error": "멤버를 내보낼 권한이 없습니다."}))));
+    }
+
+    let stmt = SeaQuery::delete()
+        .from_table("chat_room_members")
+        .and_where(Expr::col("room_id").eq(room_id).into())
+        .and_where(Expr::col("user_id").eq(target_user_id).into())
+        .to_owned();
+
+    crate::db::execute(&pool, &stmt).await.map_err(|e| {
+        (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()})))
+    })?;
+
+    Ok(Json(json!({"success": true})))
 }
 
 async fn get_messages(
