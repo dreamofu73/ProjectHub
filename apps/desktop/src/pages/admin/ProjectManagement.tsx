@@ -14,7 +14,7 @@ export default function ProjectManagement() {
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      const url = statusFilter === 'all' ? '/api/projects' : `/api/projects?status=${statusFilter}`;
+      const url = `/api/projects?status=${statusFilter}`;
       const res = await apiJson<ApiResponse<Project[]>>(url);
       setProjects(res.data);
     } catch (err) {
@@ -52,7 +52,7 @@ export default function ProjectManagement() {
           onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'archived')}
           className="bg-[var(--bg-surface)] border border-[var(--border)] rounded px-3 py-2"
         >
-          <option value="all">{t('allProjects') || '모든 프로젝트'}</option>
+          <option value="all">{t('allProjectsFilter') || '모든 프로젝트'}</option>
           <option value="active">{t('activeProjectsOnly') || '활성 프로젝트만'}</option>
           <option value="archived">{t('archivedProjectsOnly') || '보관된 프로젝트만'}</option>
         </select>
