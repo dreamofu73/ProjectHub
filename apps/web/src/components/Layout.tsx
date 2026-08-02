@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, type ReactNode } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo, type ReactNode } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { LayoutDashboard, Bug, BookOpen, FileText, Bell, FolderKanban, Mail, Archive, MessageSquare, Settings, CheckSquare } from 'lucide-react';
 import { useToast } from 'ui/Toast';
@@ -212,7 +212,12 @@ export default function Layout({ children }: LayoutProps) {
 
   // --- Chat Rooms ---
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
-  const [chatUnreadCounts] = useState<Record<string, number>>({});
+  const chatUnreadCounts = useMemo(() => {
+    return chatRooms.reduce((acc, room) => {
+      acc[room.id] = room.unread_count || 0;
+      return acc;
+    }, {} as Record<string, number>);
+  }, [chatRooms]);
 
   // --- Wiki State ---
   const [wikiList, setWikiList] = useState<any[]>([]);

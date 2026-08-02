@@ -24,20 +24,38 @@ export default function ChatPage() {
 
   const [activeRoom, setActiveRoom] = useState<{ id: string; name: string } | null>(null);
   const activeRoomRef = useRef(activeRoom);
+  const [isEditingRoomName, setIsEditingRoomName] = useState(false);
+  const [editingRoomName, setEditingRoomName] = useState('');
+  const [isSavingRoomName, setIsSavingRoomName] = useState(false);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const roomIdParam = searchParams.get('room');
 
-  const { messages, setMessages, chatRooms, fetchChatRooms, fetchMessages, isLoadingMessages } = useChat(activeRoom, currentUser);
+  const { messages, setMessages, chatRooms, fetchChatRooms, fetchMessages, fetchMoreMessages, isLoadingMessages, isFetchingMore, hasMore } = useChat(activeRoom, currentUser);
+  const observerTarget = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && hasMore && !isFetchingMore && !isLoadingMessages) {
+          fetchMoreMessages();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => observer.disconnect();
+  }, [hasMore, isFetchingMore, isLoadingMessages, fetchMoreMessages]);
 
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isCreateRoomOpen, setIsCreateRoomOpen] = useState(false);
   const [isGroupManagerOpen, setIsGroupManagerOpen] = useState(false);
-  const [newRoomName, setNewRoomName] = useState('');
-  const [isCreatingRoom, setIsCreatingRoom] = useState(false);
-  const [createRoomUsers, setCreateRoomUsers] = useState<UserInfo[]>([]);
-  const [createRoomSelectedUsers, setCreateRoomSelectedUsers] = useState<string[]>([]);
+
 
   const [isMembersOpen, setIsMembersOpen] = useState(false);
   const [isUploadingFile, setIsUploadingFile] = useState(false);
@@ -136,8 +154,13 @@ export default function ChatPage() {
         const wasReconnect = reconnectAttemptsRef.current > 0;
         reconnectAttemptsRef.current = 0;
         setWsConnected(true);
-        // 재연결 시 끊긴 동안 누락된 메시지를 보정
-        if (wasReconnect) fetchMessagesRef.current();
+        if (wasReconnect) {
+          setMessages(prev => {
+            const sinceId = prev.length > 0 ? prev[prev.length - 1].id : undefined;
+            fetchMessagesRef.current(sinceId);
+            return prev;
+          });
+        }
       };
 
       ws.onmessage = (event) => {
@@ -426,6 +449,34 @@ export default function ChatPage() {
     setConfirmDialog({ title: t('chatLeaveBtn'), message: t('chatLeaveConfirm'), confirmLabel: t('confirm'), danger: true, action: doLeaveRoom });
   };
 
+  const handleRenameRoom = async () => {
+    if (!activeRoom || !editingRoomName.trim() || editingRoomName === activeRoom.name) {
+      setIsEditingRoomName(false);
+      return;
+    }
+    setIsSavingRoomName(true);
+    try {
+      const res = await api(`/api/chat/rooms/${activeRoom.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: editingRoomName.trim() })
+      });
+      const json = await res.json();
+      if (json.success) {
+        setActiveRoom(prev => prev ? { ...prev, name: editingRoomName.trim() } : prev);
+        setIsEditingRoomName(false);
+        fetchChatRooms();
+        window.dispatchEvent(new CustomEvent('refresh_chat_rooms'));
+      } else {
+        showToast(json.error || t('errOccurred') || '이름 변경 실패', 'error');
+      }
+    } catch {
+      showToast(t('errOccurred') || '이름 변경 실패', 'error');
+    } finally {
+      setIsSavingRoomName(false);
+    }
+  };
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length) await uploadFiles(files);
@@ -449,40 +500,7 @@ export default function ChatPage() {
     });
   }, [newMessage]);
 
-  useEffect(() => {
-    if (isCreateRoomOpen) {
-      api('/api/users').then(res => res.json()).then(json => {
-        if (json.success) setCreateRoomUsers((json.data || []).filter((u: UserInfo) => u.id !== (currentUser.id ? String(currentUser.id) : 1)));
-      });
-    }
-  }, [isCreateRoomOpen, currentUser.id]);
 
-  const handleCreateRoom = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newRoomName.trim()) return;
-    setIsCreatingRoom(true);
-    try {
-      const res = await api('/api/chat/rooms', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newRoomName, user_id: currentUser.id ? String(currentUser.id) : 1 })
-      });
-      const json = await res.json();
-      if (json.success) {
-        for (const userId of createRoomSelectedUsers) {
-          await api(`/api/chat/rooms/${json.id}/members`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: userId }) });
-        }
-        showToast(t('chatRoomCreateSuccess'), 'success');
-        setIsCreateRoomOpen(false);
-        setNewRoomName('');
-        setCreateRoomSelectedUsers([]);
-        window.dispatchEvent(new CustomEvent('refresh_chat_rooms'));
-        fetchChatRooms();
-        setSearchParams({ room: json.id.toString() });
-      }
-    } catch { showToast(t('errOccurred'), 'error'); }
-    finally { setIsCreatingRoom(false); }
-  };
 
   useEffect(() => {
     const originalOverflow = document.body.style.overflow;
@@ -506,7 +524,31 @@ export default function ChatPage() {
               </div>
             )}
             <div className="flex items-center justify-between px-6 py-3.5 border-b border-[var(--border)] shrink-0 bg-[var(--bg-surface)]">
-              <div className="flex items-center gap-2 min-w-0"><Hash size={17} className="text-slate-400 shrink-0" /><h2 className="text-base font-bold text-[var(--text-primary)] truncate">{activeRoom.name}</h2></div>
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <Hash size={17} className="text-slate-400 shrink-0" />
+                {isEditingRoomName ? (
+                  <input
+                    type="text"
+                    value={editingRoomName}
+                    onChange={(e) => setEditingRoomName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleRenameRoom();
+                      else if (e.key === 'Escape') setIsEditingRoomName(false);
+                    }}
+                    onBlur={() => { if (!isSavingRoomName) setIsEditingRoomName(false); }}
+                    className="flex-1 max-w-sm px-2 py-1 text-base font-bold text-[var(--text-primary)] bg-[var(--bg-surface-2)] border border-[var(--border)] rounded outline-none focus:border-[var(--primary)]"
+                    autoFocus
+                    disabled={isSavingRoomName}
+                  />
+                ) : (
+                  <>
+                    <h2 className="text-base font-bold text-[var(--text-primary)] truncate">{activeRoom.name}</h2>
+                    <button onClick={() => { setEditingRoomName(activeRoom.name); setIsEditingRoomName(true); }} className="w-6 h-6 flex items-center justify-center rounded text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 border-none bg-transparent cursor-pointer ml-1" title={t('edit') || '이름 변경'} aria-label={t('edit') || '이름 변경'}>
+                      <Pencil size={13} />
+                    </button>
+                  </>
+                )}
+              </div>
               <div className="flex items-center gap-1.5 shrink-0">
                 <button onClick={() => setShowSearch(s => !s)} className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors border-none bg-transparent cursor-pointer ${showSearch ? 'text-[var(--primary)] bg-[var(--primary)]/10' : 'text-[var(--text-muted)] hover:bg-[var(--bg-surface-2)]'}`} title={t('search') || '검색'} aria-label={t('search') || '검색'}><Search size={15} /></button>
                 <button onClick={() => setIsMembersOpen(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-[var(--text-secondary)] hover:bg-[var(--bg-surface-2)] transition-colors border-none bg-transparent cursor-pointer whitespace-nowrap"><Users size={13} />{t('members')}</button>
@@ -548,6 +590,11 @@ export default function ChatPage() {
                 <div className="flex-1 flex flex-col items-center justify-center text-center gap-4 py-20"><div className="w-16 h-16 rounded-2xl bg-[var(--bg-surface-2)] flex items-center justify-center"><Hash size={28} className="text-[var(--text-muted)]" /></div><div><p className="text-sm font-bold text-[var(--text-secondary)]">{t('welcomeToChannel').replace('{name}', activeRoom.name)}</p><p className="text-xs text-[var(--text-muted)] mt-1.5">{t('sendFirstMessage')}</p></div></div>
               ) : (
                 <>
+                  {hasMore && (
+                    <div ref={observerTarget} className="w-full h-10 flex justify-center items-center shrink-0">
+                      {isFetchingMore && <div className="w-5 h-5 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin"></div>}
+                    </div>
+                  )}
                   {messages.map((msg, index) => {
                     const isMe = msg.author_login === currentUser.login;
                     const prevMsg = index > 0 ? messages[index - 1] : null;
@@ -615,7 +662,18 @@ export default function ChatPage() {
         )}
       </div>
 
-      <CreateRoomModal isOpen={isCreateRoomOpen} onClose={() => setIsCreateRoomOpen(false)} newRoomName={newRoomName} setNewRoomName={setNewRoomName} handleCreateRoom={handleCreateRoom} isCreatingRoom={isCreatingRoom} createRoomUsers={createRoomUsers} createRoomSelectedUsers={createRoomSelectedUsers} handleToggleCreateRoomUser={(id) => setCreateRoomSelectedUsers(prev => prev.includes(id) ? prev.filter(uid => uid !== id) : [...prev, id])} t={t} showToast={showToast} />
+      <CreateRoomModal
+        isOpen={isCreateRoomOpen}
+        onClose={() => setIsCreateRoomOpen(false)}
+        currentUser={currentUser}
+        t={t}
+        showToast={showToast}
+        onRoomCreated={(roomId) => {
+          window.dispatchEvent(new CustomEvent('refresh_chat_rooms'));
+          fetchChatRooms();
+          setSearchParams({ room: roomId });
+        }}
+      />
 
       <UserGroupManager
         isOpen={isGroupManagerOpen}

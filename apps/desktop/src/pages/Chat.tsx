@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Send, UserPlus, Users, X, MessageSquare, Paperclip, Download, Trash2, Hash, LogOut, Shield, Check, ArrowDown, WifiOff, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Search, ChevronUp, ChevronDown, Pencil } from 'lucide-react';
-import { Button } from 'ui/Button';
+import { Send, Users, X, MessageSquare, Paperclip, Download, Trash2, Hash, LogOut, Shield, Check, ArrowDown, WifiOff, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Search, ChevronUp, ChevronDown, Pencil } from 'lucide-react';
 import { useToast } from 'ui/Toast';
 import { ConfirmDialog } from 'ui/ConfirmDialog';
 import { useLanguage } from '../context/LanguageContext';
@@ -12,6 +11,7 @@ import { useChat } from './chat/hooks/useChat';
 import { ChatFileAttachment } from './chat/components/ChatFileAttachment';
 import { CreateRoomModal } from './chat/components/CreateRoomModal';
 import { UserGroupManager } from './chat/components/UserGroupManager';
+import { ChatMemberManagerModal } from './chat/components/ChatMemberManagerModal';
 import { EmojiPicker } from './chat/components/EmojiPicker';
 
 export default function ChatPage() {
@@ -24,27 +24,40 @@ export default function ChatPage() {
 
   const [activeRoom, setActiveRoom] = useState<{ id: string; name: string } | null>(null);
   const activeRoomRef = useRef(activeRoom);
+  const [isEditingRoomName, setIsEditingRoomName] = useState(false);
+  const [editingRoomName, setEditingRoomName] = useState('');
+  const [isSavingRoomName, setIsSavingRoomName] = useState(false);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const roomIdParam = searchParams.get('room');
 
-  const { messages, setMessages, chatRooms, fetchChatRooms, fetchMessages, isLoadingMessages } = useChat(activeRoom, currentUser);
+  const { messages, setMessages, chatRooms, fetchChatRooms, fetchMessages, fetchMoreMessages, isLoadingMessages, isFetchingMore, hasMore } = useChat(activeRoom, currentUser);
+  const observerTarget = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && hasMore && !isFetchingMore && !isLoadingMessages) {
+          fetchMoreMessages();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => observer.disconnect();
+  }, [hasMore, isFetchingMore, isLoadingMessages, fetchMoreMessages]);
 
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isCreateRoomOpen, setIsCreateRoomOpen] = useState(false);
   const [isGroupManagerOpen, setIsGroupManagerOpen] = useState(false);
-  const [newRoomName, setNewRoomName] = useState('');
-  const [isCreatingRoom, setIsCreatingRoom] = useState(false);
-  const [createRoomUsers, setCreateRoomUsers] = useState<UserInfo[]>([]);
-  const [createRoomSelectedUsers, setCreateRoomSelectedUsers] = useState<string[]>([]);
 
-  const [isInviteOpen, setIsInviteOpen] = useState(false);
+
   const [isMembersOpen, setIsMembersOpen] = useState(false);
-  const [roomMembers, setRoomMembers] = useState<UserInfo[]>([]);
-  const [inviteUsers, setInviteUsers] = useState<UserInfo[]>([]);
-  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
-  const [isInviting, setIsInviting] = useState(false);
   const [isUploadingFile, setIsUploadingFile] = useState(false);
   const [uploadCount, setUploadCount] = useState<{ done: number; total: number } | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
@@ -141,8 +154,13 @@ export default function ChatPage() {
         const wasReconnect = reconnectAttemptsRef.current > 0;
         reconnectAttemptsRef.current = 0;
         setWsConnected(true);
-        // 재연결 시 끊긴 동안 누락된 메시지를 보정
-        if (wasReconnect) fetchMessagesRef.current();
+        if (wasReconnect) {
+          setMessages(prev => {
+            const sinceId = prev.length > 0 ? prev[prev.length - 1].id : undefined;
+            fetchMessagesRef.current(sinceId);
+            return prev;
+          });
+        }
       };
 
       ws.onmessage = (event) => {
@@ -431,6 +449,34 @@ export default function ChatPage() {
     setConfirmDialog({ title: t('chatLeaveBtn'), message: t('chatLeaveConfirm'), confirmLabel: t('confirm'), danger: true, action: doLeaveRoom });
   };
 
+  const handleRenameRoom = async () => {
+    if (!activeRoom || !editingRoomName.trim() || editingRoomName === activeRoom.name) {
+      setIsEditingRoomName(false);
+      return;
+    }
+    setIsSavingRoomName(true);
+    try {
+      const res = await api(`/api/chat/rooms/${activeRoom.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: editingRoomName.trim() })
+      });
+      const json = await res.json();
+      if (json.success) {
+        setActiveRoom(prev => prev ? { ...prev, name: editingRoomName.trim() } : prev);
+        setIsEditingRoomName(false);
+        fetchChatRooms();
+        window.dispatchEvent(new CustomEvent('refresh_chat_rooms'));
+      } else {
+        showToast(json.error || t('errOccurred') || '이름 변경 실패', 'error');
+      }
+    } catch {
+      showToast(t('errOccurred') || '이름 변경 실패', 'error');
+    } finally {
+      setIsSavingRoomName(false);
+    }
+  };
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length) await uploadFiles(files);
@@ -454,65 +500,7 @@ export default function ChatPage() {
     });
   }, [newMessage]);
 
-  useEffect(() => {
-    if (isCreateRoomOpen) {
-      api('/api/users').then(res => res.json()).then(json => {
-        if (json.success) setCreateRoomUsers((json.data || []).filter((u: UserInfo) => u.id !== (currentUser.id ? String(currentUser.id) : 1)));
-      });
-    }
-  }, [isCreateRoomOpen, currentUser.id]);
 
-  const handleCreateRoom = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newRoomName.trim()) return;
-    setIsCreatingRoom(true);
-    try {
-      const res = await api('/api/chat/rooms', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newRoomName, user_id: currentUser.id ? String(currentUser.id) : 1 })
-      });
-      const json = await res.json();
-      if (json.success) {
-        for (const userId of createRoomSelectedUsers) {
-          await api(`/api/chat/rooms/${json.id}/members`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: userId }) });
-        }
-        showToast(t('chatRoomCreateSuccess'), 'success');
-        setIsCreateRoomOpen(false);
-        setNewRoomName('');
-        setCreateRoomSelectedUsers([]);
-        window.dispatchEvent(new CustomEvent('refresh_chat_rooms'));
-        fetchChatRooms();
-        setSearchParams({ room: json.id.toString() });
-      }
-    } catch { showToast(t('errOccurred'), 'error'); }
-    finally { setIsCreatingRoom(false); }
-  };
-
-  useEffect(() => {
-    if (isMembersOpen && activeRoom) api(`/api/chat/rooms/${activeRoom.id}/members`).then(res => res.json()).then(json => setRoomMembers(json.data || []));
-  }, [isMembersOpen, activeRoom]);
-
-  useEffect(() => {
-    if (isInviteOpen && activeRoom) {
-        Promise.all([api('/api/users').then(r => r.json()), api(`/api/chat/rooms/${activeRoom.id}/members`).then(r => r.json())]).then(([uJson, mJson]) => {
-            const memberIds = (mJson.data || []).map((m: { user_id: string }) => m.user_id);
-            setInviteUsers((uJson.data || []).filter((u: UserInfo) => !memberIds.includes(u.id)));
-            setSelectedUsers([]);
-        });
-    }
-  }, [isInviteOpen, activeRoom]);
-
-  const handleInviteUsers = async () => {
-    if (selectedUsers.length === 0 || !activeRoom) return;
-    setIsInviting(true);
-    try {
-      for (const userId of selectedUsers) await api(`/api/chat/rooms/${activeRoom.id}/members`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: userId }) });
-      showToast(t('chatInviteSuccessCount').replace('{count}', selectedUsers.length.toString()), 'success');
-      setIsInviteOpen(false);
-    } catch { showToast(t('chatInviteFail'), 'error'); }
-    finally { setIsInviting(false); }
-  };
 
   useEffect(() => {
     const originalOverflow = document.body.style.overflow;
@@ -524,9 +512,9 @@ export default function ChatPage() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-105px)] relative" onDragEnter={(e) => { e.preventDefault(); dragCounter.current++; setIsDragging(true); }} onDragOver={(e) => e.preventDefault()} onDragLeave={(e) => { e.preventDefault(); dragCounter.current--; if (dragCounter.current === 0) setIsDragging(false); }} onDrop={async (e) => { e.preventDefault(); setIsDragging(false); dragCounter.current = 0; const files = Array.from(e.dataTransfer.files || []); if (files.length) await uploadFiles(files); }}>
-      {isDragging && <div className="absolute inset-0 bg-slate-950/40 dark:bg-black/70 backdrop-blur-md z-50 flex items-center justify-center rounded-2xl pointer-events-none border-2 border-dashed border-indigo-500"><div className="bg-white dark:bg-slate-900 px-8 py-6 rounded-2xl shadow-2xl flex flex-col items-center gap-4 max-w-xs text-center"><div className="w-14 h-14 bg-indigo-50 dark:bg-indigo-950/50 rounded-full flex items-center justify-center text-indigo-500 animate-bounce"><Paperclip size={28} /></div><p className="text-sm font-bold text-slate-900 dark:text-slate-100">{t('chatDragDropOverlay')}</p></div></div>}
+      {isDragging && <div className="absolute inset-0 bg-slate-950/40 dark:bg-black/70 backdrop-blur-md z-50 flex items-center justify-center rounded-2xl pointer-events-none border-2 border-dashed border-[var(--primary)]"><div className="bg-[var(--bg-surface)] px-8 py-6 rounded-2xl shadow-2xl flex flex-col items-center gap-4 max-w-xs text-center"><div className="w-14 h-14 bg-[var(--primary)]/10 rounded-full flex items-center justify-center text-[var(--primary)] animate-bounce"><Paperclip size={28} /></div><p className="text-sm font-bold text-slate-900 dark:text-slate-100">{t('chatDragDropOverlay')}</p></div></div>}
 
-      <div className="flex-1 flex overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm min-h-0 bg-white dark:bg-slate-900">
+      <div className="flex-1 flex overflow-hidden rounded-2xl border border-[var(--border)] shadow-sm min-h-0 bg-[var(--bg-surface)]">
         {activeRoom ? (
           <div className="flex-1 flex flex-col overflow-hidden relative">
             {!wsConnected && (
@@ -535,18 +523,41 @@ export default function ChatPage() {
                 <span>{t('chatReconnecting') || '연결이 끊겼습니다. 재연결 중…'}</span>
               </div>
             )}
-            <div className="flex items-center justify-between px-6 py-3.5 border-b border-slate-200 dark:border-slate-800 shrink-0 bg-white dark:bg-slate-900">
-              <div className="flex items-center gap-2 min-w-0"><Hash size={17} className="text-slate-400 shrink-0" /><h2 className="text-base font-bold text-slate-900 dark:text-white truncate">{activeRoom.name}</h2></div>
+            <div className="flex items-center justify-between px-6 py-3.5 border-b border-[var(--border)] shrink-0 bg-[var(--bg-surface)]">
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <Hash size={17} className="text-slate-400 shrink-0" />
+                {isEditingRoomName ? (
+                  <input
+                    type="text"
+                    value={editingRoomName}
+                    onChange={(e) => setEditingRoomName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleRenameRoom();
+                      else if (e.key === 'Escape') setIsEditingRoomName(false);
+                    }}
+                    onBlur={() => { if (!isSavingRoomName) setIsEditingRoomName(false); }}
+                    className="flex-1 max-w-sm px-2 py-1 text-base font-bold text-[var(--text-primary)] bg-[var(--bg-surface-2)] border border-[var(--border)] rounded outline-none focus:border-[var(--primary)]"
+                    autoFocus
+                    disabled={isSavingRoomName}
+                  />
+                ) : (
+                  <>
+                    <h2 className="text-base font-bold text-[var(--text-primary)] truncate">{activeRoom.name}</h2>
+                    <button onClick={() => { setEditingRoomName(activeRoom.name); setIsEditingRoomName(true); }} className="w-6 h-6 flex items-center justify-center rounded text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 border-none bg-transparent cursor-pointer ml-1" title={t('edit') || '이름 변경'} aria-label={t('edit') || '이름 변경'}>
+                      <Pencil size={13} />
+                    </button>
+                  </>
+                )}
+              </div>
               <div className="flex items-center gap-1.5 shrink-0">
-                <button onClick={() => setShowSearch(s => !s)} className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors border-none bg-transparent cursor-pointer ${showSearch ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/30' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`} title={t('search') || '검색'} aria-label={t('search') || '검색'}><Search size={15} /></button>
-                <button onClick={() => setIsMembersOpen(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border-none bg-transparent cursor-pointer whitespace-nowrap"><Users size={13} />{t('members')}</button>
-                <button onClick={() => setIsInviteOpen(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 transition-colors border border-indigo-200 dark:border-indigo-800/60 bg-transparent cursor-pointer whitespace-nowrap"><UserPlus size={13} />{t('chatInviteBtn')}</button>
+                <button onClick={() => setShowSearch(s => !s)} className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors border-none bg-transparent cursor-pointer ${showSearch ? 'text-[var(--primary)] bg-[var(--primary)]/10' : 'text-[var(--text-muted)] hover:bg-[var(--bg-surface-2)]'}`} title={t('search') || '검색'} aria-label={t('search') || '검색'}><Search size={15} /></button>
+                <button onClick={() => setIsMembersOpen(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-[var(--text-secondary)] hover:bg-[var(--bg-surface-2)] transition-colors border-none bg-transparent cursor-pointer whitespace-nowrap"><Users size={13} />{t('members')}</button>
                 <button onClick={handleLeaveRoom} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors border border-rose-200 dark:border-rose-800/60 bg-transparent cursor-pointer whitespace-nowrap"><LogOut size={13} />{t('chatLeaveBtn')}</button>
               </div>
             </div>
 
             {showSearch && (
-              <div className="flex items-center gap-2 px-6 py-2 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 shrink-0">
+              <div className="flex items-center gap-2 px-6 py-2 border-b border-[var(--border)] bg-[var(--bg-surface-2)] shrink-0">
                 <Search size={14} className="text-slate-400 shrink-0" />
                 <input
                   autoFocus
@@ -554,31 +565,36 @@ export default function ChatPage() {
                   onChange={(e) => { setSearchQuery(e.target.value); setSearchMatchIndex(0); }}
                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (e.shiftKey) searchPrev(); else searchNext(); } else if (e.key === 'Escape') closeSearch(); }}
                   placeholder={t('chatSearchPlaceholder') || '메시지 검색…'}
-                  className="flex-1 min-w-0 bg-transparent border-none outline-none text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500"
+                  className="flex-1 min-w-0 bg-transparent border-none outline-none text-sm text-[var(--text-primary)] placeholder-slate-400 dark:placeholder-slate-500"
                 />
-                <span className="text-xs text-slate-400 dark:text-slate-500 tabular-nums select-none shrink-0">{searchQuery.trim() ? `${searchMatches.length ? Math.min(searchMatchIndex, searchMatches.length - 1) + 1 : 0}/${searchMatches.length}` : ''}</span>
+                <span className="text-xs text-[var(--text-muted)] tabular-nums select-none shrink-0">{searchQuery.trim() ? `${searchMatches.length ? Math.min(searchMatchIndex, searchMatches.length - 1) + 1 : 0}/${searchMatches.length}` : ''}</span>
                 <button onClick={searchPrev} disabled={!searchMatches.length} className="w-6 h-6 flex items-center justify-center rounded text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30 border-none bg-transparent cursor-pointer" aria-label={t('prev') || '이전'}><ChevronUp size={14} /></button>
                 <button onClick={searchNext} disabled={!searchMatches.length} className="w-6 h-6 flex items-center justify-center rounded text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30 border-none bg-transparent cursor-pointer" aria-label={t('next') || '다음'}><ChevronDown size={14} /></button>
                 <button onClick={closeSearch} className="w-6 h-6 flex items-center justify-center rounded text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 border-none bg-transparent cursor-pointer" aria-label={t('cancel')}><X size={14} /></button>
               </div>
             )}
 
-            <div ref={scrollContainerRef} onScroll={() => { if (isNearBottom()) setShowNewMessageButton(false); }} className="flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-0 custom-scrollbar bg-white dark:bg-slate-900">
+            <div ref={scrollContainerRef} onScroll={() => { if (isNearBottom()) setShowNewMessageButton(false); }} className="flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-0 custom-scrollbar bg-[var(--bg-surface)]">
               {isLoadingMessages && messages.length === 0 ? (
                 <div className="flex flex-col gap-4 py-4">
                   {[...Array(6)].map((_, i) => (
                     <div key={i} className={`flex gap-3 ${i % 3 === 0 ? 'flex-row-reverse' : 'flex-row'}`}>
-                      {i % 3 !== 0 && <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 animate-pulse shrink-0" />}
+                      {i % 3 !== 0 && <div className="w-8 h-8 rounded-full bg-[var(--bg-surface-2)] animate-pulse shrink-0" />}
                       <div className="flex flex-col gap-1.5 max-w-[65%]">
-                        <div className="h-8 rounded-2xl bg-slate-100 dark:bg-slate-800 animate-pulse" style={{ width: `${120 + (i * 37) % 160}px` }} />
+                        <div className="h-8 rounded-2xl bg-[var(--bg-surface-2)] animate-pulse" style={{ width: `${120 + (i * 37) % 160}px` }} />
                       </div>
                     </div>
                   ))}
                 </div>
               ) : messages.length === 0 ? (
-                <div className="flex-1 flex flex-col items-center justify-center text-center gap-4 py-20"><div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center"><Hash size={28} className="text-slate-300 dark:text-slate-600" /></div><div><p className="text-sm font-bold text-slate-600 dark:text-slate-300">{t('welcomeToChannel').replace('{name}', activeRoom.name)}</p><p className="text-xs text-slate-400 dark:text-slate-500 mt-1.5">{t('sendFirstMessage')}</p></div></div>
+                <div className="flex-1 flex flex-col items-center justify-center text-center gap-4 py-20"><div className="w-16 h-16 rounded-2xl bg-[var(--bg-surface-2)] flex items-center justify-center"><Hash size={28} className="text-[var(--text-muted)]" /></div><div><p className="text-sm font-bold text-[var(--text-secondary)]">{t('welcomeToChannel').replace('{name}', activeRoom.name)}</p><p className="text-xs text-[var(--text-muted)] mt-1.5">{t('sendFirstMessage')}</p></div></div>
               ) : (
                 <>
+                  {hasMore && (
+                    <div ref={observerTarget} className="w-full h-10 flex justify-center items-center shrink-0">
+                      {isFetchingMore && <div className="w-5 h-5 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin"></div>}
+                    </div>
+                  )}
                   {messages.map((msg, index) => {
                     const isMe = msg.author_login === currentUser.login;
                     const prevMsg = index > 0 ? messages[index - 1] : null;
@@ -587,22 +603,22 @@ export default function ChatPage() {
                     return (
                       <div key={msg.id} data-mid={msg.id}>
                         {(!prevMsg || new Date(msg.created_at).toDateString() !== new Date(prevMsg.created_at).toDateString()) && (
-                          <div className="flex items-center gap-3 my-5 select-none"><div className="flex-1 h-px bg-slate-100 dark:bg-slate-800" /><span className="text-xs font-semibold text-slate-400 dark:text-slate-500 px-2">{getDateLabel(msg.created_at)}</span><div className="flex-1 h-px bg-slate-100 dark:bg-slate-800" /></div>
+                          <div className="flex items-center gap-3 my-5 select-none"><div className="flex-1 h-px bg-[var(--bg-surface-2)]" /><span className="text-xs font-semibold text-[var(--text-muted)] px-2">{getDateLabel(msg.created_at)}</span><div className="flex-1 h-px bg-[var(--bg-surface-2)]" /></div>
                         )}
                         <div className={`group flex gap-3 ${isMe ? 'flex-row-reverse' : 'flex-row'} ${isGroupStart ? 'mt-4' : 'mt-0.5'}`}>
                           {!isMe && <div className="w-8 shrink-0 self-end mb-0.5">{isGroupStart ? <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center text-white text-xs font-bold select-none shadow-sm">{(msg.author_name || msg.author_login).slice(0, 2).toUpperCase()}</div> : <div className="w-8" />}</div>}
                           <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[65%]`}>
-                            {!isMe && isGroupStart && <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5 ml-1 select-none">{msg.author_name || msg.author_login}</span>}
+                            {!isMe && isGroupStart && <span className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 ml-1 select-none">{msg.author_name || msg.author_login}</span>}
                             {fileMatch ? <ChatFileAttachment fileId={fileMatch[1]} filename={fileMatch[2]} isMe={isMe} onPreview={(fileId, filename) => openPreview(fileId, filename)} showToast={showToast} t={t} /> : editingId === msg.id ? (
                               <div className="flex flex-col gap-1.5 w-full min-w-[220px]">
-                                <textarea autoFocus value={editingText} onChange={(e) => setEditingText(e.target.value)} onKeyDown={(e) => { if (e.nativeEvent.isComposing) return; if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitEdit(msg.id); } else if (e.key === 'Escape') setEditingId(null); }} rows={1} className="px-3 py-2 rounded-xl text-sm bg-white dark:bg-slate-800 border border-indigo-300 dark:border-indigo-700 outline-none resize-none text-slate-800 dark:text-slate-100 custom-scrollbar leading-relaxed" />
+                                <textarea autoFocus value={editingText} onChange={(e) => setEditingText(e.target.value)} onKeyDown={(e) => { if (e.nativeEvent.isComposing) return; if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitEdit(msg.id); } else if (e.key === 'Escape') setEditingId(null); }} rows={1} className="px-3 py-2 rounded-xl text-sm bg-white dark:bg-slate-800 border border-[var(--primary)] outline-none resize-none text-[var(--text-primary)] custom-scrollbar leading-relaxed" />
                                 <div className={`flex items-center gap-2 text-xs ${isMe ? 'justify-end' : 'justify-start'}`}>
-                                  <button onClick={() => submitEdit(msg.id)} className="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold border-none cursor-pointer transition-colors">{t('save') || '저장'}</button>
-                                  <button onClick={() => setEditingId(null)} className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-semibold border-none cursor-pointer transition-colors">{t('cancel')}</button>
+                                  <button onClick={() => submitEdit(msg.id)} className="px-2.5 py-1 rounded-lg bg-[var(--primary)] hover:bg-[var(--primary)] text-white font-semibold border-none cursor-pointer transition-colors">{t('save') || '저장'}</button>
+                                  <button onClick={() => setEditingId(null)} className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-[var(--text-secondary)] font-semibold border-none cursor-pointer transition-colors">{t('cancel')}</button>
                                 </div>
                               </div>
-                            ) : <div className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed break-words whitespace-pre-wrap ${isMe ? 'bg-indigo-600 text-white rounded-br-sm shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 rounded-bl-sm'} ${msg.id === currentMatchMsgId ? 'ring-2 ring-amber-400 ring-offset-1 dark:ring-offset-slate-900' : ''}`}>{highlightContent(msg.content)}</div>}
-                            <div className={`flex items-center gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>{isMe && !fileMatch && <button onClick={() => startEdit(msg.id, msg.content)} className="w-5 h-5 rounded flex items-center justify-center text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 transition-colors border-none bg-transparent cursor-pointer" title={t('edit') || '수정'}><Pencil size={10} /></button>}{isMe && <button onClick={() => handleDeleteMessage(msg.id)} className="w-5 h-5 rounded flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors border-none bg-transparent cursor-pointer"><Trash2 size={10} /></button>}{msg.edited_at && <span className="text-xs text-slate-400 dark:text-slate-500 select-none italic px-0.5">{t('chatEdited') || '(수정됨)'}</span>}<span className="text-xs text-slate-400 dark:text-slate-500 select-none px-0.5">{formatTime(msg.created_at, { hour: '2-digit', minute: '2-digit' })}</span></div>
+                            ) : <div className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed break-words whitespace-pre-wrap ${isMe ? 'bg-[var(--primary)] text-white rounded-br-sm shadow-sm' : 'bg-[var(--bg-surface-2)] text-[var(--text-primary)] rounded-bl-sm'} ${msg.id === currentMatchMsgId ? 'ring-2 ring-amber-400 ring-offset-1 dark:ring-offset-slate-900' : ''}`}>{highlightContent(msg.content)}</div>}
+                            <div className={`flex items-center gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>{isMe && !fileMatch && <button onClick={() => startEdit(msg.id, msg.content)} className="w-5 h-5 rounded flex items-center justify-center text-slate-400 hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 transition-colors border-none bg-transparent cursor-pointer" title={t('edit') || '수정'}><Pencil size={10} /></button>}{isMe && <button onClick={() => handleDeleteMessage(msg.id)} className="w-5 h-5 rounded flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors border-none bg-transparent cursor-pointer"><Trash2 size={10} /></button>}{msg.edited_at && <span className="text-xs text-[var(--text-muted)] select-none italic px-0.5">{t('chatEdited') || '(수정됨)'}</span>}<span className="text-xs text-[var(--text-muted)] select-none px-0.5">{formatTime(msg.created_at, { hour: '2-digit', minute: '2-digit' })}</span></div>
                           </div>
                         </div>
                       </div>
@@ -616,37 +632,48 @@ export default function ChatPage() {
             {showNewMessageButton && (
               <button
                 onClick={() => scrollToBottom('smooth')}
-                className="absolute bottom-24 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-lg border-none cursor-pointer animate-in fade-in slide-in-from-bottom-2 transition-colors"
+                className="absolute bottom-24 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-[var(--primary)] hover:bg-[var(--primary)] text-white text-xs font-semibold shadow-lg border-none cursor-pointer animate-in fade-in slide-in-from-bottom-2 transition-colors"
                 aria-label={t('chatNewMessagesBtn') || '새 메시지로 이동'}
               >
                 <ArrowDown size={14} />{t('chatNewMessagesBtn') || '새 메시지'}
               </button>
             )}
 
-            <div className="px-4 py-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 shrink-0">
+            <div className="px-4 py-4 bg-[var(--bg-surface)] border-t border-[var(--border)] shrink-0">
               {isUploadingFile && (
                 <div className="flex flex-col gap-1.5 mb-3">
-                  <div className="flex items-center gap-2 px-3 py-2 bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/40 rounded-xl text-xs text-indigo-600 dark:text-indigo-400">
-                    <div className="w-3.5 h-3.5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin shrink-0" />
+                  <div className="flex items-center gap-2 px-3 py-2 bg-[var(--primary)]/10 border border-[var(--primary)]/20 rounded-xl text-xs text-[var(--primary)]">
+                    <div className="w-3.5 h-3.5 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin shrink-0" />
                     <span className="font-semibold truncate flex-1">{t('chatUploadingFile')}{uploadingFileName}{uploadCount ? ` (${uploadCount.done + 1}/${uploadCount.total})` : ''}</span>
                     {uploadProgress !== null && <span className="tabular-nums shrink-0 font-bold">{uploadProgress}%</span>}
                   </div>
                   {uploadProgress !== null && (
-                    <div className="h-1 rounded-full bg-indigo-100 dark:bg-indigo-900/40 overflow-hidden">
-                      <div className="h-full bg-indigo-500 rounded-full transition-all duration-200" style={{ width: `${uploadProgress}%` }} />
+                    <div className="h-1 rounded-full bg-[var(--primary)]/20 overflow-hidden">
+                      <div className="h-full bg-[var(--primary)] rounded-full transition-all duration-200" style={{ width: `${uploadProgress}%` }} />
                     </div>
                   )}
                 </div>
               )}
-              <form onSubmit={handleSend}><div className="flex items-end gap-2 bg-slate-50 dark:bg-slate-800/50 rounded-xl px-3 py-2 border border-slate-200 dark:border-slate-700/60 focus-within:border-indigo-400 dark:focus-within:border-indigo-600/60 focus-within:ring-2 focus-within:ring-indigo-500/10 transition-all"><input type="file" id="chat-file-upload" multiple className="hidden" onChange={handleFileChange} disabled={isLoading || isUploadingFile} /><label htmlFor="chat-file-upload" className={`shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors mb-0.5 cursor-pointer ${isUploadingFile ? 'opacity-40 pointer-events-none' : ''}`}>          {isUploadingFile ? <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" /> : <Paperclip size={15} />}</label><EmojiPicker onEmojiSelect={handleEmojiSelect} disabled={isUploadingFile} t={t} /><textarea ref={textareaRef} placeholder={isUploadingFile ? t('chatUploadingPlaceholder') : (t('chatPlaceholder') || '메시지를 입력하세요...')} value={newMessage} onChange={(e) => setNewMessage(e.target.value)} onKeyDown={handleKeyDown} onPaste={handlePaste} disabled={isLoading} rows={1} className="flex-1 min-w-0 bg-transparent border-none outline-none resize-none text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 max-h-[120px] min-h-[28px] py-1 custom-scrollbar leading-relaxed" /><button type="submit" disabled={!newMessage.trim() || isLoading} className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all mb-0.5 border-none cursor-pointer ${newMessage.trim() && !isLoading ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm' : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed opacity-60'}`}>{isLoading ? <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Send size={14} />}</button></div><p className="text-xs text-slate-300 dark:text-slate-600 text-right mt-1.5 pr-1 select-none">{t('chatKeyboardShortcut')}</p></form>
+              <form onSubmit={handleSend}><div className="flex items-end gap-2 bg-[var(--bg-surface-2)] rounded-xl px-3 py-2 border border-[var(--border)] focus-within:border-[var(--primary)] focus-within:ring-2 focus-within:ring-[var(--primary)]/10 transition-all"><input type="file" id="chat-file-upload" multiple className="hidden" onChange={handleFileChange} disabled={isLoading || isUploadingFile} /><label htmlFor="chat-file-upload" className={`shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors mb-0.5 cursor-pointer ${isUploadingFile ? 'opacity-40 pointer-events-none' : ''}`}>          {isUploadingFile ? <div className="w-4 h-4 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" /> : <Paperclip size={15} />}</label><EmojiPicker onEmojiSelect={handleEmojiSelect} disabled={isUploadingFile} t={t} /><textarea ref={textareaRef} placeholder={isUploadingFile ? t('chatUploadingPlaceholder') : (t('chatPlaceholder') || '메시지를 입력하세요...')} value={newMessage} onChange={(e) => setNewMessage(e.target.value)} onKeyDown={handleKeyDown} onPaste={handlePaste} disabled={isLoading} rows={1} className="flex-1 min-w-0 bg-transparent border-none outline-none resize-none text-sm text-[var(--text-primary)] placeholder-slate-400 dark:placeholder-slate-500 max-h-[120px] min-h-[28px] py-1 custom-scrollbar leading-relaxed" /><button type="submit" disabled={!newMessage.trim() || isLoading} className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all mb-0.5 border-none cursor-pointer ${newMessage.trim() && !isLoading ? 'bg-[var(--primary)] hover:bg-[var(--primary)] text-white shadow-sm' : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed opacity-60'}`}>{isLoading ? <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Send size={14} />}</button></div><p className="text-xs text-[var(--text-muted)] text-right mt-1.5 pr-1 select-none">{t('chatKeyboardShortcut')}</p></form>
             </div>
           </div>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center bg-white dark:bg-slate-900 gap-4"><div className="w-20 h-20 rounded-3xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center"><MessageSquare size={36} className="text-slate-300 dark:text-slate-600" /></div><div className="text-center"><p className="text-sm font-semibold text-slate-600 dark:text-slate-300">{t('selectChatRoom')}</p><p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{t('selectChannelDesc')}</p></div><div className="flex items-center gap-3"><button onClick={() => setIsCreateRoomOpen(true)} className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline bg-transparent border-none cursor-pointer font-semibold">+ {t('addNewChannel')}</button><span className="text-slate-300 dark:text-slate-700">|</span><button onClick={() => setIsGroupManagerOpen(true)} className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 bg-transparent border-none cursor-pointer font-semibold transition-colors"><Shield size={12} />{t('manageUserGroups')}</button></div></div>
+          <div className="flex-1 flex flex-col items-center justify-center bg-[var(--bg-surface)] gap-4"><div className="w-20 h-20 rounded-3xl bg-[var(--bg-surface-2)] flex items-center justify-center"><MessageSquare size={36} className="text-[var(--text-muted)]" /></div><div className="text-center"><p className="text-sm font-semibold text-[var(--text-secondary)]">{t('selectChatRoom')}</p><p className="text-xs text-[var(--text-muted)] mt-1">{t('selectChannelDesc')}</p></div><div className="flex items-center gap-3"><button onClick={() => setIsCreateRoomOpen(true)} className="text-xs text-[var(--primary)] hover:underline bg-transparent border-none cursor-pointer font-semibold">+ {t('addNewChannel')}</button><span className="text-[var(--text-muted)]">|</span><button onClick={() => setIsGroupManagerOpen(true)} className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--primary)] bg-transparent border-none cursor-pointer font-semibold transition-colors"><Shield size={12} />{t('manageUserGroups')}</button></div></div>
         )}
       </div>
 
-      <CreateRoomModal isOpen={isCreateRoomOpen} onClose={() => setIsCreateRoomOpen(false)} newRoomName={newRoomName} setNewRoomName={setNewRoomName} handleCreateRoom={handleCreateRoom} isCreatingRoom={isCreatingRoom} createRoomUsers={createRoomUsers} createRoomSelectedUsers={createRoomSelectedUsers} handleToggleCreateRoomUser={(id) => setCreateRoomSelectedUsers(prev => prev.includes(id) ? prev.filter(uid => uid !== id) : [...prev, id])} t={t} showToast={showToast} />
+      <CreateRoomModal
+        isOpen={isCreateRoomOpen}
+        onClose={() => setIsCreateRoomOpen(false)}
+        currentUser={currentUser}
+        t={t}
+        showToast={showToast}
+        onRoomCreated={(roomId) => {
+          window.dispatchEvent(new CustomEvent('refresh_chat_rooms'));
+          fetchChatRooms();
+          setSearchParams({ room: roomId });
+        }}
+      />
 
       <UserGroupManager
         isOpen={isGroupManagerOpen}
@@ -666,9 +693,14 @@ export default function ChatPage() {
         onCancel={() => setConfirmDialog(null)}
       />
 
-      {isMembersOpen && <div className="fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4" onClick={() => setIsMembersOpen(false)}><div onClick={(e) => e.stopPropagation()} className="w-full max-w-sm bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 animate-zoom-in overflow-hidden"><div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800"><h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2"><Users size={16} className="text-indigo-500" />{t('chatRoomMembers')}</h3><button onClick={() => setIsMembersOpen(false)} className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 border-none bg-transparent cursor-pointer text-slate-400 transition-colors"><X size={15} /></button></div><div className="p-3 flex flex-col gap-1 max-h-[60vh] overflow-y-auto custom-scrollbar">{roomMembers.map(user => (<div key={user.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"><div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-100 to-indigo-50 dark:from-indigo-900/40 dark:to-indigo-800/20 flex items-center justify-center text-indigo-700 dark:text-indigo-300 font-bold text-xs shrink-0">{(user.firstname || user.login).charAt(0).toUpperCase()}</div><div className="flex flex-col flex-1 min-w-0"><div className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">{user.firstname && user.lastname ? `${user.firstname} ${user.lastname}` : user.login}</div><div className="text-xs text-slate-400 dark:text-slate-500 truncate">{user.email}</div></div></div>))}{roomMembers.length === 0 && <div className="py-10 text-center text-sm text-slate-400">{t('noMembers')}</div>}</div></div></div>}
-
-      {isInviteOpen && <div className="fixed inset-0 z-[100] flex items-center justify-center p-4"><div className="fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm animate-fade-in" onClick={() => setIsInviteOpen(false)} /><div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 z-10 animate-zoom-in max-h-[80vh] flex flex-col overflow-hidden"><div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800 shrink-0"><h3 className="text-sm font-bold text-slate-900 dark:text-white">{t('chatInviteTitle')}</h3><button onClick={() => setIsInviteOpen(false)} className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 border-none bg-transparent cursor-pointer text-slate-400 transition-colors"><X size={15} /></button></div><div className="flex-1 overflow-y-auto p-4 flex flex-col gap-1.5 custom-scrollbar"><div className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 select-none px-1">{t('chatInviteSelectUser')}</div>{inviteUsers.length > 0 ? inviteUsers.map(user => { const isSelected = selectedUsers.includes(user.id); return (<button key={user.id} type="button" onClick={() => setSelectedUsers(prev => prev.includes(user.id) ? prev.filter(id => id !== user.id) : [...prev, user.id])} className={`w-full text-left flex items-center justify-between px-3 py-2.5 rounded-xl border transition-all cursor-pointer ${isSelected ? 'border-indigo-300 dark:border-indigo-700/60 bg-indigo-50 dark:bg-indigo-950/20' : 'border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40 bg-transparent'}`}><div className="flex items-center gap-3"><div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${isSelected ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>{(user.firstname || user.login).slice(0, 2).toUpperCase()}</div><div><div className="text-sm font-semibold text-slate-800 dark:text-slate-200">{user.firstname || user.lastname ? `${user.firstname} ${user.lastname}` : user.login}</div><div className="text-xs text-slate-400 dark:text-slate-500">{user.email}</div></div></div><div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all shrink-0 ${isSelected ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300 dark:border-slate-600'}`}>{isSelected && <Check size={11} />}</div></button>); }) : <div className="py-12 text-center text-sm text-slate-400">{t('chatInviteNoUsers')}</div>}</div><div className="px-4 py-4 flex justify-end gap-2 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 shrink-0"><Button type="button" variant="secondary" onClick={() => setIsInviteOpen(false)}>{t('cancel')}</Button><Button type="button" onClick={handleInviteUsers} isLoading={isInviting} disabled={selectedUsers.length === 0}>{t('chatInviteActionBtn')} ({selectedUsers.length})</Button></div></div></div>}
+      <ChatMemberManagerModal
+        isOpen={isMembersOpen}
+        onClose={() => setIsMembersOpen(false)}
+        activeRoomId={activeRoom?.id}
+        currentUser={currentUser}
+        t={t}
+        showToast={showToast}
+      />
 
       {preview && (() => {
         const cur = preview.images[preview.index];

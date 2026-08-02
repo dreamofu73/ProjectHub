@@ -170,6 +170,7 @@ export interface ChatRoom {
   id: string;
   name: string;
   created_at: string;
+  unread_count?: number;
 }
 
 export interface ChatRoomMember {

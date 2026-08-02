@@ -784,6 +784,7 @@ async fn create_messaging_tables(pool: &AnyPool, kind: DbKind) {
             .col(int_required("room_id"))
             .col(int_required("user_id"))
             .col(text_nn("joined_at"))
+            .col(int_null("last_read_message_id"))
             .foreign_key(&mut fk(
                 "chat_room_members",
                 "room_id",

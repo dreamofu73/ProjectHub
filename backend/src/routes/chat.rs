@@ -2,7 +2,7 @@ use axum::{
     extract::{Extension, Path, Query},
     response::Json,
     http::StatusCode,
-    routing::{get, post, delete},
+    routing::{get, post, delete, put},
     Router,
 };
 use std::sync::Arc;
@@ -10,7 +10,6 @@ use serde_json::{json, Value};
 use sqlx::{AnyPool, Row};
 use sea_query::{Asterisk, Expr, ExprTrait, Func, JoinType, OnConflict, Order, Query as SeaQuery};
 use crate::auth::AuthUser;
-use crate::models::ChatRoom;
 use tokio::sync::broadcast;
 use std::collections::HashMap;
 
@@ -23,10 +22,81 @@ pub fn router() -> crate::routes::ProtectedRoutes {
             .route("/chat/rooms/:room_id/members", post(add_chat_room_member))
             .route("/chat/rooms/:room_id/members/:user_id", delete(remove_chat_room_member))
             .route("/chat/rooms/:room_id/leave", post(leave_chat_room))
+            .route("/chat/rooms/:room_id", put(rename_chat_room))
             .route("/chat", get(get_messages))
+            .route("/chat/search", get(search_messages))
             .route("/chat", post(send_message))
-            .route("/chat/:id", delete(delete_chat_message).put(update_chat_message)),
+            .route("/chat/:id", delete(delete_chat_message).put(update_chat_message))
+            .route("/chat/rooms/:room_id/read", post(update_last_read)),
     )
+}
+
+async fn rename_chat_room(
+    Path(room_id_str): Path<String>,
+    user: AuthUser,
+    Extension(pool): Extension<Arc<AnyPool>>,
+    axum::Json(payload): axum::Json<Value>,
+) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    let room_id = crate::serde_utils::parse_path_id(&room_id_str)?;
+    let new_name = payload.get("name").and_then(|v| v.as_str()).ok_or_else(|| (StatusCode::BAD_REQUEST, Json(json!({"success": false, "error": "name is required"}))))?;
+
+    // Check if user is a member of the room
+    let check_stmt = SeaQuery::select()
+        .column(sea_query::Alias::new("id"))
+        .from(sea_query::Alias::new("chat_room_members"))
+        .and_where(Expr::col(sea_query::Alias::new("room_id")).eq(room_id))
+        .and_where(Expr::col(sea_query::Alias::new("user_id")).eq(user.id))
+        .to_owned();
+
+    let is_member = crate::db::fetch_optional(&pool, &check_stmt)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()}))))?
+        .is_some();
+
+    if !is_member {
+        return Err((StatusCode::FORBIDDEN, Json(json!({"success": false, "error": "권한이 없습니다."}))));
+    }
+
+    let stmt = SeaQuery::update()
+        .table(sea_query::Alias::new("chat_rooms"))
+        .value(sea_query::Alias::new("name"), new_name)
+        .and_where(Expr::col(sea_query::Alias::new("id")).eq(room_id))
+        .to_owned();
+
+    crate::db::execute(&pool, &stmt)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()}))))?;
+
+    // broadcast room rename is tricky, but frontend can just re-fetch chat rooms
+    Ok(Json(json!({ "success": true })))
+}
+
+async fn update_last_read(
+    Path(room_id_str): Path<String>,
+    user: AuthUser,
+    Extension(pool): Extension<Arc<AnyPool>>,
+    axum::Json(payload): axum::Json<Value>,
+) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    let room_id = crate::serde_utils::parse_path_id(&room_id_str)?;
+    let last_read_id = payload.get("last_read_message_id")
+        .and_then(|v| {
+            if let Some(s) = v.as_str() { s.parse::<i64>().ok() }
+            else { v.as_i64() }
+        })
+        .ok_or_else(|| (StatusCode::BAD_REQUEST, Json(json!({"success": false, "error": "last_read_message_id is required"}))))?;
+
+    let stmt = SeaQuery::update()
+        .table(sea_query::Alias::new("chat_room_members"))
+        .value(sea_query::Alias::new("last_read_message_id"), last_read_id)
+        .and_where(Expr::col(sea_query::Alias::new("room_id")).eq(room_id))
+        .and_where(Expr::col(sea_query::Alias::new("user_id")).eq(user.id))
+        .to_owned();
+
+    crate::db::execute(&pool, &stmt)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()}))))?;
+
+    Ok(Json(json!({ "success": true })))
 }
 
 async fn create_chat_room(
@@ -65,6 +135,20 @@ async fn get_chat_rooms(
             (sea_query::Alias::new("cr"), sea_query::Alias::new("name")),
             (sea_query::Alias::new("cr"), sea_query::Alias::new("created_at")),
         ])
+        .expr_as(
+            Expr::expr(
+                SeaQuery::select()
+                    .expr(sea_query::Expr::col(sea_query::Alias::new("id")).count())
+                    .from(sea_query::Alias::new("messages"))
+                    .and_where(Expr::col(sea_query::Alias::new("room_id")).equals((sea_query::Alias::new("cr"), sea_query::Alias::new("id"))))
+                    .and_where(
+                        Expr::col(sea_query::Alias::new("id"))
+                            .gt(sea_query::Func::coalesce([Expr::col((sea_query::Alias::new("crm"), sea_query::Alias::new("last_read_message_id"))), Expr::val(0)]))
+                    )
+                    .to_owned()
+            ),
+            "unread_count",
+        )
         .from_as(sea_query::Alias::new("chat_rooms"), sea_query::Alias::new("cr"))
         .join_as(
             JoinType::InnerJoin,
@@ -78,11 +162,12 @@ async fn get_chat_rooms(
     
     let rows = crate::db::fetch_all(&pool, &stmt).await.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()}))))?;
     
-    let rooms: Vec<ChatRoom> = rows.iter().map(|row| ChatRoom {
-        id: row.get("id"),
-        name: row.get("name"),
-        created_at: row.get("created_at"),
-    }).collect();
+    let rooms: Vec<Value> = rows.iter().map(|row| json!({
+        "id": row.get::<i64, _>("id").to_string(),
+        "name": row.get::<String, _>("name"),
+        "created_at": row.get::<String, _>("created_at"),
+        "unread_count": row.try_get::<i64, _>("unread_count").unwrap_or(0),
+    })).collect();
 
     Ok(Json(json!({ "success": true, "data": rooms })))
 }
@@ -240,6 +325,9 @@ async fn get_messages(
     Query(params): Query<HashMap<String, String>>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     let room_id = params.get("room_id").and_then(|v| v.parse::<i64>().ok());
+    let before_id = params.get("before_id").and_then(|v| v.parse::<i64>().ok());
+    let since_id = params.get("since_id").and_then(|v| v.parse::<i64>().ok());
+    let limit = std::cmp::min(params.get("limit").and_then(|v| v.parse::<u64>().ok()).unwrap_or(50), 100);
 
     let mut stmt = SeaQuery::select();
     stmt.column((sea_query::Alias::new("m"), Asterisk))
@@ -255,12 +343,86 @@ async fn get_messages(
         );
 
     if let Some(id) = room_id {
-        stmt.and_where(Expr::col((sea_query::Alias::new("m"), sea_query::Alias::new("room_id"))).eq(id))
-            .order_by((sea_query::Alias::new("m"), sea_query::Alias::new("created_at")), Order::Asc);
-    } else {
-        stmt.order_by((sea_query::Alias::new("m"), sea_query::Alias::new("created_at")), Order::Desc);
+        stmt.and_where(Expr::col((sea_query::Alias::new("m"), sea_query::Alias::new("room_id"))).eq(id));
     }
-    stmt.limit(100);
+
+    if let Some(b_id) = before_id {
+        stmt.and_where(Expr::col((sea_query::Alias::new("m"), sea_query::Alias::new("id"))).lt(b_id));
+        stmt.order_by((sea_query::Alias::new("m"), sea_query::Alias::new("id")), Order::Desc);
+    } else if let Some(s_id) = since_id {
+        stmt.and_where(Expr::col((sea_query::Alias::new("m"), sea_query::Alias::new("id"))).gt(s_id));
+        stmt.order_by((sea_query::Alias::new("m"), sea_query::Alias::new("id")), Order::Asc);
+    } else {
+        stmt.order_by((sea_query::Alias::new("m"), sea_query::Alias::new("id")), Order::Desc);
+    }
+    stmt.limit(limit);
+
+    let rows = crate::db::fetch_all(&pool, &stmt.to_owned()).await.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()}))))?;
+
+    let mut messages: Vec<Value> = rows.into_iter().map(|r| {
+        let firstname: Option<String> = r.get("firstname");
+        let lastname: Option<String> = r.get("lastname");
+        let login: String = r.get("login");
+        let author_name = crate::routes::utils::display_name(firstname.as_deref(), lastname.as_deref(), &login);
+        json!({
+            "id": r.get::<i64, _>("id").to_string(),
+            "room_id": r.get::<i64, _>("room_id").to_string(),
+            "author_id": r.get::<i64, _>("author_id").to_string(),
+            "author_login": login,
+            "author_name": author_name,
+            "content": r.get::<String, _>("content"),
+            "created_at": r.get::<String, _>("created_at"),
+            "edited_at": r.get::<Option<String>, _>("edited_at")
+        })
+    }).collect();
+
+    if since_id.is_none() {
+        messages.reverse();
+    }
+
+    Ok(Json(json!({ "success": true, "data": messages })))
+}
+
+async fn search_messages(
+    user: AuthUser,
+    Extension(pool): Extension<Arc<AnyPool>>,
+    Query(params): Query<HashMap<String, String>>,
+) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    let room_id = params.get("room_id").and_then(|v| v.parse::<i64>().ok());
+    let query = params.get("q").map(|s| s.as_str()).unwrap_or("");
+    
+    if query.trim().is_empty() {
+        return Ok(Json(json!({ "success": true, "data": [] })));
+    }
+
+    let mut stmt = SeaQuery::select();
+    stmt.column((sea_query::Alias::new("m"), Asterisk))
+        .expr_as(Expr::col((sea_query::Alias::new("u"), sea_query::Alias::new("login"))), "login")
+        .expr_as(Expr::col((sea_query::Alias::new("u"), sea_query::Alias::new("firstname"))), "firstname")
+        .expr_as(Expr::col((sea_query::Alias::new("u"), sea_query::Alias::new("lastname"))), "lastname")
+        .from_as(sea_query::Alias::new("messages"), sea_query::Alias::new("m"))
+        .join_as(
+            JoinType::InnerJoin,
+            sea_query::Alias::new("users"),
+            sea_query::Alias::new("u"),
+            Expr::col((sea_query::Alias::new("u"), sea_query::Alias::new("id"))).equals((sea_query::Alias::new("m"), sea_query::Alias::new("author_id"))),
+        );
+
+    if let Some(id) = room_id {
+        stmt.and_where(Expr::col((sea_query::Alias::new("m"), sea_query::Alias::new("room_id"))).eq(id));
+    } else {
+        stmt.join_as(
+            JoinType::InnerJoin,
+            sea_query::Alias::new("chat_room_members"),
+            sea_query::Alias::new("crm"),
+            Expr::col((sea_query::Alias::new("crm"), sea_query::Alias::new("room_id"))).equals((sea_query::Alias::new("m"), sea_query::Alias::new("room_id"))),
+        );
+        stmt.and_where(Expr::col((sea_query::Alias::new("crm"), sea_query::Alias::new("user_id"))).eq(user.id));
+    }
+
+    stmt.and_where(Expr::col((sea_query::Alias::new("m"), sea_query::Alias::new("content"))).like(format!("%{}%", query)));
+    stmt.order_by((sea_query::Alias::new("m"), sea_query::Alias::new("created_at")), Order::Desc);
+    stmt.limit(50);
 
     let rows = crate::db::fetch_all(&pool, &stmt.to_owned()).await.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()}))))?;
 
