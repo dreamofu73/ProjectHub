@@ -10,11 +10,12 @@ import type { Project } from 'shared/types';
 
 interface NewIssuePanelProps {
   project: Project;
+  initialStatus?: string;
   onClose: () => void;
   onCreated: () => void;
 }
 
-export function NewIssuePanel({ project, onClose, onCreated }: NewIssuePanelProps) {
+export function NewIssuePanel({ project, initialStatus, onClose, onCreated }: NewIssuePanelProps) {
   const { showToast } = useToast();
   
   // Parse project settings
@@ -27,7 +28,14 @@ export function NewIssuePanel({ project, onClose, onCreated }: NewIssuePanelProp
   const [description, setDescription] = useState('');
   const [tracker, setTracker] = useState(issueTypes[0] || 'bug');
   const [taskType, setTaskType] = useState(taskTypes[0] || 'Development');
-  const [status, setStatus] = useState(statuses[0] || 'new');
+  const [status, setStatus] = useState(() => {
+    if (initialStatus) {
+      const match = statuses.find((s: string) => s.toLowerCase() === initialStatus.toLowerCase());
+      if (match) return match;
+      return initialStatus;
+    }
+    return statuses[0] || 'new';
+  });
   const [plannedStartDate, setPlannedStartDate] = useState('');
   const [actualStartDate, setActualStartDate] = useState('');
   const [actualEndDate, setActualEndDate] = useState('');

@@ -175,30 +175,52 @@ export function Sidebar() {
             </div>
           )}
 
-          {/* 일감 사이드바 (일감 / 간트차트) */}
+          {/* 일감 사이드바 (WBS 목록 / 간트 차트 / 칸반 보드 / 리소스 부하) */}
           {(location.pathname.match(/^\/projects\/[^/]+\/tasks$/) ?? false) && (
             <div className="sidebar-section">
-              {!isSidebarCollapsed && <div className="sidebar-section-label">일감</div>}
+              {!isSidebarCollapsed && <div className="sidebar-section-label">일감 뷰</div>}
               <ul className="sidebar-nav" aria-label="일감 메뉴">
                 <li className="sidebar-nav-item">
-                  <Tooltip content="일감" disabled={!isSidebarCollapsed} position="right">
+                  <Tooltip content="WBS 목록" disabled={!isSidebarCollapsed} position="right">
                     <Link
-                      to={`/projects/${location.pathname.split('/')[2]}/tasks`}
-                      className={`sidebar-nav-link ${location.pathname.endsWith('/tasks') && !location.search.includes('view=gantt') ? 'active' : ''} ${isSidebarCollapsed ? 'justify-center px-1' : ''}`}
+                      to={`/projects/${location.pathname.split('/')[2]}/tasks?view=table`}
+                      className={`sidebar-nav-link ${location.pathname.endsWith('/tasks') && (!location.search.includes('view=') || location.search.includes('view=table')) ? 'active' : ''} ${isSidebarCollapsed ? 'justify-center px-1' : ''}`}
                     >
-                      <CheckSquare size={16} className={`shrink-0 ${location.pathname.endsWith('/tasks') && !location.search.includes('view=gantt') ? 'opacity-100' : 'opacity-60'}`} />
-                      {!isSidebarCollapsed && <span>일감</span>}
+                      <CheckSquare size={16} className={`shrink-0 ${location.pathname.endsWith('/tasks') && (!location.search.includes('view=') || location.search.includes('view=table')) ? 'opacity-100' : 'opacity-60'}`} />
+                      {!isSidebarCollapsed && <span>WBS 목록</span>}
                     </Link>
                   </Tooltip>
                 </li>
                 <li className="sidebar-nav-item">
-                  <Tooltip content="간트차트" disabled={!isSidebarCollapsed} position="right">
+                  <Tooltip content="간트 차트" disabled={!isSidebarCollapsed} position="right">
                     <Link
                       to={`/projects/${location.pathname.split('/')[2]}/tasks?view=gantt`}
                       className={`sidebar-nav-link ${location.pathname.endsWith('/tasks') && location.search.includes('view=gantt') ? 'active' : ''} ${isSidebarCollapsed ? 'justify-center px-1' : ''}`}
                     >
                       <BarChart size={16} className={`shrink-0 ${location.pathname.endsWith('/tasks') && location.search.includes('view=gantt') ? 'opacity-100' : 'opacity-60'}`} />
-                      {!isSidebarCollapsed && <span>간트차트</span>}
+                      {!isSidebarCollapsed && <span>간트 차트</span>}
+                    </Link>
+                  </Tooltip>
+                </li>
+                <li className="sidebar-nav-item">
+                  <Tooltip content="칸반 보드" disabled={!isSidebarCollapsed} position="right">
+                    <Link
+                      to={`/projects/${location.pathname.split('/')[2]}/tasks?view=kanban`}
+                      className={`sidebar-nav-link ${location.pathname.endsWith('/tasks') && location.search.includes('view=kanban') ? 'active' : ''} ${isSidebarCollapsed ? 'justify-center px-1' : ''}`}
+                    >
+                      <Columns3 size={16} className={`shrink-0 ${location.pathname.endsWith('/tasks') && location.search.includes('view=kanban') ? 'opacity-100' : 'opacity-60'}`} />
+                      {!isSidebarCollapsed && <span>칸반 보드</span>}
+                    </Link>
+                  </Tooltip>
+                </li>
+                <li className="sidebar-nav-item">
+                  <Tooltip content="리소스 부하" disabled={!isSidebarCollapsed} position="right">
+                    <Link
+                      to={`/projects/${location.pathname.split('/')[2]}/tasks?view=workload`}
+                      className={`sidebar-nav-link ${location.pathname.endsWith('/tasks') && location.search.includes('view=workload') ? 'active' : ''} ${isSidebarCollapsed ? 'justify-center px-1' : ''}`}
+                    >
+                      <Users size={16} className={`shrink-0 ${location.pathname.endsWith('/tasks') && location.search.includes('view=workload') ? 'opacity-100' : 'opacity-60'}`} />
+                      {!isSidebarCollapsed && <span>리소스 부하</span>}
                     </Link>
                   </Tooltip>
                 </li>

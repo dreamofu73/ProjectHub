@@ -8,6 +8,8 @@ import { TaskDetailPanel } from 'ui/TaskDetailPanel';
 import { BulkTaskEditPanel } from 'ui/BulkTaskEditPanel';
 import { BulkUploadModal } from 'ui/BulkUploadModal';
 import { TasksGanttChart } from 'ui/TasksGanttChart';
+import { TasksKanbanBoard } from 'ui/TasksKanbanBoard';
+import { TasksWorkloadView } from 'ui/TasksWorkloadView';
 import { NewMilestonePanel } from 'ui/NewMilestonePanel';
 import { TaskStatusBadge } from 'ui/TaskStatusBadge';
 import { useMilestones } from 'shared/hooks/useMilestones';
@@ -17,10 +19,63 @@ import { useLocation } from 'react-router-dom';
 import type { Task } from 'shared/types';
 import type { GanttDatePatch } from 'ui/TasksGanttChart';
 
+function addDaysStr(dateStr: string, days: number): string {
+  const parts = dateStr.split('-').map(Number);
+  if (parts.length !== 3) return dateStr;
+  const dt = new Date(parts[0], parts[1] - 1, parts[2] + days);
+  const ny = dt.getFullYear();
+  const nm = String(dt.getMonth() + 1).padStart(2, '0');
+  const nd = String(dt.getDate()).padStart(2, '0');
+  return `${ny}-${nm}-${nd}`;
+}
+
+function computeAdjustedDates(
+  predTask: Task,
+  currTask: Task,
+  depType: 'FS' | 'SS' | 'FF' | 'SF'
+): { planned_start_date: string; planned_end_date: string } | null {
+  let duration = 3;
+  if (currTask.planned_start_date && currTask.planned_end_date) {
+    const s = new Date(currTask.planned_start_date).getTime();
+    const e = new Date(currTask.planned_end_date).getTime();
+    if (!isNaN(s) && !isNaN(e) && e >= s) {
+      duration = Math.max(0, Math.round((e - s) / (1000 * 60 * 60 * 24)));
+    }
+  }
+
+  let newStart = '';
+  let newEnd = '';
+
+  if (depType === 'FS') {
+    const baseDate = predTask.planned_end_date || predTask.planned_start_date;
+    if (!baseDate) return null;
+    newStart = addDaysStr(baseDate, 1);
+    newEnd = addDaysStr(newStart, duration);
+  } else if (depType === 'SS') {
+    const baseDate = predTask.planned_start_date || predTask.planned_end_date;
+    if (!baseDate) return null;
+    newStart = baseDate;
+    newEnd = addDaysStr(newStart, duration);
+  } else if (depType === 'FF') {
+    const baseDate = predTask.planned_end_date || predTask.planned_start_date;
+    if (!baseDate) return null;
+    newEnd = baseDate;
+    newStart = addDaysStr(newEnd, -duration);
+  } else if (depType === 'SF') {
+    const baseDate = predTask.planned_start_date || predTask.planned_end_date;
+    if (!baseDate) return null;
+    newEnd = baseDate;
+    newStart = addDaysStr(newEnd, -duration);
+  }
+
+  if (!newStart || !newEnd) return null;
+  return { planned_start_date: newStart, planned_end_date: newEnd };
+}
+
 export default function TasksPage() {
   const { t } = useLanguage();
   const { showToast } = useToast();
-  const { tasks, loading, error, project, fetchTasks, updateTask, bulkUpdateTasks } = useTasks();
+  const { tasks, dependencies, loading, error, project, fetchTasks, updateTask, bulkUpdateTasks } = useTasks();
   const isArchived = project?.status === 'archived';
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -31,15 +86,26 @@ export default function TasksPage() {
   const [isMilestoneOpen, setIsMilestoneOpen] = useState(false);
   const { milestones, createMilestone, deleteMilestone } = useMilestones(project?.id);
   const location = useLocation();
-  const viewMode = new URLSearchParams(location.search).get('view') === 'gantt' ? 'gantt' : 'table';
+
+  const queryView = new URLSearchParams(location.search).get('view');
+  const [currentView, setCurrentView] = useState<'table' | 'gantt' | 'kanban' | 'workload'>(
+    queryView === 'gantt' ? 'gantt' : queryView === 'kanban' ? 'kanban' : queryView === 'workload' ? 'workload' : 'table'
+  );
+
+  useEffect(() => {
+    const q = new URLSearchParams(location.search).get('view');
+    const v = q === 'gantt' ? 'gantt' : q === 'kanban' ? 'kanban' : q === 'workload' ? 'workload' : 'table';
+    setCurrentView(v);
+  }, [location.search]);
+
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // 프로젝트 변경 또는 간트 뷰 전환 시 선택 상태 초기화
+  // 프로젝트 변경 또는 뷰 전환 시 선택 상태 초기화
   useEffect(() => {
     setSelectedIds(new Set());
     setIsBulkEditOpen(false);
-  }, [viewMode, project?.id]);
+  }, [currentView, project?.id]);
 
   // 프로젝트 변경 시 필터 초기화
   useEffect(() => {
@@ -78,8 +144,26 @@ export default function TasksPage() {
     const ok = await updateTask(taskId, patch);
     if (!ok) {
       showToast(t('taskUpdatedError'), 'error');
+      return;
     }
-  }, [updateTask, showToast, t]);
+    // 의존성 연쇄: 선행 일감 변경 시 후행 일감 계획일자 연쇄 자동 반영
+    const succDeps = dependencies.filter(d => String(d.predecessor_id) === String(taskId));
+    if (succDeps.length > 0) {
+      const predTask = tasks.find(t => String(t.id) === String(taskId));
+      if (predTask) {
+        const updatedPred = { ...predTask, ...patch };
+        for (const dep of succDeps) {
+          const succTask = tasks.find(t => String(t.id) === String(dep.successor_id));
+          if (succTask) {
+            const newDates = computeAdjustedDates(updatedPred, succTask, dep.dependency_type);
+            if (newDates) {
+              await updateTask(succTask.id, newDates);
+            }
+          }
+        }
+      }
+    }
+  }, [updateTask, showToast, t, dependencies, tasks]);
 
   // 특정 일감의 하위 일감 생성 패널을 연다.
   const openSubtaskPanel = useCallback((taskId: string) => {
@@ -137,11 +221,17 @@ export default function TasksPage() {
 
   return (
     <div className="w-full h-[calc(100vh-105px)] animate-in fade-in slide-in-from-bottom-4 duration-300 flex flex-col overflow-hidden bg-[var(--bg-surface)] rounded-2xl border border-[var(--border)] shadow-sm">
-      <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)] shrink-0">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)] shrink-0 flex-wrap gap-3">
         <h2 className="text-sm font-bold text-[var(--text-primary)] flex items-center gap-2">
           <CheckSquare size={16} className="text-[var(--primary)]" />
-          <span>{t('tasks')} - {project.name}</span>
+          <span>
+            {t('tasks')} - {project.name}{' '}
+            <span className="text-xs font-normal text-[var(--text-muted)] ml-2">
+              ({currentView === 'gantt' ? t('ganttChart') : currentView === 'kanban' ? t('kanbanBoard') : currentView === 'workload' ? t('workloadView') : t('wbsList')})
+            </span>
+          </span>
         </h2>
+
         <div className="flex gap-2">
           {!isArchived && (
             <>
@@ -175,19 +265,33 @@ export default function TasksPage() {
         ) : error ? (
           <div className="text-[var(--danger)]">{error}</div>
         ) : (
-          
           <>
-            {viewMode === 'gantt' ? (
-            <TasksGanttChart
-              tasks={tasks}
-              milestones={milestones}
-              readOnly={isArchived}
-              onTaskClick={(task) => setSelectedTaskId(task.id)}
-              onDateChange={handleGanttDateChange}
-              onAddSubtask={openSubtaskPanel}
-              onAddMilestone={() => setIsMilestoneOpen(true)}
-            />
-          ) : (
+            {currentView === 'gantt' ? (
+              <TasksGanttChart
+                tasks={tasks}
+                dependencies={dependencies}
+                milestones={milestones}
+                readOnly={isArchived}
+                onTaskClick={(task) => setSelectedTaskId(task.id)}
+                onDateChange={handleGanttDateChange}
+                onAddSubtask={openSubtaskPanel}
+                onAddMilestone={() => setIsMilestoneOpen(true)}
+              />
+            ) : currentView === 'kanban' ? (
+              <TasksKanbanBoard
+                tasks={tasks}
+                onTaskClick={(task) => setSelectedTaskId(task.id)}
+                onStatusChange={(taskId, newStatus) => updateTask(taskId, { status: newStatus })}
+                onNewTaskClick={() => setIsNewTaskOpen(true)}
+                readOnly={isArchived}
+                statusOptions={statusOptions}
+              />
+            ) : currentView === 'workload' ? (
+              <TasksWorkloadView
+                tasks={tasks}
+                onTaskClick={(task) => setSelectedTaskId(task.id)}
+              />
+            ) : (
             <>
               <div className="flex flex-wrap items-center gap-2 mb-3">
                 <div className="relative flex-1 min-w-[180px] max-w-xs">
@@ -316,7 +420,6 @@ export default function TasksPage() {
             </>
             )}
           </>
-    
         )}
       </div>
 

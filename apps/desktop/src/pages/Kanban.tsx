@@ -15,6 +15,7 @@ import { Button } from 'ui/Button';
 import { Badge } from 'ui/Badge';
 import { useLanguage } from '../context/LanguageContext';
 import { api } from 'shared/lib/api';
+import { NewIssuePanel } from '../components/issues/NewIssuePanel';
 
 
 interface Issue {
@@ -47,6 +48,16 @@ export default function KanbanPage() {
   const [isUpdating, setIsUpdating] = useState(false);
   const isArchived = project?.status === 'archived';
 
+  // Floating New Issue Panel State
+  const [isNewIssueOpen, setIsNewIssueOpen] = useState(false);
+  const [selectedStatusForNewIssue, setSelectedStatusForNewIssue] = useState<string | undefined>(undefined);
+
+  const handleOpenNewIssue = (columnStatus?: string) => {
+    if (isArchived) return;
+    setSelectedStatusForNewIssue(columnStatus);
+    setIsNewIssueOpen(true);
+  };
+
   const fetchProject = useCallback(async () => {
     try {
       const res = await api(`/api/projects/${id}`);
@@ -75,6 +86,21 @@ export default function KanbanPage() {
     fetchProject();
     fetchIssues();
   }, [fetchProject, fetchIssues]);
+
+  // ESC 키로 새 이슈 추가 패널 닫기
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable)) return;
+      if (isNewIssueOpen) {
+        e.preventDefault();
+        setIsNewIssueOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isNewIssueOpen]);
 
   const statusColumns = project?.statuses 
     ? JSON.parse(project.statuses).map((s: string) => ({ id: s, label: s, color: 'bg-gray-500', bgColor: 'bg-gray-50/20' }))
@@ -141,9 +167,9 @@ export default function KanbanPage() {
               <div className="flex items-center gap-3">
                 {isUpdating && <div className="spinner text-primary w-4 h-4 border-2" />}
                 {!isArchived && (
-                  <Link to={`/projects/${id}/issues/new`}>
-                    <Button icon={Plus} size="sm">이슈 추가</Button>
-                  </Link>
+                  <Button icon={Plus} size="sm" onClick={() => handleOpenNewIssue()}>
+                    이슈 추가
+                  </Button>
                 )}
               </div>
           }
@@ -219,9 +245,9 @@ export default function KanbanPage() {
                   </div>
                   <div className="flex items-center gap-0.5 shrink-0">
                     {!isArchived && (
-                      <Link to={`/projects/${id}/issues/new?status=${column.id}`} className="p-1 hover:bg-white rounded-md text-muted hover:text-primary transition-all">
+                      <button type="button" onClick={() => handleOpenNewIssue(column.id)} className="p-1 hover:bg-white rounded-md text-muted hover:text-primary transition-all border-none bg-transparent cursor-pointer">
                         <Plus size={14} />
-                      </Link>
+                      </button>
                     )}
                   </div>
                 </div>
@@ -318,6 +344,21 @@ export default function KanbanPage() {
           })}
         </div>
       </DragDropContext>
+
+      {/* ── 우측 새 이슈 추가 패널 (slide-over) ── */}
+      {isNewIssueOpen && project && (
+        <div className="fixed top-[calc(var(--header-height)+1rem)] bottom-4 right-0 w-2/3 z-50 bg-[var(--bg-surface)] border-l border-y border-[var(--border)] rounded-l-xl shadow-2xl animate-slide-in-right flex flex-col overflow-hidden">
+          <NewIssuePanel
+            project={project}
+            initialStatus={selectedStatusForNewIssue}
+            onClose={() => setIsNewIssueOpen(false)}
+            onCreated={() => {
+              setIsNewIssueOpen(false);
+              fetchIssues();
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }
