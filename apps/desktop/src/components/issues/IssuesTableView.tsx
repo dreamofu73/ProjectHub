@@ -289,7 +289,7 @@ export function IssuesTableView({
   };
 
   return (
-    <div className="table-container custom-scrollbar border-none rounded-none shadow-none">
+    <div className="w-full overflow-x-auto custom-scrollbar">
       <table className="table">
         <thead>
           <tr className="sticky top-0 z-10">

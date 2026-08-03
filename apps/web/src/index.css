@@ -1073,7 +1073,7 @@ a:hover { text-decoration: underline; }
   background: var(--bg-surface);
 }
 .table th {
-  padding: 10px 16px;
+  padding: 6px 12px;
   text-align: left;
   font-size: 11px;
   font-weight: 500;
@@ -1084,7 +1084,7 @@ a:hover { text-decoration: underline; }
   border-bottom: 1px solid var(--border);
 }
 .table td {
-  padding: 10px 16px;
+  padding: 5px 12px;
   border-bottom: 1px solid var(--border);
   color: var(--text-primary);
 }
@@ -1161,7 +1161,7 @@ a:hover { text-decoration: underline; }
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: var(--bg-surface-2);
+  background: transparent;
   border-radius: 4px;
 }
 

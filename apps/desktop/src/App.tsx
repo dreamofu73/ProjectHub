@@ -48,28 +48,28 @@ const PageLoader = () => (
   </div>
 );
 
-function ProtectedRoute({ children, noPadding }: { children: ReactNode, noPadding?: boolean }) {
+function ProtectedRoute({ children, noPadding, minimalPadding }: { children: ReactNode, noPadding?: boolean, minimalPadding?: boolean }) {
   const user = localStorage.getItem('user');
   if (!user) {
     return <Navigate to="/login" replace />;
   }
   return (
     <Layout>
-      <PageLayout noPadding={noPadding}>
+      <PageLayout noPadding={noPadding} minimalPadding={minimalPadding}>
         {children}
       </PageLayout>
     </Layout>
   );
 }
 
-function SystemRoute({ children }: { children: ReactNode }) {
+function SystemRoute({ children, noPadding, minimalPadding }: { children: ReactNode, noPadding?: boolean, minimalPadding?: boolean }) {
   const user = localStorage.getItem('user');
   if (!user) {
     return <Navigate to="/login" replace />;
   }
   return (
     <Layout>
-      <PageLayout sidebar={<SystemSidebar />}>
+      <PageLayout sidebar={<SystemSidebar />} noPadding={noPadding} minimalPadding={minimalPadding}>
         {children}
       </PageLayout>
     </Layout>
@@ -122,37 +122,37 @@ function App() {
               <Route path="/projects/new" element={<ProtectedRoute><NewProject /></ProtectedRoute>} />
               <Route path="/projects/:id" element={<Navigate to="dashboard" replace />} />
               <Route path="/projects/:id/dashboard" element={<ProtectedRoute><ProjectDetail /></ProtectedRoute>} />
-              <Route path="/projects/:id/members" element={<ProtectedRoute><ProjectMembersPage /></ProtectedRoute>} />
+              <Route path="/projects/:id/members" element={<ProtectedRoute minimalPadding><ProjectMembersPage /></ProtectedRoute>} />
               <Route path="/projects/:id/wiki" element={<ProtectedRoute noPadding><ProjectWikiPage /></ProtectedRoute>} />
-              <Route path="/projects/:id/board" element={<ProtectedRoute><ProjectBoardPage /></ProtectedRoute>} />
+              <Route path="/projects/:id/board" element={<ProtectedRoute minimalPadding><ProjectBoardPage /></ProtectedRoute>} />
               <Route path="/projects/:id/board/new" element={<ProtectedRoute><PostForm /></ProtectedRoute>} />
               <Route path="/projects/:id/board/:postId/edit" element={<ProtectedRoute><PostForm /></ProtectedRoute>} />
               <Route path="/projects/:id/board/:postId" element={<ProtectedRoute><PostDetailPage /></ProtectedRoute>} />
-              <Route path="/chat" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
-              <Route path="/memos" element={<ProtectedRoute><MemosPage /></ProtectedRoute>} />
+              <Route path="/chat" element={<ProtectedRoute minimalPadding><ChatPage /></ProtectedRoute>} />
+              <Route path="/memos" element={<ProtectedRoute minimalPadding><MemosPage /></ProtectedRoute>} />
               <Route path="/memos/:id" element={<ProtectedRoute><MemoDetailPage /></ProtectedRoute>} />
-              <Route path="/projects/:id/memos" element={<ProtectedRoute><MemosPage /></ProtectedRoute>} />
-              <Route path="/projects/:id/chat" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
-              <Route path="/projects/:id/issues" element={<ProtectedRoute><IssuesPage /></ProtectedRoute>} />
-              <Route path="/projects/:id/tasks" element={<ProtectedRoute><TasksPage /></ProtectedRoute>} />
-              <Route path="/projects/:id/kanban" element={<ProtectedRoute><KanbanPage /></ProtectedRoute>} />
+              <Route path="/projects/:id/memos" element={<ProtectedRoute minimalPadding><MemosPage /></ProtectedRoute>} />
+              <Route path="/projects/:id/chat" element={<ProtectedRoute minimalPadding><ChatPage /></ProtectedRoute>} />
+              <Route path="/projects/:id/issues" element={<ProtectedRoute minimalPadding><IssuesPage /></ProtectedRoute>} />
+              <Route path="/projects/:id/tasks" element={<ProtectedRoute minimalPadding><TasksPage /></ProtectedRoute>} />
+              <Route path="/projects/:id/kanban" element={<ProtectedRoute minimalPadding><KanbanPage /></ProtectedRoute>} />
               <Route path="/projects/:id/issues/new" element={<ProtectedRoute><NewIssue /></ProtectedRoute>} />
               <Route path="/projects/:id/issues/:issueId" element={<ProtectedRoute><IssueDetail /></ProtectedRoute>} />
-              <Route path="/issues" element={<ProtectedRoute><IssuesPage /></ProtectedRoute>} />
-              <Route path="/users" element={<SystemRoute><UsersManagementPage /></SystemRoute>} />
+              <Route path="/issues" element={<ProtectedRoute minimalPadding><IssuesPage /></ProtectedRoute>} />
+              <Route path="/users" element={<SystemRoute minimalPadding><UsersManagementPage /></SystemRoute>} />
               <Route path="/wiki" element={<ProtectedRoute noPadding><ProjectWikiPage /></ProtectedRoute>} />
-              <Route path="/contacts" element={<ProtectedRoute><AddressBookPage /></ProtectedRoute>} />
-              <Route path="/projects/:id/contacts" element={<ProtectedRoute><AddressBookPage /></ProtectedRoute>} />
-              <Route path="/admin/groups" element={<SystemRoute><AdminGroupsPage /></SystemRoute>} />
-              <Route path="/admin/organization" element={<SystemRoute><OrganizationPage /></SystemRoute>} />
-              <Route path="/admin/scheduler" element={<SystemRoute><SchedulerPage /></SystemRoute>} />
-              <Route path="/admin/logs" element={<SystemRoute><LogsPage /></SystemRoute>} />
-              <Route path="/admin/projects" element={<SystemRoute><ProjectManagementPage /></SystemRoute>} />
+              <Route path="/contacts" element={<ProtectedRoute minimalPadding><AddressBookPage /></ProtectedRoute>} />
+              <Route path="/projects/:id/contacts" element={<ProtectedRoute minimalPadding><AddressBookPage /></ProtectedRoute>} />
+              <Route path="/admin/groups" element={<SystemRoute minimalPadding><AdminGroupsPage /></SystemRoute>} />
+              <Route path="/admin/organization" element={<SystemRoute minimalPadding><OrganizationPage /></SystemRoute>} />
+              <Route path="/admin/scheduler" element={<SystemRoute minimalPadding><SchedulerPage /></SystemRoute>} />
+              <Route path="/admin/logs" element={<SystemRoute minimalPadding><LogsPage /></SystemRoute>} />
+              <Route path="/admin/projects" element={<SystemRoute minimalPadding><ProjectManagementPage /></SystemRoute>} />
               <Route path="/projects/:id/settings" element={<ProtectedRoute><ProjectSettingsPage /></ProtectedRoute>} />
 
               {/* Global Boards */}
               <Route path="/boards" element={<Navigate to="/boards/notice" replace />} />
-              <Route path="/boards/:boardType" element={<ProtectedRoute><GlobalBoardList /></ProtectedRoute>} />
+              <Route path="/boards/:boardType" element={<ProtectedRoute minimalPadding><GlobalBoardList /></ProtectedRoute>} />
               <Route path="/boards/:boardType/new" element={<ProtectedRoute><PostForm /></ProtectedRoute>} />
               <Route path="/boards/:boardType/:postId/edit" element={<ProtectedRoute><PostForm /></ProtectedRoute>} />
               <Route path="/boards/:boardType/:postId" element={<ProtectedRoute><PostDetailPage /></ProtectedRoute>} />

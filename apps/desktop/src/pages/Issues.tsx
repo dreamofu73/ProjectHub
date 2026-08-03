@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Plus, AlertCircle, Layers, FileText } from 'lucide-react';
+import { Plus, AlertCircle, Layers, Bug } from 'lucide-react';
 import { Pagination } from 'ui/Pagination';
 import { useLanguage } from '../context/LanguageContext';
 import { IssuesTableView, DEFAULT_COLUMN_KEYS } from '../components/issues/IssuesTableView';
@@ -139,12 +139,12 @@ export default function IssuesPage() {
   const title = project ? t('projectIssuesTitle').replace('{name}', project.name) : t('totalIssuesTitle');
 
   return (
-    <div className="w-full h-[calc(100vh-105px)] animate-in fade-in slide-in-from-bottom-4 duration-300 flex flex-col overflow-hidden bg-[var(--bg-surface)] rounded-2xl border border-[var(--border)] shadow-sm">
+    <div className="w-full h-full animate-in fade-in slide-in-from-bottom-4 duration-300 flex flex-col overflow-hidden bg-[var(--bg-surface)] text-[var(--text-primary)]">
 
       {/* ── 헤더 ── */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)] shrink-0">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)] bg-[var(--bg-surface)] shrink-0">
         <h2 className="text-sm font-bold text-[var(--text-primary)] flex items-center gap-2">
-          <FileText size={16} className="text-[var(--primary)]" />
+          <Bug size={16} className="text-[var(--primary)]" />
           <span>{title}</span>
         </h2>
         {project && !isArchived && (
@@ -159,10 +159,10 @@ export default function IssuesPage() {
         )}
       </div>
 
-      {/* ── 메인 콘텐츠 ── */}
-      <div className="flex-1 h-full flex flex-col min-w-0 overflow-hidden">
+      {/* ── 메인 화면 콘텐츠 ── */}
+      <div className="flex-1 h-full flex flex-col min-w-0 overflow-hidden bg-[var(--bg-surface)]">
         {/* 툴바 */}
-        <div className="p-3 border-b border-[var(--border)] shrink-0">
+        <div className="p-3 border-b border-[var(--border)] shrink-0 bg-[var(--bg-surface-2)]/30">
           <IssuesToolbar
             filterType={filterType}
             setFilterType={setFilterType}
@@ -195,13 +195,11 @@ export default function IssuesPage() {
             setIsColumnSettingsOpen={setIsColumnSettingsOpen}
             columnSettingsRef={columnSettingsRef}
             onReorderColumns={handleReorderColumns}
-            
-            
           />
         </div>
 
         {/* 이슈 목록 */}
-        <div className="flex-1 overflow-auto min-h-0">
+        <div className="flex-1 overflow-auto min-h-0 h-full flex flex-col">
           {loading ? (
             <div className="py-2">
               {[1, 2, 3, 4, 5, 6].map(n => (
@@ -256,7 +254,7 @@ export default function IssuesPage() {
 
         {/* 페이지네이션 */}
         {!loading && issues.length > 0 && (
-          <div className="border-t border-[var(--border)] shrink-0">
+          <div className="border-t border-[var(--border)] shrink-0 bg-[var(--bg-surface-2)]/20">
             <Pagination
               currentPage={page}
               totalCount={total}

@@ -52,4 +52,4 @@ export function ToolbarButton({
 }
 
 /** 드롭다운 패널 공통 스타일 — 그림자/테두리 변형은 호출부에서 덧붙인다 */
-export const MENU_PANEL_CLASS = 'absolute left-0 mt-1 bg-white dark:bg-slate-900 border border-border rounded z-30';
+export const MENU_PANEL_CLASS = 'absolute mt-1 bg-white dark:bg-slate-900 border border-border rounded z-30 max-w-[calc(100vw-2rem)]';

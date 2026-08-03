@@ -28,7 +28,7 @@ export function FontGroup({ editor, labels, commands, popovers, disabled, isSour
         </button>
 
         {isFontOpen && (
-          <div className={`${MENU_PANEL_CLASS} shadow-xl p-1 min-w-[120px]`} onKeyDown={popovers.handleMenuKeyDown}>
+          <div className={`${MENU_PANEL_CLASS} left-0 shadow-xl p-1 min-w-[120px]`} onKeyDown={popovers.handleMenuKeyDown}>
             {EDITOR_FONTS.map((font) => (
               <button
                 key={font.value}
@@ -63,7 +63,7 @@ export function FontGroup({ editor, labels, commands, popovers, disabled, isSour
 
         {isSizeOpen && (
           <div
-            className={`${MENU_PANEL_CLASS} shadow-xl p-1 w-[346px] max-h-[400px] overflow-y-auto overflow-x-hidden custom-scrollbar`}
+            className={`${MENU_PANEL_CLASS} left-0 shadow-xl p-1 w-[346px] max-h-[400px] overflow-y-auto overflow-x-hidden custom-scrollbar`}
             onKeyDown={popovers.handleMenuKeyDown}
           >
             {EDITOR_FONT_SIZES.map((size) => {

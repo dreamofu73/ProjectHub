@@ -1156,6 +1156,7 @@ async fn apply_legacy_upgrades(pool: &AnyPool) {
     add_column(pool, "tasks", int_null("parent_task_id")).await;
 
     add_column(pool, "messages", text("edited_at")).await;
+    add_column(pool, "chat_room_members", int_null("last_read_message_id")).await;
 
     add_column(pool, "wiki_pages", key_string("uuid")).await;
 }

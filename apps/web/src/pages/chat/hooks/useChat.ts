@@ -9,7 +9,7 @@ export function useChat(activeRoom: { id: string; name: string } | null, current
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const lastSeenIds = useRef<Record<string, number>>({});
+  const lastSeenIds = useRef<Record<string, string>>({});
 
   useEffect(() => {
     try {
@@ -57,19 +57,26 @@ export function useChat(activeRoom: { id: string; name: string } | null, current
   }, [activeRoom, currentUser?.id]);
 
   useEffect(() => {
-    if (!activeRoom || messages.length === 0) return;
-    const latestId = Math.max(...messages.map((m: Message) => Number(m.id)));
-    const currentLatest = lastSeenIds.current[activeRoom.id] || 0;
-    
-    if (latestId > currentLatest) {
+    if (!activeRoom) return;
+    // 낙관적 임시 메시지(temp-*)는 숫자 ID가 아니므로 제외
+    const numericIds = messages.map((m: Message) => m.id).filter((id) => /^\d+$/.test(id));
+    if (numericIds.length === 0) return;
+
+    // Sonyflake ID 는 Number 안전 범위를 넘으므로 BigInt 문자열 비교로 최신 ID 를 구한다.
+    const latestId = numericIds.reduce((max, id) => (BigInt(id) > BigInt(max) ? id : max), '0');
+    const currentLatest = lastSeenIds.current[activeRoom.id] || '0';
+
+    if (BigInt(latestId) > BigInt(currentLatest)) {
       lastSeenIds.current[activeRoom.id] = latestId;
       localStorage.setItem(`chat_last_seen_${currentUser?.id || 'default'}`, JSON.stringify(lastSeenIds.current));
-      
+
       api(`/api/chat/rooms/${activeRoom.id}/read`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ last_read_message_id: latestId.toString() })
-      }).catch(console.error);
+        body: JSON.stringify({ last_read_message_id: latestId })
+      })
+        .then(() => window.dispatchEvent(new CustomEvent('refresh_chat_rooms')))
+        .catch(console.error);
     }
   }, [messages, activeRoom, currentUser?.id]);
 

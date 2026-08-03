@@ -85,7 +85,7 @@ export default function ProjectMembersPage() {
   const pagedMembers = filteredMembers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-105px)] animate-in fade-in slide-in-from-bottom-4 duration-300 bg-[var(--bg-surface)] rounded-2xl border border-[var(--border)] shadow-sm overflow-hidden">
+    <div className="flex flex-col w-full h-full animate-in fade-in slide-in-from-bottom-4 duration-300 bg-[var(--bg-surface)] text-[var(--text-primary)] overflow-hidden">
       {/* 헤더 */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)] shrink-0">
         <h2 className="text-sm font-bold text-[var(--text-primary)]">멤버 관리</h2>
@@ -113,7 +113,7 @@ export default function ProjectMembersPage() {
           <table className="w-full">
             <thead className="sticky top-0 z-10 bg-[var(--bg-surface-2)]">
               <tr className="border-b border-[var(--border)]">
-                <th className="py-3.5 px-4 w-10">
+                <th className="py-1.5 px-4 w-10">
                   <input
                     type="checkbox"
                     className="w-4 h-4 rounded border-gray-300 text-primary cursor-pointer accent-current"
@@ -121,9 +121,9 @@ export default function ProjectMembersPage() {
                     onChange={() => toggleSelectAll(pagedMembers)}
                   />
                 </th>
-                <th className="py-3.5 px-4 text-xs font-bold text-muted uppercase tracking-wider text-left">멤버</th>
-                <th className="py-3.5 px-4 text-xs font-bold text-muted uppercase tracking-wider text-left hidden sm:table-cell">이메일</th>
-                <th className="py-3.5 px-4 text-xs font-bold text-muted uppercase tracking-wider text-left">권한</th>
+                <th className="py-1.5 px-4 text-xs font-bold text-muted uppercase tracking-wider text-left">멤버</th>
+                <th className="py-1.5 px-4 text-xs font-bold text-muted uppercase tracking-wider text-left hidden sm:table-cell">이메일</th>
+                <th className="py-1.5 px-4 text-xs font-bold text-muted uppercase tracking-wider text-left">권한</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--border)]">
@@ -143,7 +143,7 @@ export default function ProjectMembersPage() {
                     selectedMember?.id === member.user_id ? 'bg-[var(--primary-bg)]' : ''
                   } ${selectedIds.has(member.user_id) ? 'bg-[var(--primary-bg)]/50' : ''}`}
                 >
-                  <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
+                  <td className="py-1.5 px-4" onClick={(e) => e.stopPropagation()}>
                     <input
                       type="checkbox"
                       className="w-4 h-4 rounded border-gray-300 text-primary cursor-pointer accent-current"
@@ -151,19 +151,19 @@ export default function ProjectMembersPage() {
                       onChange={() => toggleSelect(member.user_id)}
                     />
                   </td>
-                  <td className="py-3 px-4">
+                  <td className="py-1.5 px-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-primary-bg text-primary flex items-center justify-center font-bold text-sm shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-primary-bg text-primary flex items-center justify-center font-bold text-xs shrink-0">
                         {member.firstname?.[0] || member.login[0].toUpperCase()}
                       </div>
                       <div className="min-w-0">
-                        <div className="font-semibold text-foreground truncate">{member.firstname} {member.lastname}</div>
+                        <div className="font-semibold text-foreground truncate text-xs">{member.firstname} {member.lastname}</div>
                         <div className="text-xs text-muted truncate">@{member.login}</div>
                       </div>
                     </div>
                   </td>
-                  <td className="py-3 px-4 hidden sm:table-cell text-sm text-secondary">{member.email}</td>
-                  <td className="py-3 px-4 text-xs font-semibold">{member.role}</td>
+                  <td className="py-1.5 px-4 hidden sm:table-cell text-xs text-secondary">{member.email}</td>
+                  <td className="py-1.5 px-4 text-xs font-semibold">{member.role}</td>
                 </tr>
               ))}
             </tbody>

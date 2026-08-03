@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Send, Users, X, MessageSquare, Paperclip, Download, Trash2, Hash, LogOut, Shield, ArrowDown, WifiOff, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Search, ChevronUp, ChevronDown, Pencil } from 'lucide-react';
+import { Send, Users, X, MessageSquare, Paperclip, Download, Trash2, LogOut, ArrowDown, WifiOff, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Search, ChevronUp, ChevronDown, Pencil } from 'lucide-react';
 import { useToast } from 'ui/Toast';
 import { ConfirmDialog } from 'ui/ConfirmDialog';
 import { useLanguage } from '../context/LanguageContext';
@@ -11,7 +11,6 @@ import type { Message } from 'shared/types';
 import { useChat } from './chat/hooks/useChat';
 import { ChatFileAttachment } from './chat/components/ChatFileAttachment';
 import { CreateRoomModal } from './chat/components/CreateRoomModal';
-import { UserGroupManager } from './chat/components/UserGroupManager';
 import { ChatMemberManagerModal } from './chat/components/ChatMemberManagerModal';
 import { EmojiPicker } from './chat/components/EmojiPicker';
 
@@ -55,7 +54,6 @@ export default function ChatPage() {
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isCreateRoomOpen, setIsCreateRoomOpen] = useState(false);
-  const [isGroupManagerOpen, setIsGroupManagerOpen] = useState(false);
 
 
   const [isMembersOpen, setIsMembersOpen] = useState(false);
@@ -183,6 +181,11 @@ export default function ChatPage() {
               if (newMsg.room_id === room?.id) return [...prev, newMsg];
               return prev;
             });
+            // 다른 방에 새 메시지가 도착하면 사이드바 안읽음 배지를 즉시 갱신한다.
+            // (현재 방은 읽음 처리 effect 가 refresh_chat_rooms 를 발생시키므로 여기서는 제외)
+            if (newMsg.room_id !== room?.id) {
+              window.dispatchEvent(new CustomEvent('refresh_chat_rooms'));
+            }
           } else if (payload.type === 'delete_message') {
             const deletedId = String(payload.data.id);
             setMessages(prev => prev.filter(m => m.id !== deletedId));
@@ -520,7 +523,7 @@ export default function ChatPage() {
   }, []);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-105px)] relative" onDragEnter={(e) => { e.preventDefault(); dragCounter.current++; setIsDragging(true); }} onDragOver={(e) => e.preventDefault()} onDragLeave={(e) => { e.preventDefault(); dragCounter.current--; if (dragCounter.current === 0) setIsDragging(false); }} onDrop={async (e) => { e.preventDefault(); setIsDragging(false); dragCounter.current = 0; const files = Array.from(e.dataTransfer.files || []); if (files.length) await uploadFiles(files); }}>
+    <div className="flex flex-col h-full w-full relative" onDragEnter={(e) => { e.preventDefault(); dragCounter.current++; setIsDragging(true); }} onDragOver={(e) => e.preventDefault()} onDragLeave={(e) => { e.preventDefault(); dragCounter.current--; if (dragCounter.current === 0) setIsDragging(false); }} onDrop={async (e) => { e.preventDefault(); setIsDragging(false); dragCounter.current = 0; const files = Array.from(e.dataTransfer.files || []); if (files.length) await uploadFiles(files); }}>
       {isDragging && <div className="absolute inset-0 bg-slate-950/40 dark:bg-black/70 backdrop-blur-md z-50 flex items-center justify-center rounded-2xl pointer-events-none border-2 border-dashed border-[var(--primary)]"><div className="bg-[var(--bg-surface)] px-8 py-6 rounded-2xl shadow-2xl flex flex-col items-center gap-4 max-w-xs text-center"><div className="w-14 h-14 bg-[var(--primary)]/10 rounded-full flex items-center justify-center text-[var(--primary)] animate-bounce"><Paperclip size={28} /></div><p className="text-sm font-bold text-slate-900 dark:text-slate-100">{t('chatDragDropOverlay')}</p></div></div>}
 
       <div className="flex-1 flex overflow-hidden rounded-2xl border border-[var(--border)] shadow-sm min-h-0 bg-[var(--bg-surface)]">
@@ -534,7 +537,7 @@ export default function ChatPage() {
             )}
             <div className="flex items-center justify-between px-6 py-3.5 border-b border-[var(--border)] shrink-0 bg-[var(--bg-surface)]">
               <div className="flex items-center gap-2 min-w-0 flex-1">
-                <Hash size={17} className="text-slate-400 shrink-0" />
+                <MessageSquare size={17} className="text-slate-400 shrink-0" />
                 {isEditingRoomName ? (
                   <input
                     type="text"
@@ -596,7 +599,7 @@ export default function ChatPage() {
                   ))}
                 </div>
               ) : messages.length === 0 ? (
-                <div className="flex-1 flex flex-col items-center justify-center text-center gap-4 py-20"><div className="w-16 h-16 rounded-2xl bg-[var(--bg-surface-2)] flex items-center justify-center"><Hash size={28} className="text-[var(--text-muted)]" /></div><div><p className="text-sm font-bold text-[var(--text-secondary)]">{t('welcomeToChannel').replace('{name}', activeRoom.name)}</p><p className="text-xs text-[var(--text-muted)] mt-1.5">{t('sendFirstMessage')}</p></div></div>
+                <div className="flex-1 flex flex-col items-center justify-center text-center gap-4 py-20"><div className="w-16 h-16 rounded-2xl bg-[var(--bg-surface-2)] flex items-center justify-center"><MessageSquare size={28} className="text-[var(--text-muted)]" /></div><div><p className="text-sm font-bold text-[var(--text-secondary)]">{t('welcomeToChannel').replace('{name}', activeRoom.name)}</p><p className="text-xs text-[var(--text-muted)] mt-1.5">{t('sendFirstMessage')}</p></div></div>
               ) : (
                 <>
                   {hasMore && (
@@ -667,7 +670,7 @@ export default function ChatPage() {
             </div>
           </div>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center bg-[var(--bg-surface)] gap-4"><div className="w-20 h-20 rounded-3xl bg-[var(--bg-surface-2)] flex items-center justify-center"><MessageSquare size={36} className="text-[var(--text-muted)]" /></div><div className="text-center"><p className="text-sm font-semibold text-[var(--text-secondary)]">{t('selectChatRoom')}</p><p className="text-xs text-[var(--text-muted)] mt-1">{t('selectChannelDesc')}</p></div><div className="flex items-center gap-3"><button onClick={() => setIsCreateRoomOpen(true)} className="text-xs text-[var(--primary)] hover:underline bg-transparent border-none cursor-pointer font-semibold">+ {t('addNewChannel')}</button><span className="text-[var(--text-muted)]">|</span><button onClick={() => setIsGroupManagerOpen(true)} className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--primary)] bg-transparent border-none cursor-pointer font-semibold transition-colors"><Shield size={12} />{t('manageUserGroups')}</button></div></div>
+          <div className="flex-1 flex flex-col items-center justify-center bg-[var(--bg-surface)] gap-4"><div className="w-20 h-20 rounded-3xl bg-[var(--bg-surface-2)] flex items-center justify-center"><MessageSquare size={36} className="text-[var(--text-muted)]" /></div><div className="text-center"><p className="text-sm font-semibold text-[var(--text-secondary)]">{t('selectChatRoom')}</p><p className="text-xs text-[var(--text-muted)] mt-1">{t('selectChannelDesc')}</p></div><div className="flex items-center gap-3"><button onClick={() => setIsCreateRoomOpen(true)} className="text-xs text-[var(--primary)] hover:underline bg-transparent border-none cursor-pointer font-semibold">+ {t('addNewChannel')}</button></div></div>
         )}
       </div>
 
@@ -682,13 +685,6 @@ export default function ChatPage() {
           fetchChatRooms();
           setSearchParams({ room: roomId });
         }}
-      />
-
-      <UserGroupManager
-        isOpen={isGroupManagerOpen}
-        onClose={() => setIsGroupManagerOpen(false)}
-        t={t}
-        showToast={showToast}
       />
 
       <ConfirmDialog

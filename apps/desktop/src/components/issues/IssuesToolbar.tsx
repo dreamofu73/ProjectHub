@@ -193,7 +193,7 @@ export function IssuesToolbar({
           className="h-8 px-2 border border-[var(--border)] rounded bg-[var(--bg-surface)] text-xs focus:outline-none text-[var(--text-primary)] cursor-pointer font-medium"
         >
           <option value="all" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
-            {'담당자'}
+            {t('assignee') || '담당자'}
           </option>
           <option value="me" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
             {t('myIssues') || '내 이슈'}
@@ -247,7 +247,7 @@ export function IssuesToolbar({
           title={t('resetFilters') || '필터 초기화'}
         >
           <X size={12} />
-          {'초기화'}
+          {t('reset') || '초기화'}
         </button>
 
         

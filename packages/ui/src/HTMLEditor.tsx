@@ -186,7 +186,6 @@ export function HTMLEditor({
             onChange={handleSourceChange}
             disabled={disabled}
             className="w-full h-full p-4 font-mono text-sm border-none bg-slate-50 dark:bg-slate-900/50 text-foreground resize-none focus:outline-none focus:ring-0 absolute inset-0 custom-scrollbar rounded-b-xl"
-            style={{ minHeight: `${height}px` }}
           />
         ) : (
           <div
@@ -196,8 +195,8 @@ export function HTMLEditor({
           >
             <EditorContent
               editor={editor}
-              className="w-full h-full px-6 pt-0 pb-5 focus:outline-none text-foreground prose dark:prose-invert max-w-none text-sm leading-relaxed [&>.tiptap>*:first-child]:mt-1"
-              style={{ minHeight: `${height}px`, outline: 'none' }}
+              className="w-full min-h-full px-6 py-4 focus:outline-none text-foreground prose dark:prose-invert max-w-none text-sm leading-relaxed [&>.tiptap>*:first-child]:mt-1"
+              style={{ outline: 'none' }}
             />
           </div>
         )}

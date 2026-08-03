@@ -45,7 +45,7 @@ export function TableInsertMenu({ labels, commands, popovers }: Props) {
       </ToolbarButton>
 
       {isOpen && (
-        <div className={`${MENU_PANEL_CLASS} dark:border-slate-700 shadow-xl p-3 rounded-md flex flex-col gap-3 w-64`} onKeyDown={popovers.handleMenuKeyDown}>
+        <div className={`${MENU_PANEL_CLASS} right-0 dark:border-slate-700 shadow-xl p-3 rounded-md flex flex-col gap-3 w-64`} onKeyDown={popovers.handleMenuKeyDown}>
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold">
               {labels.insertTable} <span className="text-indigo-500">{previewCols}x{previewRows}</span>

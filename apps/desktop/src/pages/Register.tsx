@@ -123,7 +123,8 @@ export default function RegisterPage() {
       });
       const data = await res.json();
       if (res.ok && data.success) navigate('/login?registered=true');
-      else setError(data.error || t('registerFail'));
+      else if (res.status === 409) setError(t('registerErrorExists'));
+      else setError(t('registerFail'));
     } catch { setError(t('networkError')); }
     finally { setIsLoading(false); }
   };

@@ -573,7 +573,7 @@ export default function GlobalBoardList() {
   };
 
   return (
-    <div className="w-full h-[calc(100vh-105px)] animate-in fade-in slide-in-from-bottom-4 duration-300 flex flex-col overflow-hidden bg-[var(--bg-surface)] text-[var(--text-primary)] rounded-2xl border border-[var(--border)] shadow-sm">
+    <div className="w-full h-full animate-in fade-in slide-in-from-bottom-4 duration-300 flex flex-col overflow-hidden bg-[var(--bg-surface)] text-[var(--text-primary)]">
 
       {/* 상단 헤더 */}
       <div className="flex items-center justify-between px-6 py-4 bg-[var(--bg-surface)] border-b border-[var(--border)] shrink-0">
@@ -724,7 +724,7 @@ export default function GlobalBoardList() {
             splitLayout === 'columns' ? { width: `${leftWidth}%` } :
             splitLayout === 'rows' ? { height: `${topHeight}%` } : {}
           }
-          className={`flex flex-col overflow-hidden min-w-[240px] min-h-[100px] ${splitLayout === 'list' ? 'w-full' : ''}`}
+          className={`flex flex-col overflow-hidden min-w-[240px] min-h-[100px] h-full ${splitLayout === 'list' ? 'w-full flex-1' : ''}`}
         >
           {/* 테이블 스크롤 영역 */}
           <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 custom-scrollbar">
@@ -829,7 +829,7 @@ export default function GlobalBoardList() {
                       <tr
                         key={post.id}
                         onClick={() => handleOpenDetail(post)}
-                        className={`cursor-pointer transition-colors ${
+                        className={`h-9 min-h-[36px] max-h-[36px] cursor-pointer transition-colors ${
                           isActive
                             ? 'bg-[var(--primary)]/10'
                             : isChecked
@@ -840,7 +840,7 @@ export default function GlobalBoardList() {
                         }`}
                       >
                         {isAdmin && (
-                          <td className="p-2 text-center" onClick={(e) => e.stopPropagation()}>
+                          <td className="h-9 py-1 px-2 text-center align-middle" onClick={(e) => e.stopPropagation()}>
                             <label className="flex items-center justify-center cursor-pointer p-1 rounded focus-within:ring-2 focus-within:ring-[var(--primary)]/60">
                               <input
                                 type="checkbox"
@@ -856,38 +856,28 @@ export default function GlobalBoardList() {
                             </label>
                           </td>
                         )}
-                        <td className="p-2 text-center font-mono text-xs text-[var(--text-muted)]">{ordinal}</td>
-                        <td className="p-2 pl-3 min-w-0">
+                        <td className="h-9 py-1 px-2 text-center font-mono text-xs text-[var(--text-muted)] align-middle">{ordinal}</td>
+                        <td className="h-9 py-1 px-2 pl-3 min-w-0 align-middle">
                           <button
                             type="button"
                             onClick={(e) => { e.stopPropagation(); handleOpenDetail(post); }}
                             className="w-full min-w-0 text-left bg-transparent border-none p-0 cursor-pointer rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/60"
                           >
-                            {splitLayout !== 'list' ? (
-                              <span className="flex flex-col gap-0.5 min-w-0">
-                                <span className={`flex items-center gap-1 text-xs truncate font-semibold ${isActive ? 'text-[var(--primary)]' : 'text-[var(--text-primary)]'}`}>
-                                  {post.is_pinned && <Pin size={10} className="shrink-0 text-[var(--primary)]" aria-label={t('pinned')} />}
-                                  <span className="truncate">{post.title}</span>
-                                  {isResource && !!post.attachment_count && (
-                                    <span className="shrink-0 flex items-center gap-0.5 text-xs text-[var(--text-muted)] font-medium">
-                                      <Paperclip size={10} aria-hidden="true" />{post.attachment_count}
-                                    </span>
-                                  )}
+                            <span className="flex items-center gap-1.5 min-w-0">
+                              {post.is_pinned && <Pin size={11} className="shrink-0 text-[var(--primary)]" aria-label={t('pinned')} />}
+                              <span className={`text-xs font-semibold truncate ${isActive ? 'text-[var(--primary)]' : 'text-[var(--text-primary)]'}`}>{post.title}</span>
+                              {isResource && !!post.attachment_count && (
+                                <span className="shrink-0 flex items-center gap-0.5 text-xs text-[var(--text-muted)] font-medium">
+                                  <Paperclip size={10} aria-hidden="true" />{post.attachment_count}
                                 </span>
-                                <span className="text-xs text-[var(--text-muted)] truncate">{post.author_name}</span>
-                              </span>
-                            ) : (
-                              <span className="flex items-center gap-1 min-w-0">
-                                {post.is_pinned && <Pin size={10} className="shrink-0 text-[var(--primary)]" aria-label={t('pinned')} />}
-                                <span className="text-xs font-semibold text-[var(--text-primary)] truncate">{post.title}</span>
-                              </span>
-                            )}
+                              )}
+                            </span>
                           </button>
                         </td>
                         {splitLayout === 'list' ? (
                           <>
                             {isResource && (
-                              <td className="p-2 text-center text-xs text-[var(--text-muted)] font-medium">
+                              <td className="h-9 py-1 px-2 text-center text-xs text-[var(--text-muted)] font-medium align-middle">
                                 {post.attachment_count ? (
                                   <span
                                     className="inline-flex items-center gap-1"
@@ -899,12 +889,12 @@ export default function GlobalBoardList() {
                                 ) : '-'}
                               </td>
                             )}
-                            <td className="p-2 text-center text-xs text-[var(--text-secondary)] font-medium">{post.author_name}</td>
-                            <td className="p-2 text-center text-xs text-[var(--text-muted)] font-medium">{post.view_count ?? 0}</td>
-                            <td className="p-2 pr-4 text-right text-xs text-[var(--text-muted)] font-medium">{formatDate(post.created_at)}</td>
+                            <td className="h-9 py-1 px-2 text-center text-xs text-[var(--text-secondary)] font-medium align-middle truncate">{post.author_name}</td>
+                            <td className="h-9 py-1 px-2 text-center text-xs text-[var(--text-muted)] font-medium align-middle">{post.view_count ?? 0}</td>
+                            <td className="h-9 py-1 px-2 pr-4 text-right text-xs text-[var(--text-muted)] font-medium align-middle">{formatDate(post.created_at)}</td>
                           </>
                         ) : (
-                          <td className="p-2 pr-3 text-right text-xs text-[var(--text-muted)] font-medium">{formatDate(post.created_at)}</td>
+                          <td className="h-9 py-1 px-3 text-right text-xs text-[var(--text-muted)] font-medium align-middle">{formatDate(post.created_at)}</td>
                         )}
                       </tr>
                     );

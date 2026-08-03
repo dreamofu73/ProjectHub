@@ -47,7 +47,7 @@ const zh: Record<string, string> = {
   board: '论坛',
   notices: '公告',
   resources: '资料室',
-  
+
   // Header & Info
   status: '状态',
   searchPlaceholder: '搜索与命令 (⌘K)...',
@@ -64,7 +64,7 @@ const zh: Record<string, string> = {
   themeSelect: '主题选择',
   themeChange: '更换主题 ({name})',
   confirm: '确认',
-  
+
   // Common actions & fields
   id: 'ID',
   project: '项目',
@@ -88,28 +88,28 @@ const zh: Record<string, string> = {
   actions: '操作',
   role: '角色',
   category: '类别',
-  
+
   // Roles
   admin: '管理员',
   manager: '经理',
   member: '成员',
   overseer: '监察员',
   user: '用户',
-  
+
   // Issue tracker
   bug: '缺陷',
   feature: '新功能',
   task: '任务',
   support: '支持',
   enhancement: '改进',
-  
+
   // Priorities
   low: '低',
   normal: '普通',
   high: '高',
   urgent: '紧急',
   immediate: '立即',
-  
+
   // Issue status
   new: '新建',
   in_progress: '进行中',
@@ -117,7 +117,7 @@ const zh: Record<string, string> = {
   feedback: '反馈',
   closed: '关闭',
   rejected: '拒绝',
-  
+
   // Chat & Board
   inviteMember: '邀请成员',
   inputMessage: '输入消息...',
@@ -126,7 +126,7 @@ const zh: Record<string, string> = {
   newPost: '发布新帖',
   editPost: '编辑帖子',
   comments: '评论',
-  
+
   // Dashboard
   recentActivities: '最近动态',
   myIssues: '我的问题',
@@ -217,6 +217,7 @@ const zh: Record<string, string> = {
   pwMismatchError: '密码不匹配。',
   networkError: '发生网络错误。',
   registerFail: '注册失败。',
+  registerErrorExists: '该用户名或邮箱已被使用。',
   noticeDesc: '查看重要公告。',
   resourceDesc: '共享项目和工作所需的资料。',
   postLoadFail: '加载帖子失败。',
@@ -315,7 +316,7 @@ const zh: Record<string, string> = {
   totalUsers: '共{count}人',
   changeRoleTo: '更改权限...',
   selectAll: '全选',
-  
+
   // Issues Page Extensions
   projectIssuesTitle: '{name} 问题列表',
   totalIssuesTitle: '所有问题',
@@ -348,6 +349,10 @@ const zh: Record<string, string> = {
   dueDateFormat: '{date} 截止',
   updatedAtFormat: '更新于: {date}',
   totalIssuesCount: '共 {count} 个问题',
+  reset: '重置',
+  columnsSelected: '已选 {count} 项',
+  convertToTask: '注册为任务',
+  issueListCount: '共 {count} 个',
   failToLoadIssues: '加载问题失败。',
   bulkUpdateConfirm: '确定要批量更新选中的 {count} 个问题吗？',
   bulkUpdateError: '批量操作过程中发生错误。',
@@ -654,6 +659,18 @@ const zh: Record<string, string> = {
   // Kanban Page
   kanbanAll: '全部',
   unspecified: '未指定',
+  issueKanbanBoard: '问题看板',
+  searchIssuePlaceholder: '按标题搜索问题...',
+  saving: '保存中...',
+  newIssue: '添加新问题',
+  statusNew: '新建',
+  statusInProgress: '进行中',
+  statusFeedback: '反馈',
+  statusResolved: '已解决',
+  statusClosed: '已关闭',
+  totalWithCount: '共 {count} 个',
+  totalCountWithNum: '共 {count} 个',
+  wipLimitExceeded: '超出WIP限制！请检查瓶颈。',
   // Tasks Page
   addNewTask: '新建任务',
   task_type: '任务类型',
@@ -664,7 +681,6 @@ const zh: Record<string, string> = {
   planned_end_date: '计划结束日期',
   createTask: '创建任务',
   editTask: '编辑任务',
-  saving: '保存中...',
   taskCreatedSuccess: '任务已成功创建。',
   taskCreatedError: '任务创建失败。',
   taskUpdatedSuccess: '任务已成功更新。',
@@ -802,7 +818,6 @@ const zh: Record<string, string> = {
   zoomWeek: '周',
   zoomMonth: '月',
   noItemsFound: '暂无数据。',
-  wipLimitExceeded: '超过 WIP 限制！请检查瓶颈。',
   depAutoSyncToast: '依赖关系条件和计划日期已自动更新。',
 
   // Sidebar

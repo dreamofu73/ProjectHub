@@ -390,7 +390,7 @@ export default function MemosPage() {
   }, []);
 
   return (
-    <div className="w-full h-[calc(100vh-105px)] animate-in fade-in slide-in-from-bottom-4 duration-300 flex flex-col overflow-hidden bg-[var(--bg-surface)] text-[var(--text-primary)] rounded-2xl border border-[var(--border)] shadow-sm">
+    <div className="w-full h-full animate-in fade-in slide-in-from-bottom-4 duration-300 flex flex-col overflow-hidden bg-[var(--bg-surface)] text-[var(--text-primary)]">
       
       {/* 상단 네비게이션 & 액션 바 */}
       {!isComposeOpen && (

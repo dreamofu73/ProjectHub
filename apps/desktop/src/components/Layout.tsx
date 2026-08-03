@@ -265,9 +265,12 @@ export default function Layout({ children }: LayoutProps) {
   const isSystemContext = location.pathname.startsWith('/users') || location.pathname.startsWith('/admin/groups') || location.pathname.startsWith('/admin/organization') || location.pathname.startsWith('/admin/scheduler') || location.pathname.startsWith('/admin/logs');
 
   useEffect(() => {
-    if (location.pathname.startsWith('/chat') || (isProjectContext && location.pathname.endsWith('/chat'))) {
-      fetchChatRooms();
-    }
+    const isChatPage = location.pathname.startsWith('/chat') || (isProjectContext && location.pathname.endsWith('/chat'));
+    if (!isChatPage) return;
+    fetchChatRooms();
+    // 채팅 페이지에서는 새 메시지 도착 시 사이드바 안읽음 배지가 갱신되도록 주기적으로 방 목록을 재조회한다.
+    const chatRoomPollId = setInterval(fetchChatRooms, 5000);
+    return () => clearInterval(chatRoomPollId);
   }, [location.pathname, fetchChatRooms, isProjectContext]);
 
   useEffect(() => {

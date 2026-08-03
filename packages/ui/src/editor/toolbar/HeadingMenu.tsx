@@ -1,4 +1,4 @@
-import { ChevronDown, Heading1, Heading2, Type } from 'lucide-react';
+import { ChevronDown, Heading1, Heading2 } from 'lucide-react';
 import { MENU_PANEL_CLASS } from './ToolbarButton';
 import { MENU_ITEM_CLASS, SELECT_TRIGGER_CLASS, activeTextClass, type ToolbarGroupProps } from './types';
 
@@ -40,14 +40,14 @@ export function HeadingMenu({ editor, labels, popovers, disabled, isSourceMode }
       </button>
 
       {isOpen && (
-        <div className={`${MENU_PANEL_CLASS} shadow-xl p-1 min-w-[130px]`} onKeyDown={popovers.handleMenuKeyDown}>
+        <div className={`${MENU_PANEL_CLASS} left-0 shadow-xl p-1 min-w-[130px]`} onKeyDown={popovers.handleMenuKeyDown}>
           <button
             type="button"
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => { editor?.chain().focus().setParagraph().run(); popovers.close('heading'); }}
             className={`${MENU_ITEM_CLASS} ${activeTextClass(!!editor?.isActive('paragraph'))}`}
           >
-            <Type size={14} /> {labels.paragraph}
+            {labels.paragraph}
           </button>
           <div className="border-t border-border my-1" />
           {headings.map(({ level, label }) => (

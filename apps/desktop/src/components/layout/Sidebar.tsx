@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import {  ChevronRight, Plus, Send, Inbox, Award, Clock, Archive, Trash2, Folder, Edit2, X, MessageSquare, Bell, Users, FileText, Search, Home, Settings, Columns3, ChevronDown, CheckSquare , BarChart } from 'lucide-react';
+import {  ChevronRight, Plus, Send, Inbox, Award, Clock, Archive, Trash2, Folder, Edit2, X, MessageSquare, Bell, Users, FileText, Bug, Search, Home, Settings, Columns3, ChevronDown, CheckSquare , GanttChart } from 'lucide-react';
 import { Tooltip } from 'ui/Tooltip';
 import { useSidebar } from '../../context/SidebarContext';
 import type { WikiPage } from 'shared/types';
@@ -191,7 +191,7 @@ export function Sidebar() {
                       to={`/projects/${location.pathname.split('/')[2]}/tasks?view=gantt`}
                       className={`sidebar-nav-link ${location.pathname.endsWith('/tasks') && location.search.includes('view=gantt') ? 'active' : ''} ${isSidebarCollapsed ? 'justify-center px-1' : ''}`}
                     >
-                      <BarChart size={16} className={`shrink-0 ${location.pathname.endsWith('/tasks') && location.search.includes('view=gantt') ? 'opacity-100' : 'opacity-60'}`} />
+                      <GanttChart size={16} className={`shrink-0 ${location.pathname.endsWith('/tasks') && location.search.includes('view=gantt') ? 'opacity-100' : 'opacity-60'}`} />
                       {!isSidebarCollapsed && <span>{t('ganttChart')}</span>}
                     </Link>
                   </Tooltip>
@@ -211,7 +211,7 @@ export function Sidebar() {
                       to={`/projects/${location.pathname.split('/')[2]}/issues`}
                       className={`sidebar-nav-link ${location.pathname.endsWith('/issues') ? 'active' : ''} ${isSidebarCollapsed ? 'justify-center px-1' : ''}`}
                     >
-                      <FileText size={16} className={`shrink-0 ${location.pathname.endsWith('/issues') ? 'opacity-100' : 'opacity-60'}`} />
+                      <Bug size={16} className={`shrink-0 ${location.pathname.endsWith('/issues') ? 'opacity-100' : 'opacity-60'}`} />
                       {!isSidebarCollapsed && <span>{t('issueList')}</span>}
                     </Link>
                   </Tooltip>

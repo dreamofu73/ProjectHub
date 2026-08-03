@@ -45,7 +45,7 @@ export function InsertGroup({ editor, labels, commands, popovers, onAddLink, onA
         </ToolbarButton>
         {popovers.isOpen('specialChar') && (
           <div
-            className={`${MENU_PANEL_CLASS} dark:border-slate-700 shadow-xl p-2 rounded-md grid grid-cols-10 gap-1 w-max max-h-[220px] overflow-y-auto custom-scrollbar`}
+            className={`${MENU_PANEL_CLASS} right-0 dark:border-slate-700 shadow-xl p-2 rounded-md grid grid-cols-10 gap-1 w-max max-h-[220px] overflow-y-auto overflow-x-auto custom-scrollbar`}
             onKeyDown={popovers.handleMenuKeyDown}
           >
             {SPECIAL_CHARACTERS.map((char, idx) => (
@@ -74,7 +74,7 @@ export function InsertGroup({ editor, labels, commands, popovers, onAddLink, onA
           <Smile size={14} />
         </ToolbarButton>
         {popovers.isOpen('emoji') && (
-          <div className="absolute left-0 mt-1 z-30 shadow-xl rounded-xl overflow-hidden border border-border dark:border-slate-700">
+          <div className="absolute right-0 mt-1 z-30 shadow-xl rounded-xl overflow-hidden border border-border dark:border-slate-700 max-w-[calc(100vw-2rem)]">
             <React.Suspense
               fallback={
                 <div className="w-[352px] h-[435px] flex items-center justify-center bg-white dark:bg-slate-900 text-xs text-slate-500 dark:text-slate-400">

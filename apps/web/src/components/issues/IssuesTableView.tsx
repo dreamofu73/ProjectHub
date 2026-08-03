@@ -19,9 +19,9 @@ interface RenderProps {
   isDueSoon: (date: string | null) => boolean;
   getAvatarColor: (name: string) => string;
   getInitials: (name: string) => string;
-  STATUS_CONFIG: Record<string, { color: string; bg: string; dot: string }>;
-  TRACKER_CONFIG: Record<string, { emoji: string; color: string }>;
-  PRIORITY_CONFIG: Record<string, { color: string; label: string }>;
+  STATUS_CONFIG: Record<string, { color: string; bg: string; border: string; dot: string }>;
+  TRACKER_CONFIG: Record<string, { emoji: string; color: string; bg: string; border: string }>;
+  PRIORITY_CONFIG: Record<string, { color: string; bg: string; border: string; label: string }>;
   trackerLabels: Record<string, string>;
   priorityLabels: Record<string, string>;
   statusLabels: Record<string, string>;
@@ -45,7 +45,7 @@ interface IssuesTableViewProps {
   onReorderColumns: (newKeys: string[]) => void;
 }
 
-const headerBaseClass = 'select-none py-2 px-3 text-left font-bold text-xs uppercase tracking-wider sticky top-0 z-10 bg-[var(--bg-surface-2)]';
+const headerBaseClass = 'select-none py-1.5 px-3 text-left font-bold text-xs uppercase tracking-wider sticky top-0 z-10 bg-[var(--bg-surface-2)]';
 
 function SortHeader({
   column,
@@ -168,44 +168,52 @@ export function IssuesTableView({
   const renderCell = (col: ColumnDef, issue: Issue) => {
     const overdue = isOverdue(issue.due_date) && issue.status !== 'closed' && issue.status !== 'resolved';
     const dueSoon = isDueSoon(issue.due_date) && issue.status !== 'closed' && issue.status !== 'resolved';
-    const trackerCfg = TRACKER_CONFIG[issue.tracker] || { emoji: '•', color: '#6b7280' };
-    const priorityCfg = PRIORITY_CONFIG[issue.priority] || { color: '#6b7280', label: issue.priority };
+    const trackerCfg = TRACKER_CONFIG[issue.tracker] || { emoji: '•', color: '#64748b', bg: 'rgba(100,116,139,0.08)', border: 'rgba(100,116,139,0.2)' };
+    const statusCfg = STATUS_CONFIG[issue.status] || { color: '#64748b', bg: 'rgba(100,116,139,0.12)', border: 'rgba(100,116,139,0.25)', dot: '#64748b' };
+    const priorityCfg = PRIORITY_CONFIG[issue.priority] || { color: '#64748b', bg: 'rgba(100,116,139,0.08)', border: 'rgba(100,116,139,0.2)', label: issue.priority };
 
     switch (col.key) {
       case 'task_type':
-        return <span className="text-xs text-[var(--text-secondary)]">{issue.task_type || '-'}</span>;
+        return <span className="text-xs text-[var(--text-secondary)] font-medium">{issue.task_type || '-'}</span>;
       case 'planned_start_date':
-        return <span className="text-xs text-[var(--text-muted)]">{issue.planned_start_date ? formatDate(issue.planned_start_date, { year: 'numeric', month: 'numeric', day: 'numeric' }) : '-'}</span>;
+        return <span className="text-xs text-[var(--text-muted)] tabular-nums">{issue.planned_start_date ? formatDate(issue.planned_start_date, { year: 'numeric', month: 'numeric', day: 'numeric' }) : '-'}</span>;
       case 'actual_start_date':
-        return <span className="text-xs text-[var(--text-muted)]">{issue.actual_start_date ? formatDate(issue.actual_start_date, { year: 'numeric', month: 'numeric', day: 'numeric' }) : '-'}</span>;
+        return <span className="text-xs text-[var(--text-muted)] tabular-nums">{issue.actual_start_date ? formatDate(issue.actual_start_date, { year: 'numeric', month: 'numeric', day: 'numeric' }) : '-'}</span>;
       case 'actual_end_date':
-        return <span className="text-xs text-[var(--text-muted)]">{issue.actual_end_date ? formatDate(issue.actual_end_date, { year: 'numeric', month: 'numeric', day: 'numeric' }) : '-'}</span>;
+        return <span className="text-xs text-[var(--text-muted)] tabular-nums">{issue.actual_end_date ? formatDate(issue.actual_end_date, { year: 'numeric', month: 'numeric', day: 'numeric' }) : '-'}</span>;
       case 'id':
         return (
-          <span className="text-xs font-bold text-[var(--text-muted)] font-mono">
+          <span className="text-xs font-bold text-[var(--text-muted)] font-mono tabular-nums bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
             #{issue.id}
           </span>
         );
       case 'tracker':
         return (
-          <span className="inline-flex items-center gap-1.25 text-xs font-semibold" style={{ color: trackerCfg.color }}>
-            <span>{trackerCfg.emoji}</span>
+          <span
+            className="inline-flex items-center gap-1.5 text-[0.725rem] font-bold px-2 py-0.5 rounded-md border transition-all shadow-2xs"
+            style={{ color: trackerCfg.color, backgroundColor: trackerCfg.bg, borderColor: trackerCfg.border }}
+          >
+            <span className="text-xs">{trackerCfg.emoji}</span>
             {trackerLabels[issue.tracker] || issue.tracker}
           </span>
         );
       case 'priority':
         return (
-          <span className="inline-flex items-center gap-1.25">
-            <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: priorityCfg.color }} />
-            <span className="text-xs font-semibold" style={{ color: priorityCfg.color }}>
-              {priorityLabels[issue.priority] || issue.priority}
-            </span>
+          <span
+            className="inline-flex items-center gap-1.5 text-[0.725rem] font-semibold px-2 py-0.5 rounded border"
+            style={{ color: priorityCfg.color, backgroundColor: priorityCfg.bg, borderColor: priorityCfg.border }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full inline-block shrink-0" style={{ background: priorityCfg.color }} />
+            {priorityLabels[issue.priority] || issue.priority}
           </span>
         );
       case 'status':
         return (
-          <span className="inline-flex items-center gap-1.5 text-xs font-semibold" style={{ color: STATUS_CONFIG[issue.status]?.color || 'var(--text-secondary)' }}>
-            <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: STATUS_CONFIG[issue.status]?.dot || 'var(--text-muted)' }} />
+          <span
+            className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-0.75 rounded-full border shadow-2xs transition-all"
+            style={{ color: statusCfg.color, backgroundColor: statusCfg.bg, borderColor: statusCfg.border }}
+          >
+            <span className="w-1.75 h-1.75 rounded-full inline-block shrink-0 animate-pulse" style={{ background: statusCfg.dot }} />
             {statusLabels[issue.status] || issue.status}
           </span>
         );
@@ -214,72 +222,83 @@ export function IssuesTableView({
           <span className="text-xs">
             <Link
               to={`/projects/${issue.project_identifier}/dashboard`}
-              className="font-semibold text-[var(--text-secondary)] hover:text-[var(--primary)]"
+              className="font-bold text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors"
             >
               {issue.project_name}
             </Link>
           </span>
         );
-      case 'subject':
+      case 'subject': {
+        // Clean bracket tracker prefixes like [SUPPORT] if present in subject string for cleaner display
+        const displaySubject = issue.subject.replace(/^\[(SUPPORT|FEATURE|BUG|TASK|ENHANCEMENT)\]\s*/i, '');
         return (
           <div className="flex items-center gap-2">
+            {!columnKeys.includes('tracker') && (
+              <span
+                className="inline-flex items-center text-[0.65rem] font-extrabold px-1.5 py-0.5 rounded border uppercase tracking-wider shrink-0"
+                style={{ color: trackerCfg.color, backgroundColor: trackerCfg.bg, borderColor: trackerCfg.border }}
+              >
+                {trackerLabels[issue.tracker] || issue.tracker}
+              </span>
+            )}
             {onOpenDetail ? (
-              <span className="issue-link text-sm cursor-pointer">
-                {issue.subject}
+              <span className="issue-link text-sm font-semibold text-[var(--text-primary)] hover:text-[var(--primary)] transition-colors cursor-pointer leading-snug">
+                {displaySubject}
               </span>
             ) : (
               <Link
                 to={`/projects/${issue.project_identifier}/issues/${issue.id}`}
-                className="issue-link text-sm"
+                className="issue-link text-sm font-semibold text-[var(--text-primary)] hover:text-[var(--primary)] transition-colors leading-snug"
               >
-                {issue.subject}
+                {displaySubject}
               </Link>
             )}
             {overdue && (
-              <span title={t('overdue')} className="inline-flex items-center text-[var(--danger)] shrink-0">
+              <span title={t('overdue')} className="inline-flex items-center text-[var(--danger)] shrink-0 bg-red-50 dark:bg-red-950/30 p-1 rounded-full border border-red-200 dark:border-red-900">
                 <AlertCircle size={13} />
               </span>
             )}
             {dueSoon && !overdue && (
-              <span title={t('dueSoon')} className="inline-flex items-center text-[var(--warning)] shrink-0">
+              <span title={t('dueSoon')} className="inline-flex items-center text-[var(--warning)] shrink-0 bg-amber-50 dark:bg-amber-950/30 p-1 rounded-full border border-amber-200 dark:border-amber-900">
                 <Clock size={13} />
               </span>
             )}
           </div>
         );
+      }
       case 'assigned_name':
         return issue.assigned_name ? (
-          <div className="flex items-center gap-1.75">
+          <div className="flex items-center gap-2">
             <span
-              className="w-6.5 h-6.5 rounded-full flex items-center justify-center text-white text-[0.65rem] font-bold shrink-0"
+              className="w-6.5 h-6.5 rounded-full flex items-center justify-center text-white text-[0.65rem] font-extrabold shrink-0 shadow-xs border border-white/20"
               style={{ background: getAvatarColor(issue.assigned_name) }}
             >
               {getInitials(issue.assigned_name)}
             </span>
-            <span className="text-xs text-[var(--text-secondary)] font-medium">
+            <span className="text-xs text-[var(--text-secondary)] font-semibold">
               {issue.assigned_name}
             </span>
           </div>
         ) : (
-          <span className="text-xs text-[var(--text-muted)] flex items-center gap-1.25">
-            <User size={13} className="opacity-40" /> {t('unassigned')}
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-[var(--text-muted)] text-[0.7rem] font-medium border border-slate-200/50 dark:border-slate-700/50">
+            <User size={12} className="opacity-60" /> {t('unassigned')}
           </span>
         );
       case 'author_name':
         return (
-          <span className="text-xs text-[var(--text-secondary)]">
+          <span className="text-xs text-[var(--text-secondary)] font-medium">
             {issue.author_name || issue.author_login || '-'}
           </span>
         );
       case 'created_at':
         return (
-          <span className="text-[0.75rem] text-[var(--text-muted)]">
+          <span className="text-[0.75rem] text-[var(--text-muted)] tabular-nums">
             {formatDate(issue.created_at, { year: 'numeric', month: 'numeric', day: 'numeric' })}
           </span>
         );
       case 'updated_at':
         return (
-          <span className="text-[0.75rem] text-[var(--text-muted)]">
+          <span className="text-[0.75rem] text-[var(--text-muted)] tabular-nums">
             {formatDate(issue.updated_at, { year: 'numeric', month: 'numeric', day: 'numeric' })}
           </span>
         );
@@ -289,16 +308,16 @@ export function IssuesTableView({
   };
 
   return (
-    <div className="table-container custom-scrollbar border-none rounded-none shadow-none">
-      <table className="table">
+    <div className="w-full flex-1 overflow-auto custom-scrollbar">
+      <table className="table w-full border-collapse">
         <thead>
-          <tr className="sticky top-0 z-10">
-            <th className="w-11 min-w-[44px] max-w-[44px] text-center bg-[var(--bg-surface-2)] sticky top-0 z-10">
+          <tr className="sticky top-0 z-10 border-b border-[var(--border)]">
+            <th className="w-11 min-w-[44px] max-w-[44px] text-center bg-[var(--bg-surface-2)] sticky top-0 z-10 py-1.5">
               <input
                 type="checkbox"
                 checked={issues.length > 0 && selectedIssues.length === issues.length}
                 onChange={onSelectAll}
-                className="accent-[var(--primary)]"
+                className="accent-[var(--primary)] cursor-pointer"
               />
             </th>
             {visibleColumns.map(col => {
@@ -322,7 +341,7 @@ export function IssuesTableView({
             })}
           </tr>
         </thead>
-        <tbody>
+        <tbody className="divide-y divide-[var(--border)]/60">
           {issues.map((issue, idx) => {
             const isSelected = selectedIssues.includes(issue.id);
             const isDetailSelected = selectedIssueId === issue.id;
@@ -331,24 +350,24 @@ export function IssuesTableView({
               <tr
                 key={issue.id}
                 onClick={clickable ? () => onOpenDetail(issue) : undefined}
-                className={`transition-colors duration-150 ${
-                  isSelected ? 'bg-indigo-50/5 dark:bg-indigo-950/5' : isDetailSelected ? 'bg-[var(--primary)]/5' : 'bg-transparent'
+                className={`transition-colors duration-150 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 ${
+                  isSelected ? 'bg-indigo-50/20 dark:bg-indigo-950/20' : isDetailSelected ? 'bg-[var(--primary)]/10' : 'bg-transparent'
                 } ${clickable ? 'cursor-pointer' : ''}`}
                 style={{
-                  animation: `slideUpFade 0.3s ease ${idx * 0.03}s both`,
+                  animation: `slideUpFade 0.25s cubic-bezier(0.16, 1, 0.3, 1) ${idx * 0.02}s both`,
                 }}
               >
-                <td className="text-center py-2">
+                <td className="text-center py-1.5">
                   <input
                     type="checkbox"
                     checked={isSelected}
                     onChange={(e) => { e.stopPropagation(); onSelectIssue(issue.id); }}
                     onClick={(e) => e.stopPropagation()}
-                    className="accent-[var(--primary)]"
+                    className="accent-[var(--primary)] cursor-pointer"
                   />
                 </td>
                 {visibleColumns.map(col => (
-                  <td key={col.key} className="py-2 px-3">
+                  <td key={col.key} className="py-1.5 px-3 align-middle">
                     {renderCell(col, issue)}
                   </td>
                 ))}

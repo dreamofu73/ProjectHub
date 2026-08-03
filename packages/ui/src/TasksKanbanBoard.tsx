@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import type { Task } from 'shared/types/index';
-import { KanbanBoard, type KanbanColumnDef } from './KanbanBoard';
+import { KanbanBoard, type KanbanColumnDef, getWorkflowStatusRank } from './KanbanBoard';
 
 export interface TasksKanbanBoardProps {
   tasks: Task[];
@@ -15,6 +15,7 @@ export interface TasksKanbanBoardProps {
 const DEFAULT_STATUS_COLUMNS: KanbanColumnDef[] = [
   { id: 'New', label: '신규 (New)', color: 'bg-indigo-500', defaultWip: 10 },
   { id: 'In Progress', label: '진행중 (In Progress)', color: 'bg-blue-500', defaultWip: 5 },
+  { id: 'Feedback', label: '피드백 (Feedback)', color: 'bg-amber-500', defaultWip: 5 },
   { id: 'Resolved', label: '해결됨 (Resolved)', color: 'bg-emerald-500', defaultWip: 10 },
   { id: 'Closed', label: '완료 (Closed)', color: 'bg-slate-500', defaultWip: 20 },
 ];
@@ -29,17 +30,26 @@ export const TasksKanbanBoard: React.FC<TasksKanbanBoardProps> = ({
   wipLimits = {},
 }) => {
   const columns = useMemo<KanbanColumnDef[]>(() => {
+    let rawColumns: KanbanColumnDef[] = [];
     if (!statusOptions || statusOptions.length === 0) {
-      return DEFAULT_STATUS_COLUMNS;
+      rawColumns = DEFAULT_STATUS_COLUMNS;
+    } else {
+      rawColumns = statusOptions.map(st => {
+        const match = DEFAULT_STATUS_COLUMNS.find(c => c.id.toLowerCase() === st.toLowerCase());
+        return {
+          id: st,
+          label: st,
+          color: match?.color || 'bg-slate-500',
+          defaultWip: match?.defaultWip || 10,
+        };
+      });
     }
-    return statusOptions.map(st => {
-      const match = DEFAULT_STATUS_COLUMNS.find(c => c.id.toLowerCase() === st.toLowerCase());
-      return {
-        id: st,
-        label: st,
-        color: match?.color || 'bg-slate-500',
-        defaultWip: match?.defaultWip || 10,
-      };
+
+    return [...rawColumns].sort((a, b) => {
+      const rankA = getWorkflowStatusRank(a.id || a.label);
+      const rankB = getWorkflowStatusRank(b.id || b.label);
+      if (rankA !== rankB) return rankA - rankB;
+      return a.label.localeCompare(b.label);
     });
   }, [statusOptions]);
 

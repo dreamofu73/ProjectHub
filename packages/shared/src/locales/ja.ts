@@ -47,7 +47,7 @@ const ja: Record<string, string> = {
   board: '掲示板',
   notices: 'お知らせ',
   resources: '資料室',
-  
+
   // Header & Info
   status: '状態',
   searchPlaceholder: '検索とコマンド (⌘K)...',
@@ -64,7 +64,7 @@ const ja: Record<string, string> = {
   themeSelect: 'テーマ選択',
   themeChange: 'テーマ変更 ({name})',
   confirm: '確認',
-  
+
   // Common actions & fields
   id: 'ID',
   project: 'プロジェクト',
@@ -88,28 +88,28 @@ const ja: Record<string, string> = {
   actions: '操作',
   role: '役割',
   category: 'カテゴリ',
-  
+
   // Roles
   admin: '管理者',
   manager: 'マネージャー',
   member: 'メンバー',
   overseer: '監視者',
   user: 'ユーザー',
-  
+
   // Issue tracker
   bug: '欠陥',
   feature: '新機能',
   task: '作業',
   support: 'サポート',
   enhancement: '改善',
-  
+
   // Priorities
   low: '低',
   normal: '通常',
   high: '高',
   urgent: '緊急',
   immediate: '即時',
-  
+
   // Issue status
   new: '新規',
   in_progress: '進行中',
@@ -117,7 +117,7 @@ const ja: Record<string, string> = {
   feedback: 'フィードバック',
   closed: '完了',
   rejected: '却下',
-  
+
   // Chat & Board
   inviteMember: 'メンバーを招待',
   inputMessage: 'メッセージを入力...',
@@ -126,7 +126,7 @@ const ja: Record<string, string> = {
   newPost: '新規投稿',
   editPost: '投稿編集',
   comments: 'コメント',
-  
+
   // Dashboard
   recentActivities: '最近の活動',
   myIssues: '自分のイシュー',
@@ -217,6 +217,7 @@ const ja: Record<string, string> = {
   pwMismatchError: 'パスワードが一致しません。',
   networkError: 'ネットワークエラーが発生しました。',
   registerFail: '会員登録に失敗しました。',
+  registerErrorExists: 'このユーザー名またはメールアドレスは既に使用されています。',
   noticeDesc: '重要なお知らせを確認してください。',
   resourceDesc: 'プロジェクトおよび業務に必要な資料を共有します。',
   postLoadFail: '投稿の読み込みに失敗しました。',
@@ -315,7 +316,7 @@ const ja: Record<string, string> = {
   totalUsers: '全{count}名',
   changeRoleTo: '権限変更...',
   selectAll: '全選択',
-  
+
   // Issues Page Extensions
   projectIssuesTitle: '{name} イシュー一覧',
   totalIssuesTitle: '統合イシュー一覧',
@@ -348,6 +349,10 @@ const ja: Record<string, string> = {
   dueDateFormat: '{date} 期限',
   updatedAtFormat: '更新: {date}',
   totalIssuesCount: '計 {count} 件のイシュー',
+  reset: 'リセット',
+  columnsSelected: '{count}件選択',
+  convertToTask: 'タスクとして登録',
+  issueListCount: '全 {count}件',
   failToLoadIssues: 'イシューの読み込みに失敗しました。',
   bulkUpdateConfirm: '選択した {count} 件의 イシューを一括変更しますか？',
   bulkUpdateError: '一括処理中にエラーが発生しました。',
@@ -653,7 +658,19 @@ const ja: Record<string, string> = {
 
   // Kanban Page
   kanbanAll: 'すべて',
-  unspecified: '未指定',
+  unspecified: '未設定',
+  issueKanbanBoard: '課題看板ボード',
+  searchIssuePlaceholder: '課題タイトルで検索...',
+  saving: '保存中...',
+  newIssue: '新しい課題の追加',
+  statusNew: '新規',
+  statusInProgress: '進行中',
+  statusFeedback: 'フィードバック',
+  statusResolved: '解決済み',
+  statusClosed: '完了',
+  totalWithCount: '全 {count} 件',
+  totalCountWithNum: '全 {count} 件',
+  wipLimitExceeded: 'WIP制限超過！ボトルネックを確認してください。',
   // Tasks Page
   addNewTask: '新規タスク追加',
   task_type: 'タスクタイプ',
@@ -664,7 +681,6 @@ const ja: Record<string, string> = {
   planned_end_date: '計画終了日',
   createTask: 'タスクを作成',
   editTask: 'タスクを編集',
-  saving: '保存中...',
   taskCreatedSuccess: 'タスクが作成されました。',
   taskCreatedError: 'タスクの作成に失敗しました。',
   taskUpdatedSuccess: 'タスクが更新されました。',
@@ -802,7 +818,6 @@ const ja: Record<string, string> = {
   zoomWeek: '週単位',
   zoomMonth: '月単位',
   noItemsFound: '登録された項目がありません。',
-  wipLimitExceeded: 'WIP制限超過！ボトルネックを確認してください。',
   depAutoSyncToast: '依存関係条件および計画日付が自動更新されました。',
 
   // Sidebar

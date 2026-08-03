@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Plus, CheckSquare, Upload, Search, CornerDownRight, Settings, X, Layers, AlertCircle } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
+import { Plus, CheckSquare, Upload, Search, CornerDownRight, Settings, X, Layers, AlertCircle, GanttChart } from 'lucide-react';
 import { useToast } from 'ui/Toast';
 import { useLanguage } from '../context/LanguageContext';
 import { useTasks } from 'shared/hooks/useTasks';
@@ -12,8 +13,6 @@ import { NewMilestonePanel } from 'ui/NewMilestonePanel';
 import { TaskStatusBadge } from 'ui/TaskStatusBadge';
 import { useMilestones } from 'shared/hooks/useMilestones';
 import { flattenTaskTree } from 'shared/lib/taskTree';
-import { useLocation } from 'react-router-dom';
-
 import type { Task } from 'shared/types';
 import type { GanttDatePatch } from 'ui/TasksGanttChart';
 
@@ -176,14 +175,30 @@ export default function TasksPage() {
     });
   };
 
+  const viewHeaderInfo = useMemo(() => {
+    switch (viewMode) {
+      case 'gantt':
+        return { Icon: GanttChart, title: t('ganttChart') };
+      default:
+        return { Icon: CheckSquare, title: t('wbsList') };
+    }
+  }, [viewMode, t]);
+
+  const HeaderIcon = viewHeaderInfo.Icon;
+
   if (!project) return null;
 
   return (
-    <div className="w-full h-[calc(100vh-105px)] animate-in fade-in slide-in-from-bottom-4 duration-300 flex flex-col overflow-hidden bg-[var(--bg-surface)] rounded-2xl border border-[var(--border)] shadow-sm">
+    <div className="w-full h-full animate-in fade-in slide-in-from-bottom-4 duration-300 flex flex-col overflow-hidden bg-[var(--bg-surface)] text-[var(--text-primary)]">
       <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)] shrink-0">
         <h2 className="text-sm font-bold text-[var(--text-primary)] flex items-center gap-2">
-          <CheckSquare size={16} className="text-[var(--primary)]" />
-          <span>{t('tasks')} - {project.name}</span>
+          <HeaderIcon size={16} className="text-[var(--primary)] shrink-0" />
+          <span>
+            {viewHeaderInfo.title}
+            <span className="text-xs font-normal text-[var(--text-muted)] ml-2">
+              ({project.name})
+            </span>
+          </span>
         </h2>
         <div className="flex gap-2">
           {!isArchived && (
@@ -398,7 +413,7 @@ export default function TasksPage() {
                         {TASK_COLUMNS.filter(col => columnKeys.includes(col.key)).map(col => (
                           <th
                             key={col.key}
-                            className={`select-none py-2 px-3 text-left font-bold text-xs uppercase tracking-wider sticky top-0 z-10 bg-[var(--bg-surface-2)] ${
+                            className={`select-none py-1.5 px-3 text-left font-bold text-xs uppercase tracking-wider sticky top-0 z-10 bg-[var(--bg-surface-2)] ${
                               col.key === 'title' ? '' : col.key === 'progress' ? 'w-28' : 'w-32'
                             }`}
                           >
@@ -420,7 +435,7 @@ export default function TasksPage() {
                             onClick={() => setSelectedTaskId(task.id)}
                           >
                             {!isArchived && (
-                              <td className="text-center py-2" onClick={(e) => toggleSelectRow(task.id, e)}>
+                              <td className="text-center py-1.5" onClick={(e) => toggleSelectRow(task.id, e)}>
                                 <input
                                   type="checkbox"
                                   checked={isSelected}
@@ -431,7 +446,7 @@ export default function TasksPage() {
                               </td>
                             )}
                             {columnKeys.includes('title') && (
-                              <td className="py-2 px-3">
+                              <td className="py-1.5 px-3">
                                 <div className="flex items-center gap-2" style={{ paddingLeft: depth * 18 }}>
                                   {depth > 0 && <CornerDownRight size={12} className="text-[var(--text-muted)] shrink-0" />}
                                   <span className="truncate text-sm font-medium text-[var(--text-primary)]">{task.title}</span>
@@ -453,26 +468,26 @@ export default function TasksPage() {
                               </td>
                             )}
                             {columnKeys.includes('task_type') && (
-                              <td className="py-2 px-3 text-xs text-[var(--text-secondary)]">{task.task_type || '-'}</td>
+                              <td className="py-1.5 px-3 text-xs text-[var(--text-secondary)]">{task.task_type || '-'}</td>
                             )}
                             {columnKeys.includes('task_category') && (
-                              <td className="py-2 px-3 text-xs text-[var(--text-secondary)]">{task.task_category || '-'}</td>
+                              <td className="py-1.5 px-3 text-xs text-[var(--text-secondary)]">{task.task_category || '-'}</td>
                             )}
                             {columnKeys.includes('status') && (
-                              <td className="py-2 px-3"><TaskStatusBadge status={task.status} /></td>
+                              <td className="py-1.5 px-3"><TaskStatusBadge status={task.status} /></td>
                             )}
                             {columnKeys.includes('planned_dates') && (
-                              <td className="py-2 px-3 text-xs text-[var(--text-muted)]">
+                              <td className="py-1.5 px-3 text-xs text-[var(--text-muted)]">
                                 {task.planned_start_date ?? '-'} ~ {task.planned_end_date ?? '-'}
                               </td>
                             )}
                             {columnKeys.includes('actual_dates') && (
-                              <td className="py-2 px-3 text-xs text-[var(--text-muted)]">
+                              <td className="py-1.5 px-3 text-xs text-[var(--text-muted)]">
                                 {task.actual_start_date ?? '-'} ~ {task.actual_end_date ?? '-'}
                               </td>
                             )}
                             {columnKeys.includes('progress') && (
-                              <td className="py-2 px-3">
+                              <td className="py-1.5 px-3">
                                 <div className="flex items-center gap-2">
                                   <div className="flex-1 h-1.5 rounded-full bg-[var(--bg-surface-2)] overflow-hidden">
                                     <div
