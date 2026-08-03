@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Plus, CheckSquare, Square, Minus, Upload, Search, CornerDownRight } from 'lucide-react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { Plus, CheckSquare, Upload, Search, CornerDownRight, Settings, X, Layers, AlertCircle } from 'lucide-react';
 import { useToast } from 'ui/Toast';
 import { useLanguage } from '../context/LanguageContext';
 import { useTasks } from 'shared/hooks/useTasks';
@@ -101,6 +101,50 @@ export default function TasksPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
 
+  // ── 컬럼 설정 ──
+  const [columnKeys, setColumnKeys] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('task_column_keys');
+      return saved ? JSON.parse(saved) : DEFAULT_TASK_COLUMN_KEYS;
+    } catch {
+      return DEFAULT_TASK_COLUMN_KEYS;
+    }
+  });
+  const [isColumnSettingsOpen, setIsColumnSettingsOpen] = useState(false);
+  const columnSettingsRef = useRef<HTMLDivElement>(null);
+
+  const saveColumnKeys = (keys: string[]) => {
+    setColumnKeys(keys);
+    localStorage.setItem('task_column_keys', JSON.stringify(keys));
+  };
+
+  const toggleColumn = (key: string) => {
+    if (columnKeys.includes(key)) {
+      saveColumnKeys(columnKeys.filter(k => k !== key));
+    } else {
+      saveColumnKeys([...columnKeys, key]);
+    }
+  };
+
+  const handleResetFilters = () => {
+    setStatusFilter('all');
+    setSearchQuery('');
+  };
+
+  const hasActiveFilters = statusFilter !== 'all' || searchQuery.trim() !== '';
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (columnSettingsRef.current && !columnSettingsRef.current.contains(e.target as Node)) {
+        setIsColumnSettingsOpen(false);
+      }
+    };
+    if (isColumnSettingsOpen) {
+      document.addEventListener('click', handleClickOutside);
+    }
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [isColumnSettingsOpen]);
+
   // 프로젝트 변경 또는 뷰 전환 시 선택 상태 초기화
   useEffect(() => {
     setSelectedIds(new Set());
@@ -201,7 +245,6 @@ export default function TasksPage() {
 
   // ── 일괄 선택 (테이블 뷰 전용) ──────────────────────────────────────
   const allSelected = !isArchived && visibleTasks.length > 0 && visibleTasks.every(task => selectedIds.has(task.id));
-  const someSelected = !isArchived && visibleTasks.some(task => selectedIds.has(task.id));
 
   const toggleSelectAll = () => {
     if (allSelected) setSelectedIds(new Set());
@@ -293,28 +336,90 @@ export default function TasksPage() {
               />
             ) : (
             <>
-              <div className="flex flex-wrap items-center gap-2 mb-3">
-                <div className="relative flex-1 min-w-[180px] max-w-xs">
-                  <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
+              {/* ── 툴바 ── */}
+              <div className="flex items-center gap-2 flex-wrap min-w-0 mb-3">
+                {/* 검색 입력 */}
+                <div className="relative">
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder={t('search')}
-                    className="w-full h-8 pl-8 pr-3 rounded-xl text-xs bg-[var(--bg-surface-2)] border border-[var(--border)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]/10 outline-none transition-all"
+                    className="pl-2 pr-7 py-1 h-8 w-40 border border-[var(--border)] rounded bg-[var(--bg-surface)] text-xs focus:outline-none text-[var(--text-primary)]"
                   />
+                  <button
+                    type="button"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] border-none bg-transparent cursor-pointer"
+                  >
+                    <Search size={12} />
+                  </button>
                 </div>
+
+                {/* 상태 필터 */}
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="h-8 px-2.5 pr-7 rounded-xl text-xs font-semibold bg-[var(--bg-surface-2)] border border-[var(--border)] text-[var(--text-primary)] focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]/10 outline-none transition-all cursor-pointer"
+                  className="h-8 px-2 border border-[var(--border)] rounded bg-[var(--bg-surface)] text-xs focus:outline-none text-[var(--text-primary)] cursor-pointer font-medium"
                 >
-                  <option value="all">{t('filterAll')}</option>
+                  <option value="all" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('filterAll')}</option>
                   {statusOptions.map((s) => (
-                    <option key={s} value={s}>{s}</option>
+                    <option key={s} value={s} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{s}</option>
                   ))}
                 </select>
+
+                {/* 초기화 버튼 */}
+                <button
+                  type="button"
+                  onClick={handleResetFilters}
+                  className="h-8 px-2.5 flex items-center gap-1 border border-[var(--border)] rounded bg-[var(--bg-surface)] text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-2)] transition-colors cursor-pointer font-medium"
+                  title={t('resetFilters')}
+                >
+                  <X size={12} />
+                  {t('resetFilters')}
+                </button>
+
+                {/* 컬럼 설정 */}
+                <div ref={columnSettingsRef} className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setIsColumnSettingsOpen(!isColumnSettingsOpen)}
+                    className="h-8 px-2.5 flex items-center gap-1 border border-[var(--border)] rounded bg-[var(--bg-surface)] text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-2)] transition-colors cursor-pointer font-medium"
+                    title={t('columnSettings')}
+                  >
+                    <Settings size={12} />
+                  </button>
+                  {isColumnSettingsOpen && (
+                    <div className="absolute left-0 mt-1 w-56 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl shadow-xl z-50 py-2 animate-in fade-in slide-in-from-top-1 duration-150">
+                      <div className="px-3 pb-1.5 mb-1 border-b border-[var(--border)]">
+                        <span className="text-xs font-bold text-[var(--text-primary)]">{t('columnSettings')}</span>
+                      </div>
+                      <div className="max-h-64 overflow-y-auto custom-scrollbar px-1">
+                        {TASK_COLUMNS.map(col => {
+                          const isVisible = columnKeys.includes(col.key);
+                          return (
+                            <div
+                              key={col.key}
+                              className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg hover:bg-[var(--bg-surface-2)] transition-colors group"
+                            >
+                              <label className="flex items-center gap-2 flex-1 cursor-pointer text-xs font-medium text-[var(--text-primary)] select-none py-0.5">
+                                <input
+                                  type="checkbox"
+                                  checked={isVisible}
+                                  onChange={() => toggleColumn(col.key)}
+                                  className="accent-[var(--primary)] w-3.5 h-3.5 rounded"
+                                />
+                                {t(col.labelKey)}
+                              </label>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
+
+              {/* ── 일괄 선택 바 ── */}
               {!isArchived && selectedIds.size > 0 && (
                 <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-xl bg-[var(--bg-surface-2)]/70 border border-[var(--border)]">
                   <span className="text-xs font-bold text-[var(--primary)] whitespace-nowrap">
@@ -327,95 +432,168 @@ export default function TasksPage() {
                   >
                     {t('bulkEdit')}
                   </button>
+                  <span className="text-[var(--border)] mx-0.5">|</span>
                   <button
                     type="button"
                     onClick={() => setSelectedIds(new Set())}
-                    className="h-7 px-3 bg-transparent hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] rounded-lg text-xs font-bold transition-all cursor-pointer border border-[var(--border)]"
+                    className="flex items-center gap-1 px-2.5 py-1.5 border border-[var(--border)] hover:bg-[var(--bg-surface-2)] text-[var(--text-secondary)] rounded text-xs font-semibold transition-all cursor-pointer bg-[var(--bg-surface)] h-7"
                   >
+                    <X size={11} />
                     {t('deselectAll')}
                   </button>
                 </div>
               )}
-              {visibleTasks.length === 0 ? (
-                <div className="flex items-center justify-center h-40 text-sm text-[var(--text-muted)]">
-                  {tasks.length === 0
-                    ? t('noTasksFound')
-                    : searchQuery.trim()
-                      ? t('noSearchResultsFor').replace('{term}', searchQuery.trim())
-                      : t('noSearchResultsFor').replace('{term}', statusFilter)}
+
+              {/* ── 스켈레톤 / 빈 상태 / 테이블 ── */}
+              {loading ? (
+                <div className="py-2">
+                  {[1, 2, 3, 4, 5, 6].map(n => (
+                    <div key={n} className="flex items-center gap-3 py-3.5 px-5 border-b border-[var(--border)]">
+                      <div className="w-4 h-4 rounded bg-[var(--border-strong)] shrink-0 animate-pulse" />
+                      <div className="w-10 h-3.5 rounded bg-[var(--border-strong)] animate-pulse" />
+                      <div className="w-15 h-5 rounded-full bg-[var(--border-strong)] animate-pulse" />
+                      <div className="flex-1 h-3.5 rounded bg-[var(--border-strong)] animate-pulse" />
+                      <div className="w-20 h-3.5 rounded bg-[var(--border-strong)] animate-pulse" />
+                    </div>
+                  ))}
+                </div>
+              ) : error ? (
+                <div className="py-15 px-6 text-center">
+                  <AlertCircle size={40} className="text-[var(--danger)] mx-auto mb-3" />
+                  <p className="text-[var(--danger)] font-semibold">{error}</p>
+                </div>
+              ) : visibleTasks.length === 0 ? (
+                <div className="py-20 px-6 text-center">
+                  <div className="w-16 h-16 rounded-full bg-[var(--primary-bg)] flex items-center justify-center mx-auto mb-4">
+                    <Layers size={28} className="text-[var(--primary)]" />
+                  </div>
+                  <h3 className="text-base font-bold text-[var(--text-primary)] mb-1.5">{t('noTasksFound')}</h3>
+                  <p className="text-sm text-[var(--text-muted)]">
+                    {tasks.length === 0
+                      ? t('noTasksDesc')
+                      : searchQuery.trim()
+                        ? t('noSearchResultsFor').replace('{term}', searchQuery.trim())
+                        : t('noSearchResultsFor').replace('{term}', t('filterAll'))}
+                  </p>
+                  {hasActiveFilters && (
+                    <button
+                      onClick={handleResetFilters}
+                      className="mt-4 bg-[var(--primary-bg)] text-[var(--primary)] border border-[var(--primary)]/30 rounded-xl px-4.5 py-2 cursor-pointer text-sm font-semibold"
+                    >
+                      {t('resetFilters')}
+                    </button>
+                  )}
                 </div>
               ) : (
-                <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-[var(--border)] text-[var(--text-muted)]">
-                    {!isArchived && (
-                      <th className="w-10 py-2 text-center">
-                        <div
-                          className="flex items-center justify-center cursor-pointer p-1 rounded hover:bg-[var(--bg-surface-2)]"
-                          onClick={toggleSelectAll}
-                          title={allSelected ? t('deselectAll') : t('selectAll')}
-                        >
-                          {allSelected
-                            ? <CheckSquare size={14} className="text-[var(--primary)]" />
-                            : someSelected
-                              ? <Minus size={14} className="text-[var(--primary)]" />
-                              : <Square size={14} className="text-[var(--text-muted)] opacity-60" />
-                          }
-                        </div>
-                      </th>
-                    )}
-                    <th className="text-left py-2">{t('title')}</th>
-                    <th className="text-left py-2">{t('task_type')}</th>
-                    <th className="text-left py-2">{t('task_category')}</th>
-                    <th className="text-left py-2">{t('status')}</th>
-                    <th className="text-left py-2">{t('planned_dates')}</th>
-                    <th className="text-left py-2">{t('actual_dates')}</th>
-                    <th className="text-left py-2">{t('progress')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {visibleRows.map(({ task, depth }) => (
-                    <tr key={task.id} className={`group border-b border-[var(--border)] hover:bg-[var(--bg-hover)] cursor-pointer ${selectedIds.has(task.id) ? 'bg-[var(--primary)]/5' : ''}`} onClick={() => setSelectedTaskId(task.id)}>
-                      {!isArchived && (
-                        <td className="py-2 text-center" onClick={(e) => toggleSelectRow(task.id, e)}>
-                          <div className="flex items-center justify-center">
-                            {selectedIds.has(task.id)
-                              ? <CheckSquare size={14} className="text-[var(--primary)]" />
-                              : <Square size={14} className="text-[var(--text-muted)] opacity-65" />
-                            }
-                          </div>
-                        </td>
-                      )}
-                      <td className="py-2">
-                        <div className="flex items-center gap-2" style={{ paddingLeft: depth * 18 }}>
-                          {depth > 0 && <CornerDownRight size={12} className="text-[var(--text-muted)] shrink-0" />}
-                          <span className="truncate">{task.title}</span>
-                          {!isArchived && (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openSubtaskPanel(task.id);
-                              }}
-                              className="opacity-0 group-hover:opacity-100 focus:opacity-100 p-1 rounded-md text-[var(--text-muted)] hover:text-[var(--primary)] hover:bg-[var(--bg-surface-2)] transition-all shrink-0 cursor-pointer"
-                              title={t('addSubtask')}
-                              aria-label={t('addSubtask')}
-                            >
-                              <Plus size={12} />
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                      <td className="py-2">{task.task_type}</td>
-                      <td className="py-2">{task.task_category}</td>
-                      <td className="py-2"><TaskStatusBadge status={task.status} /></td>
-                      <td className="py-2">{task.planned_start_date ?? '-'} - {task.planned_end_date ?? '-'}</td>
-                      <td className="py-2">{task.actual_start_date ?? '-'} - {task.actual_end_date ?? '-'}</td>
-                      <td className="py-2">{task.progress}%</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                <div className="table-container custom-scrollbar border-none rounded-none shadow-none">
+                  <table className="table">
+                    <thead>
+                      <tr className="sticky top-0 z-10">
+                        {!isArchived && (
+                          <th className="w-11 min-w-[44px] max-w-[44px] text-center bg-[var(--bg-surface-2)] sticky top-0 z-10">
+                            <input
+                              type="checkbox"
+                              checked={allSelected}
+                              onChange={toggleSelectAll}
+                              className="accent-[var(--primary)]"
+                            />
+                          </th>
+                        )}
+                        {TASK_COLUMNS.filter(col => columnKeys.includes(col.key)).map(col => (
+                          <th
+                            key={col.key}
+                            className={`select-none py-2 px-3 text-left font-bold text-xs uppercase tracking-wider sticky top-0 z-10 bg-[var(--bg-surface-2)] ${
+                              col.key === 'title' ? '' : col.key === 'progress' ? 'w-28' : 'w-32'
+                            }`}
+                          >
+                            {t(col.labelKey)}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {visibleRows.map(({ task, depth }, idx) => {
+                        const isSelected = selectedIds.has(task.id);
+                        return (
+                          <tr
+                            key={task.id}
+                            className={`group transition-colors duration-150 cursor-pointer ${
+                              isSelected ? 'bg-[var(--primary)]/5' : ''
+                            }`}
+                            style={{ animation: `slideUpFade 0.3s ease ${idx * 0.03}s both` }}
+                            onClick={() => setSelectedTaskId(task.id)}
+                          >
+                            {!isArchived && (
+                              <td className="text-center py-2" onClick={(e) => toggleSelectRow(task.id, e)}>
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={() => toggleSelectRow(task.id, {} as React.MouseEvent)}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="accent-[var(--primary)]"
+                                />
+                              </td>
+                            )}
+                            {columnKeys.includes('title') && (
+                              <td className="py-2 px-3">
+                                <div className="flex items-center gap-2" style={{ paddingLeft: depth * 18 }}>
+                                  {depth > 0 && <CornerDownRight size={12} className="text-[var(--text-muted)] shrink-0" />}
+                                  <span className="truncate text-sm font-medium text-[var(--text-primary)]">{task.title}</span>
+                                  {!isArchived && (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        openSubtaskPanel(task.id);
+                                      }}
+                                      className="opacity-0 group-hover:opacity-100 focus:opacity-100 p-1 rounded-md text-[var(--text-muted)] hover:text-[var(--primary)] hover:bg-[var(--bg-surface-2)] transition-all shrink-0 cursor-pointer"
+                                      title={t('addSubtask')}
+                                      aria-label={t('addSubtask')}
+                                    >
+                                      <Plus size={12} />
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
+                            )}
+                            {columnKeys.includes('task_type') && (
+                              <td className="py-2 px-3 text-xs text-[var(--text-secondary)]">{task.task_type || '-'}</td>
+                            )}
+                            {columnKeys.includes('task_category') && (
+                              <td className="py-2 px-3 text-xs text-[var(--text-secondary)]">{task.task_category || '-'}</td>
+                            )}
+                            {columnKeys.includes('status') && (
+                              <td className="py-2 px-3"><TaskStatusBadge status={task.status} /></td>
+                            )}
+                            {columnKeys.includes('planned_dates') && (
+                              <td className="py-2 px-3 text-xs text-[var(--text-muted)]">
+                                {task.planned_start_date ?? '-'} ~ {task.planned_end_date ?? '-'}
+                              </td>
+                            )}
+                            {columnKeys.includes('actual_dates') && (
+                              <td className="py-2 px-3 text-xs text-[var(--text-muted)]">
+                                {task.actual_start_date ?? '-'} ~ {task.actual_end_date ?? '-'}
+                              </td>
+                            )}
+                            {columnKeys.includes('progress') && (
+                              <td className="py-2 px-3">
+                                <div className="flex items-center gap-2">
+                                  <div className="flex-1 h-1.5 rounded-full bg-[var(--bg-surface-2)] overflow-hidden">
+                                    <div
+                                      className="h-full rounded-full bg-[var(--primary)] transition-all duration-300"
+                                      style={{ width: `${task.progress ?? 0}%` }}
+                                    />
+                                  </div>
+                                  <span className="text-xs text-[var(--text-muted)] tabular-nums min-w-[2.5rem] text-right">{task.progress ?? 0}%</span>
+                                </div>
+                              </td>
+                            )}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </>
             )}
@@ -488,3 +666,23 @@ export default function TasksPage() {
     </div>
   );
 }
+
+/** All available column definitions for the WBS table */
+const TASK_COLUMNS = [
+  { key: 'title', labelKey: 'title' },
+  { key: 'task_type', labelKey: 'task_type' },
+  { key: 'task_category', labelKey: 'task_category' },
+  { key: 'status', labelKey: 'status' },
+  { key: 'planned_dates', labelKey: 'planned_dates' },
+  { key: 'actual_dates', labelKey: 'actual_dates' },
+  { key: 'progress', labelKey: 'progress' },
+];
+
+/** Default visible columns and order */
+const DEFAULT_TASK_COLUMN_KEYS = [
+  'title',
+  'task_type',
+  'status',
+  'planned_dates',
+  'progress',
+];

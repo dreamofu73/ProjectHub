@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Send, Users, X, MessageSquare, Paperclip, Download, Trash2, Hash, LogOut, Shield, Check, ArrowDown, WifiOff, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Search, ChevronUp, ChevronDown, Pencil } from 'lucide-react';
+import { Send, Users, X, MessageSquare, Paperclip, Download, Trash2, Hash, LogOut, Shield, ArrowDown, WifiOff, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Search, ChevronUp, ChevronDown, Pencil } from 'lucide-react';
 import { useToast } from 'ui/Toast';
 import { ConfirmDialog } from 'ui/ConfirmDialog';
 import { useLanguage } from '../context/LanguageContext';
 import { api, fetchBlobUrl } from 'shared/lib/api';
 
-import type { Message, UserInfo } from 'shared/types';
+import type { Message } from 'shared/types';
 import { useChat } from './chat/hooks/useChat';
 import { ChatFileAttachment } from './chat/components/ChatFileAttachment';
 import { CreateRoomModal } from './chat/components/CreateRoomModal';

@@ -4,8 +4,8 @@ import type { Member, UserData } from 'shared/hooks/useProjectMembers';
 
 export function useAddMemberModal(
   projectId: string | undefined,
-  members: Member[],
-  allUsers: UserData[],
+  _members: Member[],
+  _allUsers: UserData[],
   fetchMembers: () => void
 ) {
   const [showAddModal, setShowAddModal] = useState(false);

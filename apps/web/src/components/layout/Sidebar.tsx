@@ -69,7 +69,7 @@ function WikiTreeItem({ page, location, isSidebarCollapsed, navigate, t, depth =
               <Link
                 to={`${location.pathname.split('?')[0]}?id=new&parent_id=${page.id}`}
                 className={`p-1 ml-auto opacity-0 group-hover:opacity-100 rounded border-none bg-transparent cursor-pointer flex items-center transition-opacity ${isActive ? 'text-[var(--sidebar-link-active-color)] hover:bg-black/10 dark:hover:bg-white/10' : 'text-slate-400 hover:text-[var(--primary)] hover:bg-slate-200 dark:hover:bg-slate-800'}`}
-                title="하위 페이지 생성"
+                title={t('createSubpage')}
                 onClick={(e) => e.stopPropagation()}
               >
                 <Plus size={14} />
@@ -136,38 +136,38 @@ export function Sidebar() {
           {/* 프로젝트 메뉴 사이드바 (초기화면 / 멤버 / 설정) */}
           {(location.pathname.match(/^\/projects\/[^/]+\/(dashboard|members|settings)$/) ?? false) && (
             <div className="sidebar-section">
-              {!isSidebarCollapsed && <div className="sidebar-section-label">프로젝트 메뉴</div>}
-              <ul className="sidebar-nav" aria-label="프로젝트 메뉴">
+              {!isSidebarCollapsed && <div className="sidebar-section-label">{t('projectMenu')}</div>}
+              <ul className="sidebar-nav" aria-label={t('projectMenu')}>
                 <li className="sidebar-nav-item">
-                  <Tooltip content="초기화면" disabled={!isSidebarCollapsed} position="right">
+                  <Tooltip content={t('dashboardHome')} disabled={!isSidebarCollapsed} position="right">
                     <Link
                       to={`/projects/${location.pathname.split('/')[2]}/dashboard`}
                       className={`sidebar-nav-link ${location.pathname.endsWith('/dashboard') ? 'active' : ''} ${isSidebarCollapsed ? 'justify-center px-1' : ''}`}
                     >
                       <Home size={16} className={`shrink-0 ${location.pathname.endsWith('/dashboard') ? 'opacity-100' : 'opacity-60'}`} />
-                      {!isSidebarCollapsed && <span>초기화면</span>}
+                      {!isSidebarCollapsed && <span>{t('dashboardHome')}</span>}
                     </Link>
                   </Tooltip>
                 </li>
                 <li className="sidebar-nav-item">
-                  <Tooltip content="멤버" disabled={!isSidebarCollapsed} position="right">
+                  <Tooltip content={t('members')} disabled={!isSidebarCollapsed} position="right">
                     <Link
                       to={`/projects/${location.pathname.split('/')[2]}/members`}
                       className={`sidebar-nav-link ${location.pathname.endsWith('/members') ? 'active' : ''} ${isSidebarCollapsed ? 'justify-center px-1' : ''}`}
                     >
                       <Users size={16} className={`shrink-0 ${location.pathname.endsWith('/members') ? 'opacity-100' : 'opacity-60'}`} />
-                      {!isSidebarCollapsed && <span>멤버</span>}
+                      {!isSidebarCollapsed && <span>{t('members')}</span>}
                     </Link>
                   </Tooltip>
                 </li>
                 <li className="sidebar-nav-item">
-                  <Tooltip content="설정" disabled={!isSidebarCollapsed} position="right">
+                  <Tooltip content={t('settings')} disabled={!isSidebarCollapsed} position="right">
                     <Link
                       to={`/projects/${location.pathname.split('/')[2]}/settings`}
                       className={`sidebar-nav-link ${location.pathname.endsWith('/settings') ? 'active' : ''} ${isSidebarCollapsed ? 'justify-center px-1' : ''}`}
                     >
                       <Settings size={16} className={`shrink-0 ${location.pathname.endsWith('/settings') ? 'opacity-100' : 'opacity-60'}`} />
-                      {!isSidebarCollapsed && <span>설정</span>}
+                      {!isSidebarCollapsed && <span>{t('settings')}</span>}
                     </Link>
                   </Tooltip>
                 </li>
@@ -178,49 +178,49 @@ export function Sidebar() {
           {/* 일감 사이드바 (WBS 목록 / 간트 차트 / 칸반 보드 / 리소스 부하) */}
           {(location.pathname.match(/^\/projects\/[^/]+\/tasks$/) ?? false) && (
             <div className="sidebar-section">
-              {!isSidebarCollapsed && <div className="sidebar-section-label">일감 뷰</div>}
-              <ul className="sidebar-nav" aria-label="일감 메뉴">
+              {!isSidebarCollapsed && <div className="sidebar-section-label">{t('tasksView')}</div>}
+              <ul className="sidebar-nav" aria-label={t('tasksMenu')}>
                 <li className="sidebar-nav-item">
-                  <Tooltip content="WBS 목록" disabled={!isSidebarCollapsed} position="right">
+                  <Tooltip content={t('wbsList')} disabled={!isSidebarCollapsed} position="right">
                     <Link
                       to={`/projects/${location.pathname.split('/')[2]}/tasks?view=table`}
                       className={`sidebar-nav-link ${location.pathname.endsWith('/tasks') && (!location.search.includes('view=') || location.search.includes('view=table')) ? 'active' : ''} ${isSidebarCollapsed ? 'justify-center px-1' : ''}`}
                     >
                       <CheckSquare size={16} className={`shrink-0 ${location.pathname.endsWith('/tasks') && (!location.search.includes('view=') || location.search.includes('view=table')) ? 'opacity-100' : 'opacity-60'}`} />
-                      {!isSidebarCollapsed && <span>WBS 목록</span>}
+                      {!isSidebarCollapsed && <span>{t('wbsList')}</span>}
                     </Link>
                   </Tooltip>
                 </li>
                 <li className="sidebar-nav-item">
-                  <Tooltip content="간트 차트" disabled={!isSidebarCollapsed} position="right">
+                  <Tooltip content={t('ganttChart')} disabled={!isSidebarCollapsed} position="right">
                     <Link
                       to={`/projects/${location.pathname.split('/')[2]}/tasks?view=gantt`}
                       className={`sidebar-nav-link ${location.pathname.endsWith('/tasks') && location.search.includes('view=gantt') ? 'active' : ''} ${isSidebarCollapsed ? 'justify-center px-1' : ''}`}
                     >
                       <BarChart size={16} className={`shrink-0 ${location.pathname.endsWith('/tasks') && location.search.includes('view=gantt') ? 'opacity-100' : 'opacity-60'}`} />
-                      {!isSidebarCollapsed && <span>간트 차트</span>}
+                      {!isSidebarCollapsed && <span>{t('ganttChart')}</span>}
                     </Link>
                   </Tooltip>
                 </li>
                 <li className="sidebar-nav-item">
-                  <Tooltip content="칸반 보드" disabled={!isSidebarCollapsed} position="right">
+                  <Tooltip content={t('kanbanBoard')} disabled={!isSidebarCollapsed} position="right">
                     <Link
                       to={`/projects/${location.pathname.split('/')[2]}/tasks?view=kanban`}
                       className={`sidebar-nav-link ${location.pathname.endsWith('/tasks') && location.search.includes('view=kanban') ? 'active' : ''} ${isSidebarCollapsed ? 'justify-center px-1' : ''}`}
                     >
                       <Columns3 size={16} className={`shrink-0 ${location.pathname.endsWith('/tasks') && location.search.includes('view=kanban') ? 'opacity-100' : 'opacity-60'}`} />
-                      {!isSidebarCollapsed && <span>칸반 보드</span>}
+                      {!isSidebarCollapsed && <span>{t('kanbanBoard')}</span>}
                     </Link>
                   </Tooltip>
                 </li>
                 <li className="sidebar-nav-item">
-                  <Tooltip content="리소스 부하" disabled={!isSidebarCollapsed} position="right">
+                  <Tooltip content={t('workloadView')} disabled={!isSidebarCollapsed} position="right">
                     <Link
                       to={`/projects/${location.pathname.split('/')[2]}/tasks?view=workload`}
                       className={`sidebar-nav-link ${location.pathname.endsWith('/tasks') && location.search.includes('view=workload') ? 'active' : ''} ${isSidebarCollapsed ? 'justify-center px-1' : ''}`}
                     >
                       <Users size={16} className={`shrink-0 ${location.pathname.endsWith('/tasks') && location.search.includes('view=workload') ? 'opacity-100' : 'opacity-60'}`} />
-                      {!isSidebarCollapsed && <span>리소스 부하</span>}
+                      {!isSidebarCollapsed && <span>{t('workloadView')}</span>}
                     </Link>
                   </Tooltip>
                 </li>
@@ -231,27 +231,27 @@ export function Sidebar() {
           {/* 이슈 사이드바 (이슈 / 칸반보드) */}
           {(location.pathname.match(/^\/projects\/[^/]+\/(issues|kanban)$/) ?? false) && (
             <div className="sidebar-section">
-              {!isSidebarCollapsed && <div className="sidebar-section-label">이슈</div>}
-              <ul className="sidebar-nav" aria-label="이슈 메뉴">
+              {!isSidebarCollapsed && <div className="sidebar-section-label">{t('issues')}</div>}
+              <ul className="sidebar-nav" aria-label={t('issuesMenu')}>
                 <li className="sidebar-nav-item">
-                  <Tooltip content="이슈" disabled={!isSidebarCollapsed} position="right">
+                  <Tooltip content={t('issueList')} disabled={!isSidebarCollapsed} position="right">
                     <Link
                       to={`/projects/${location.pathname.split('/')[2]}/issues`}
                       className={`sidebar-nav-link ${location.pathname.endsWith('/issues') ? 'active' : ''} ${isSidebarCollapsed ? 'justify-center px-1' : ''}`}
                     >
                       <FileText size={16} className={`shrink-0 ${location.pathname.endsWith('/issues') ? 'opacity-100' : 'opacity-60'}`} />
-                      {!isSidebarCollapsed && <span>이슈</span>}
+                      {!isSidebarCollapsed && <span>{t('issueList')}</span>}
                     </Link>
                   </Tooltip>
                 </li>
                 <li className="sidebar-nav-item">
-                  <Tooltip content="칸반보드" disabled={!isSidebarCollapsed} position="right">
+                  <Tooltip content={t('kanbanBoard')} disabled={!isSidebarCollapsed} position="right">
                     <Link
                       to={`/projects/${location.pathname.split('/')[2]}/kanban`}
                       className={`sidebar-nav-link ${location.pathname.endsWith('/kanban') ? 'active' : ''} ${isSidebarCollapsed ? 'justify-center px-1' : ''}`}
                     >
                       <Columns3 size={16} className={`shrink-0 ${location.pathname.endsWith('/kanban') ? 'opacity-100' : 'opacity-60'}`} />
-                      {!isSidebarCollapsed && <span>칸반보드</span>}
+                      {!isSidebarCollapsed && <span>{t('kanbanBoard')}</span>}
                     </Link>
                   </Tooltip>
                 </li>
@@ -267,10 +267,10 @@ export function Sidebar() {
                     onClick={() => window.dispatchEvent(new CustomEvent('open_compose_memo', { detail: { self: false } }))}
                     className="flex items-center justify-center gap-1.5 h-10 rounded-xl text-xs font-bold text-white transition-all shadow-md hover:shadow-lg cursor-pointer border-none hover:opacity-90"
                     style={{ background: 'var(--primary)' }}
-                    aria-label="쪽지쓰기"
+                    aria-label={t('composeMemo')}
                   >
                     <Send size={13} />
-                    쪽지쓰기
+                    {t('composeMemo')}
                   </button>
                   <button
                     onClick={() => window.dispatchEvent(new CustomEvent('open_compose_memo', { detail: { self: true } }))}
@@ -280,16 +280,16 @@ export function Sidebar() {
                       borderColor: 'var(--primary-30, color-mix(in srgb, var(--primary) 30%, transparent))',
                       color: 'var(--primary)',
                     }}
-                    aria-label="내게쓰기"
+                    aria-label={t('writeToSelf')}
                   >
                     <Award size={13} />
-                    내게쓰기
+                    {t('writeToSelf')}
                   </button>
                 </div>
               )}
               
-              {!isSidebarCollapsed && <div className="sidebar-section-label">마이 쪽지함</div>}
-              <ul className="sidebar-nav" aria-label="쪽지함 목록">
+              {!isSidebarCollapsed && <div className="sidebar-section-label">{t('myMemoBox')}</div>}
+              <ul className="sidebar-nav" aria-label={t('memoBoxList')}>
                 <li className="sidebar-nav-item">
                   <Tooltip content={t('receivedMemos')} disabled={!isSidebarCollapsed} position="right">
                     <button
@@ -311,14 +311,14 @@ export function Sidebar() {
 
 
                 <li className="sidebar-nav-item">
-                  <Tooltip content="내게쓴쪽지함" disabled={!isSidebarCollapsed} position="right">
+                  <Tooltip content={t('selfMemos')} disabled={!isSidebarCollapsed} position="right">
                     <button
                       onClick={() => setCurrentFolder('self')}
                       className={`sidebar-nav-link ${location.pathname.includes('/memos') && currentFolder === 'self' ? 'active' : ''} ${isSidebarCollapsed ? 'justify-center px-1' : ''}`}
                       aria-current={location.pathname.includes('/memos') && currentFolder === 'self' ? 'true' : undefined}
                     >
                       <Award size={16} className={`shrink-0 ${location.pathname.includes('/memos') && currentFolder === 'self' ? 'opacity-100' : 'opacity-60'}`} />
-                      {!isSidebarCollapsed && <span>내게쓴쪽지함</span>}
+                      {!isSidebarCollapsed && <span>{t('selfMemos')}</span>}
                     </button>
                   </Tooltip>
                 </li>
@@ -337,40 +337,40 @@ export function Sidebar() {
                 </li>
 
                 <li className="sidebar-nav-item">
-                  <Tooltip content="예약쪽지함" disabled={!isSidebarCollapsed} position="right">
+                  <Tooltip content={t('reservedMemos')} disabled={!isSidebarCollapsed} position="right">
                     <button
                       onClick={() => setCurrentFolder('reserved')}
                       className={`sidebar-nav-link ${location.pathname.includes('/memos') && currentFolder === 'reserved' ? 'active' : ''} ${isSidebarCollapsed ? 'justify-center px-1' : ''}`}
                       aria-current={location.pathname.includes('/memos') && currentFolder === 'reserved' ? 'true' : undefined}
                     >
                       <Clock size={16} className={`shrink-0 ${location.pathname.includes('/memos') && currentFolder === 'reserved' ? 'opacity-100' : 'opacity-60'}`} />
-                      {!isSidebarCollapsed && <span>예약쪽지함</span>}
+                      {!isSidebarCollapsed && <span>{t('reservedMemos')}</span>}
                     </button>
                   </Tooltip>
                 </li>
 
                 <li className="sidebar-nav-item">
-                  <Tooltip content="쪽지보관함" disabled={!isSidebarCollapsed} position="right">
+                  <Tooltip content={t('archivedMemos')} disabled={!isSidebarCollapsed} position="right">
                     <button
                       onClick={() => setCurrentFolder('archived')}
                       className={`sidebar-nav-link ${location.pathname.includes('/memos') && currentFolder === 'archived' ? 'active' : ''} ${isSidebarCollapsed ? 'justify-center px-1' : ''}`}
                       aria-current={location.pathname.includes('/memos') && currentFolder === 'archived' ? 'true' : undefined}
                     >
                       <Archive size={16} className={`shrink-0 ${location.pathname.includes('/memos') && currentFolder === 'archived' ? 'opacity-100' : 'opacity-60'}`} />
-                      {!isSidebarCollapsed && <span>쪽지보관함</span>}
+                      {!isSidebarCollapsed && <span>{t('archivedMemos')}</span>}
                     </button>
                   </Tooltip>
                 </li>
 
                 <li className="sidebar-nav-item">
-                  <Tooltip content="휴지통" disabled={!isSidebarCollapsed} position="right">
+                  <Tooltip content={t('trash')} disabled={!isSidebarCollapsed} position="right">
                     <button
                       onClick={() => setCurrentFolder('trash')}
                       className={`sidebar-nav-link ${location.pathname.includes('/memos') && currentFolder === 'trash' ? 'active' : ''} ${isSidebarCollapsed ? 'justify-center px-1' : ''}`}
                       aria-current={location.pathname.includes('/memos') && currentFolder === 'trash' ? 'true' : undefined}
                     >
                       <Trash2 size={16} className={`shrink-0 ${location.pathname.includes('/memos') && currentFolder === 'trash' ? 'opacity-100' : 'opacity-60'}`} />
-                      {!isSidebarCollapsed && <span>휴지통</span>}
+                      {!isSidebarCollapsed && <span>{t('trash')}</span>}
                     </button>
                   </Tooltip>
                 </li>
@@ -379,14 +379,14 @@ export function Sidebar() {
                 {!isSidebarCollapsed && <div className="border-t border-[var(--border)] my-3 mx-2" />}
 
                 <li className="sidebar-nav-item">
-                  <Tooltip content="수신그룹" disabled={!isSidebarCollapsed} position="right">
+                  <Tooltip content={t('contactGroups')} disabled={!isSidebarCollapsed} position="right">
                     <Link
                       to={location.pathname.includes('/projects/') ? `/projects/${location.pathname.split('/')[2]}/contacts` : "/contacts"}
                       className={`sidebar-nav-link ${location.pathname.endsWith('/contacts') ? 'active' : ''} ${isSidebarCollapsed ? 'justify-center px-1' : ''}`}
                       aria-current={location.pathname.endsWith('/contacts') ? 'page' : undefined}
                     >
                       <Users size={16} className={`shrink-0 ${location.pathname.endsWith('/contacts') ? 'opacity-100' : 'opacity-60'}`} />
-                      {!isSidebarCollapsed && <span>수신그룹</span>}
+                      {!isSidebarCollapsed && <span>{t('contactGroups')}</span>}
                     </Link>
                   </Tooltip>
                 </li>
@@ -396,12 +396,12 @@ export function Sidebar() {
                 {!isSidebarCollapsed && (
                   <>
                     <div className="sidebar-section-label flex items-center justify-between mb-1 px-1">
-                      <span id="custom-folders-label">내 폴더</span>
+                      <span id="custom-folders-label">{t('myFolders')}</span>
                       <button
                         onClick={() => setIsAddingFolder(!isAddingFolder)}
                         className="p-1 hover:bg-slate-100 dark:hover:bg-slate-900 rounded text-slate-400 hover:text-[var(--primary)] border-none bg-transparent cursor-pointer flex items-center"
-                        title="폴더 추가"
-                        aria-label={isAddingFolder ? '폴더 추가 취소' : '새 폴더 추가'}
+                        title={t('addFolder')}
+                        aria-label={isAddingFolder ? t('cancelAddFolder') : t('addNewFolder')}
                       >
                         <Plus size={12} />
                       </button>
@@ -411,19 +411,19 @@ export function Sidebar() {
                       <form onSubmit={handleAddFolder} className="px-3 mb-2 flex items-center gap-1">
                         <input
                           type="text"
-                          placeholder="폴더명..."
+                          placeholder={t('folderNamePlaceholder')}
                           value={newFolderName}
                           onChange={(e) => setNewFolderName(e.target.value)}
                           className="w-full h-7 px-2 border border-[var(--border)] rounded bg-white dark:bg-slate-950 text-xs focus:outline-none text-foreground"
                           autoFocus
-                          aria-label="새 폴더 이름 입력"
+                          aria-label={t('newFolderNameInput')}
                         />
                         <button
                           type="submit"
                           className="h-7 px-2 bg-[var(--primary)] text-white rounded text-xs font-bold border-none cursor-pointer hover:opacity-90 shrink-0"
-                          aria-label="폴더 생성"
+                          aria-label={t('createFolder')}
                         >
-                          생성
+                          {t('create')}
                         </button>
                       </form>
                     )}
@@ -452,7 +452,7 @@ export function Sidebar() {
                                 }}
                                 className="w-full h-7 px-2 border border-[var(--border)] rounded-lg bg-white dark:bg-slate-950 text-xs focus:outline-none text-foreground"
                                 autoFocus
-                                aria-label="폴더 이름 변경 입력"
+                                aria-label={t('renameFolderInput')}
                               />
                             </form>
                           ) : (
@@ -476,16 +476,16 @@ export function Sidebar() {
                                       setEditingFolderName(folder.name);
                                     }}
                                     className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded text-slate-400 hover:text-[var(--primary)] border-none bg-transparent cursor-pointer flex items-center"
-                                    title="이름 변경"
-                                    aria-label={`${folder.name} 폴더 이름 변경`}
+                                    title={t('rename')}
+                                    aria-label={t('renameFolderWithName').replace('{name}', folder.name)}
                                   >
                                     <Edit2 size={11} />
                                   </button>
                                   <button
                                     onClick={(e) => handleDeleteFolder(folder.id, e)}
                                     className="p-1 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950/20 rounded text-slate-400 border-none bg-transparent cursor-pointer flex items-center"
-                                    title="폴더 삭제"
-                                    aria-label={`${folder.name} 폴더 삭제`}
+                                    title={t('deleteFolder')}
+                                    aria-label={t('deleteFolderWithName').replace('{name}', folder.name)}
                                   >
                                     <X size={11} />
                                   </button>
@@ -497,7 +497,7 @@ export function Sidebar() {
                       </li>
                     ))}
                     {customFolders.length === 0 && !isAddingFolder && (
-                      <li className="text-xs text-[var(--text-muted)] pl-3 py-1">생성된 폴더가 없습니다.</li>
+                      <li className="text-xs text-[var(--text-muted)] pl-3 py-1">{t('noFolders')}</li>
                     )}
                   </>
                 )}
@@ -507,8 +507,8 @@ export function Sidebar() {
 
           {location.pathname.startsWith('/boards') && (
             <div className="sidebar-section">
-              {!isSidebarCollapsed && <div className="sidebar-section-label">게시판 목록</div>}
-              <ul className="sidebar-nav" aria-label="게시판 목록">
+              {!isSidebarCollapsed && <div className="sidebar-section-label">{t('boardList')}</div>}
+              <ul className="sidebar-nav" aria-label={t('boardList')}>
                 <li className="sidebar-nav-item">
                   <Tooltip content={t('notices')} disabled={!isSidebarCollapsed} position="right">
                     <Link
@@ -540,8 +540,8 @@ export function Sidebar() {
 
           {location.pathname.includes('/board') && !location.pathname.startsWith('/boards') && (
             <div className="sidebar-section">
-              {!isSidebarCollapsed && <div className="sidebar-section-label">게시판 목록</div>}
-              <ul className="sidebar-nav" aria-label="게시판 목록">
+              {!isSidebarCollapsed && <div className="sidebar-section-label">{t('boardList')}</div>}
+              <ul className="sidebar-nav" aria-label={t('boardList')}>
                 <li className="sidebar-nav-item">
                   <Tooltip content={t('all') || '전체'} disabled={!isSidebarCollapsed} position="right">
                     <Link
@@ -611,7 +611,7 @@ export function Sidebar() {
                 </div>
               )}
 
-              <ul className="sidebar-nav" aria-label="채팅 채널 목록">
+              <ul className="sidebar-nav" aria-label={t('chatChannelList')}>
                 {chatRooms.map(room => {
                   const params = new URLSearchParams(location.search);
                   const activeRoomId = params.get('room') ? String(params.get('room')!) : null;
@@ -628,7 +628,7 @@ export function Sidebar() {
                               : 'text-[var(--text-secondary)] hover:bg-[var(--bg-surface-2)] hover:text-[var(--text-primary)] font-medium bg-transparent'
                           } ${isSidebarCollapsed ? 'justify-center px-1' : ''}`}
                           aria-current={isActive ? 'true' : undefined}
-                          aria-label={`${room.name}${unreadCount > 0 ? `, 안 읽은 메시지 ${unreadCount}개` : ''}`}
+                          aria-label={`${room.name}${unreadCount > 0 ? `, ${t('unreadMessageCount').replace('{count}', String(unreadCount))}` : ''}`}
                         >
                           {isActive && !isSidebarCollapsed && (
                             <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-[var(--primary)] rounded-r-full" />
@@ -680,7 +680,7 @@ export function Sidebar() {
                 </button>
               )}
 
-              {!isSidebarCollapsed && <div className="sidebar-section-label">위키 인덱스</div>}
+              {!isSidebarCollapsed && <div className="sidebar-section-label">{t('wikiIndex')}</div>}
 
               {!isSidebarCollapsed && (
                 <div className="relative w-full mb-2">
@@ -695,7 +695,7 @@ export function Sidebar() {
                 </div>
               )}
 
-              <ul className="sidebar-nav" aria-label="위키 페이지 목록">
+              <ul className="sidebar-nav" aria-label={t('wikiPageList')}>
                 {wikiSearchQuery ? (
                   ((wikiList as WikiPage[]) || [])
                     .filter(page => page.title.toLowerCase().includes(wikiSearchQuery.toLowerCase()))
@@ -732,7 +732,7 @@ export function Sidebar() {
       <button
         onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
         className="sidebar-toggle-btn z-50"
-        aria-label={isSidebarCollapsed ? '사이드바 펼치기' : '사이드바 접기'}
+        aria-label={isSidebarCollapsed ? t('sidebarExpand') : t('sidebarCollapse')}
         aria-expanded={!isSidebarCollapsed}
       >
         <ChevronRight size={14} className={isSidebarCollapsed ? '' : 'rotate-180 transition-transform'} />

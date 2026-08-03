@@ -70,7 +70,7 @@ export function AddMemberModal({
           allUsers={allUsers}
           departments={departments}
           initialMemberIds={initialMemberIds}
-          onSave={async (finalIds, addedIds, removedIds) => {
+          onSave={async (_finalIds, addedIds, _removedIds) => {
             await handleAddMembers(addedIds);
           }}
           onClose={onClose}
