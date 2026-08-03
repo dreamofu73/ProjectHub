@@ -6,7 +6,7 @@ import { flattenTaskTree } from 'shared/lib/taskTree';
 
 import { getStatusColor } from './TaskStatusBadge';
 
-import type { Task, Milestone } from 'shared/types/index';
+import type { Task, Milestone, TaskDependency } from 'shared/types/index';
 
 /** 간트 차트에서 드래그로 바꿀 수 있는 날짜 필드. */
 export type GanttDateField =
@@ -22,6 +22,7 @@ export type GanttScale = 'day' | 'week' | 'month';
 
 interface TasksGanttChartProps {
   tasks: Task[];
+  dependencies?: TaskDependency[];
   milestones?: Milestone[];
   onTaskClick?: (task: Task) => void;
   /** 드래그가 끝났을 때 변경된 날짜 필드 하나만 담아 호출된다. */
@@ -118,6 +119,7 @@ const daysBetween = (from: Date, to: Date): number =>
 
 export const TasksGanttChart: React.FC<TasksGanttChartProps> = ({
   tasks,
+  dependencies = [],
   milestones = [],
   onTaskClick,
   onDateChange,
@@ -136,7 +138,56 @@ export const TasksGanttChart: React.FC<TasksGanttChartProps> = ({
   const [dragging, setDragging] = useState<DragState | null>(null);
   const [dragPreview, setDragPreview] = useState<DatePreview | null>(null);
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set());
-  const containerRef = useRef<HTMLDivElement>(null);
+  const sidebarBodyRef = useRef<HTMLDivElement>(null);
+  const timelineBodyRef = useRef<HTMLDivElement>(null);
+  const timelineHeaderRef = useRef<HTMLDivElement>(null);
+  const bottomScrollbarRef = useRef<HTMLDivElement>(null);
+  const isSyncingVertically = useRef(false);
+  const isSyncingHorizontally = useRef(false);
+
+  const handleSidebarScroll = useCallback(() => {
+    if (!sidebarBodyRef.current || !timelineBodyRef.current) return;
+    if (isSyncingVertically.current) {
+      isSyncingVertically.current = false;
+      return;
+    }
+    isSyncingVertically.current = true;
+    timelineBodyRef.current.scrollTop = sidebarBodyRef.current.scrollTop;
+  }, []);
+
+  const handleBottomScrollbarScroll = useCallback(() => {
+    if (!bottomScrollbarRef.current || !timelineBodyRef.current || !timelineHeaderRef.current) return;
+    if (isSyncingHorizontally.current) {
+      isSyncingHorizontally.current = false;
+      return;
+    }
+    isSyncingHorizontally.current = true;
+    const left = bottomScrollbarRef.current.scrollLeft;
+    timelineBodyRef.current.scrollLeft = left;
+    timelineHeaderRef.current.scrollLeft = left;
+  }, []);
+
+  const handleTimelineScroll = useCallback(() => {
+    if (!sidebarBodyRef.current || !timelineBodyRef.current || !timelineHeaderRef.current || !bottomScrollbarRef.current) return;
+
+    // Sync Horizontal Header and Bottom Scrollbar Track
+    if (!isSyncingHorizontally.current) {
+      isSyncingHorizontally.current = true;
+      const left = timelineBodyRef.current.scrollLeft;
+      timelineHeaderRef.current.scrollLeft = left;
+      bottomScrollbarRef.current.scrollLeft = left;
+    } else {
+      isSyncingHorizontally.current = false;
+    }
+
+    // Sync Vertical Sidebar
+    if (isSyncingVertically.current) {
+      isSyncingVertically.current = false;
+      return;
+    }
+    isSyncingVertically.current = true;
+    sidebarBodyRef.current.scrollTop = timelineBodyRef.current.scrollTop;
+  }, []);
 
   const canEdit = !readOnly && !!onDateChange;
   const { pxPerDay } = SCALE_CONFIG[scale];
@@ -297,6 +348,21 @@ export const TasksGanttChart: React.FC<TasksGanttChartProps> = ({
     const range = getBarRange(start, end || formatDate(new Date()));
     return range ? { ...range, isOngoing } : null;
   }, [getBarDates, getBarRange, formatDate]);
+
+  const taskRowPositions = useMemo(() => {
+    const map = new Map<string, { y: number; xStart: number; xEnd: number }>();
+    rows.forEach(({ task }, index) => {
+      const pBar = getPlannedBar(task);
+      if (pBar) {
+        map.set(String(task.id), {
+          y: index * ROW_HEIGHT + PLANNED_BAR_TOP + PLANNED_BAR_HEIGHT / 2,
+          xStart: pBar.left,
+          xEnd: pBar.left + pBar.width,
+        });
+      }
+    });
+    return map;
+  }, [rows, getPlannedBar]);
 
   // Handle drag start
   const handleDragStart = useCallback((e: React.MouseEvent, task: Task, kind: BarKind, field: GanttDateField) => {
@@ -496,267 +562,345 @@ export const TasksGanttChart: React.FC<TasksGanttChartProps> = ({
         </div>
       </div>
 
-      {/* Chart area */}
-      <div className="flex flex-1 overflow-auto">
-        {/* Task list sidebar */}
-        <div className="flex-shrink-0 border-r border-[var(--border)]" style={{ width: SIDEBAR_WIDTH }}>
-          {/* Header */}
-          <div className="flex items-center px-3 border-b border-[var(--border)] bg-[var(--bg-surface-2)]" style={{ height: HEADER_HEIGHT }}>
-            <span className="text-xs font-bold text-[var(--text-muted)] uppercase">{t('tasks')}</span>
+      {/* Chart area container */}
+      <div className="flex flex-col flex-1 overflow-hidden min-h-0">
+        {/* Top Header Row (Fixed at top) */}
+        <div className="flex shrink-0 border-b border-[var(--border)] bg-[var(--bg-surface-2)] z-30">
+          {/* Sidebar Header */}
+          <div className="shrink-0 border-r border-[var(--border)]" style={{ width: SIDEBAR_WIDTH }}>
+            <div className="flex items-center px-3" style={{ height: HEADER_HEIGHT }}>
+              <span className="text-xs font-bold text-[var(--text-muted)] uppercase">{t('tasks')}</span>
+            </div>
+            {hasMilestoneLane && (
+              <div
+                className="flex items-center px-3 border-t border-[var(--border)] bg-[var(--bg-surface-2)]/60 gap-1.5"
+                style={{ height: MILESTONE_LANE_HEIGHT }}
+              >
+                <Flag size={11} className="text-[var(--text-muted)]" />
+                <span className="text-[10px] font-bold text-[var(--text-muted)]">{t('milestones')}</span>
+              </div>
+            )}
           </div>
 
-          {/* Milestone lane label */}
-          {hasMilestoneLane && (
-            <div
-              className="flex items-center px-3 border-b border-[var(--border)] bg-[var(--bg-surface-2)]/60 gap-1.5"
-              style={{ height: MILESTONE_LANE_HEIGHT }}
-            >
-              <Flag size={11} className="text-[var(--text-muted)]" />
-              <span className="text-[10px] font-bold text-[var(--text-muted)]">{t('milestones')}</span>
-            </div>
-          )}
-
-          {/* Task rows */}
-          {rows.map(({ task, depth, hasChildren }, index) => (
-            <div
-              key={task.id}
-              className="flex items-center border-b border-[var(--border)] hover:bg-[var(--bg-hover)] cursor-pointer group pr-2"
-              style={{ height: ROW_HEIGHT, paddingLeft: 8 + depth * INDENT_PER_DEPTH }}
-              onClick={() => onTaskClick?.(task)}
-            >
-              {hasChildren ? (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleCollapse(task.id);
-                  }}
-                  className="p-0.5 rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-2)] shrink-0 cursor-pointer"
-                  aria-expanded={!collapsedIds.has(task.id)}
-                  aria-label={collapsedIds.has(task.id) ? t('expand') : t('collapse')}
-                >
-                  {collapsedIds.has(task.id) ? <ChevronRight size={13} /> : <ChevronDown size={13} />}
-                </button>
-              ) : (
-                <span className="w-[18px] shrink-0" />
-              )}
-
-              <div className="flex flex-col min-w-0 gap-0.5 flex-1 ml-1">
-                <span className="text-xs font-bold text-[var(--text-primary)] truncate" title={`#${task.id}`}>
-                  {index + 1}
-                </span>
-                <span className="text-[10px] text-[var(--text-muted)] truncate" title={task.title}>
-                  {task.title}
-                </span>
+          {/* Timeline Header (Horizontally synced with timeline body) */}
+          <div className="flex-1 overflow-hidden" ref={timelineHeaderRef}>
+            <div className="flex flex-col" style={{ width: timelineWidth, minWidth: timelineWidth }}>
+              <div className="flex" style={{ height: HEADER_HEIGHT }}>
+                {columns.map((column, i) => {
+                  const width = column.days * pxPerDay;
+                  const shaded = column.isWeekend || (scale !== 'day' && i % 2 === 1);
+                  return (
+                    <div
+                      key={column.key}
+                      className={`flex flex-col items-center justify-center border-r border-[var(--border)] overflow-hidden ${shaded ? 'bg-[var(--bg-surface)]' : ''} ${column.isToday ? 'bg-[var(--primary)] bg-opacity-10' : ''}`}
+                      style={{ width, minWidth: width }}
+                      title={column.start.toLocaleDateString('ko-KR')}
+                    >
+                      <span className={`text-[10px] whitespace-nowrap ${column.isToday ? 'font-bold text-[var(--primary)]' : 'text-[var(--text-muted)]'}`}>
+                        {column.topLabel}
+                      </span>
+                      <span className={`text-[9px] whitespace-nowrap ${column.isToday ? 'font-bold text-[var(--primary)]' : 'text-[var(--text-muted)]'}`}>
+                        {column.bottomLabel}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
 
-              {!readOnly && onAddSubtask && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onAddSubtask(task.id);
-                  }}
-                  className="opacity-0 group-hover:opacity-100 focus:opacity-100 p-1 rounded-md bg-[var(--bg-surface-2)] text-[var(--text-muted)] hover:text-[var(--primary)] hover:bg-[var(--bg-hover)] transition-all flex items-center justify-center shrink-0 border border-transparent hover:border-[var(--primary)]/30 cursor-pointer"
-                  title={t('addSubtask')}
-                  aria-label={t('addSubtask')}
+              {/* Milestone lane in Header */}
+              {hasMilestoneLane && (
+                <div
+                  className="relative border-t border-[var(--border)] bg-[var(--bg-surface-2)]/60"
+                  style={{ height: MILESTONE_LANE_HEIGHT }}
                 >
-                  <Plus size={14} />
-                </button>
+                  {visibleMilestones.map(({ milestone, offset }) => (
+                    <div
+                      key={milestone.id}
+                      className="absolute top-0 h-full flex items-center gap-1 pl-1 -translate-x-1/2"
+                      style={{ left: (offset + 0.5) * pxPerDay }}
+                      title={`${milestone.name} (${milestone.due_date ?? '-'})`}
+                    >
+                      <span className="w-2 h-2 rotate-45 bg-[var(--primary)] shrink-0" />
+                      <span className="text-[10px] font-semibold text-[var(--primary)] whitespace-nowrap max-w-[120px] truncate">
+                        {milestone.name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
-          ))}
-
-          {rows.length === 0 && (
-            <div className="flex items-center justify-center h-20 text-xs text-[var(--text-muted)]">
-              {t('noTasksFound')}
-            </div>
-          )}
+          </div>
         </div>
 
-        {/* Timeline area */}
-        <div className="flex-1 overflow-x-auto" ref={containerRef}>
-          <div className="relative" style={{ minWidth: timelineWidth }}>
-            {/* Column headers */}
-            <div className="flex border-b border-[var(--border)] bg-[var(--bg-surface-2)]" style={{ height: HEADER_HEIGHT }}>
-              {columns.map((column, i) => {
-                const width = column.days * pxPerDay;
-                const shaded = column.isWeekend || (scale !== 'day' && i % 2 === 1);
+        {/* Scrollable Body Area (Vertically & Horizontally synced) */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* Task list sidebar body */}
+          <div
+            className="shrink-0 border-r border-[var(--border)] overflow-y-auto overflow-x-hidden [scrollbar-width:none] [-ms-overflow-style:none]"
+            style={{ width: SIDEBAR_WIDTH }}
+            ref={sidebarBodyRef}
+            onScroll={handleSidebarScroll}
+          >
+            {rows.map(({ task, depth, hasChildren }, index) => (
+              <div
+                key={task.id}
+                className="flex items-center border-b border-[var(--border)] hover:bg-[var(--bg-hover)] cursor-pointer group pr-2"
+                style={{ height: ROW_HEIGHT, paddingLeft: 8 + depth * INDENT_PER_DEPTH }}
+                onClick={() => onTaskClick?.(task)}
+              >
+                {hasChildren ? (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleCollapse(task.id);
+                    }}
+                    className="p-0.5 rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-2)] shrink-0 cursor-pointer"
+                    aria-expanded={!collapsedIds.has(task.id)}
+                    aria-label={collapsedIds.has(task.id) ? t('expand') : t('collapse')}
+                  >
+                    {collapsedIds.has(task.id) ? <ChevronRight size={13} /> : <ChevronDown size={13} />}
+                  </button>
+                ) : (
+                  <span className="w-[18px] shrink-0" />
+                )}
+
+                <div className="flex flex-col min-w-0 gap-0.5 flex-1 ml-1">
+                  <span className="text-xs font-bold text-[var(--text-primary)] truncate" title={`#${task.id}`}>
+                    {index + 1}
+                  </span>
+                  <span className="text-[10px] text-[var(--text-muted)] truncate" title={task.title}>
+                    {task.title}
+                  </span>
+                </div>
+
+                {!readOnly && onAddSubtask && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onAddSubtask(task.id);
+                    }}
+                    className="opacity-0 group-hover:opacity-100 focus:opacity-100 p-1 rounded-md bg-[var(--bg-surface-2)] text-[var(--text-muted)] hover:text-[var(--primary)] hover:bg-[var(--bg-hover)] transition-all flex items-center justify-center shrink-0 border border-transparent hover:border-[var(--primary)]/30 cursor-pointer"
+                    title={t('addSubtask')}
+                    aria-label={t('addSubtask')}
+                  >
+                    <Plus size={14} />
+                  </button>
+                )}
+              </div>
+            ))}
+
+            {rows.length === 0 && (
+              <div className="flex items-center justify-center h-20 text-xs text-[var(--text-muted)]">
+                {t('noTasksFound')}
+              </div>
+            )}
+          </div>
+
+          {/* Timeline body (Scrolls vertically & horizontally with hidden internal scrollbar) */}
+          <div
+            className="flex-1 overflow-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+            ref={timelineBodyRef}
+            onScroll={handleTimelineScroll}
+          >
+            <div className="relative" style={{ width: timelineWidth, minWidth: timelineWidth, minHeight: rows.length * ROW_HEIGHT }}>
+              {/* Today marker */}
+              {todayOffset !== null && (
+                <div
+                  className="absolute top-0 bottom-0 w-0.5 bg-[var(--primary)] z-10 pointer-events-none"
+                  style={{ left: (todayOffset + 0.5) * pxPerDay }}
+                />
+              )}
+
+              {/* Milestone guide lines */}
+              {visibleMilestones.map(({ milestone, offset }) => (
+                <div
+                  key={milestone.id}
+                  className="absolute top-0 bottom-0 w-px z-10 pointer-events-none border-l border-dashed border-[var(--primary)]/50"
+                  style={{ left: (offset + 0.5) * pxPerDay }}
+                />
+              ))}
+
+              {/* Dependency arrows SVG overlay */}
+              <svg
+                className="absolute left-0 top-0 pointer-events-none z-10 overflow-visible"
+                style={{ width: totalDays * pxPerDay, height: rows.length * ROW_HEIGHT }}
+              >
+                <defs>
+                  <marker
+                    id="gantt-arrow"
+                    viewBox="0 0 10 10"
+                    refX="6"
+                    refY="5"
+                    markerWidth="6"
+                    markerHeight="6"
+                    orient="auto-start-reverse"
+                  >
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#6366f1" />
+                  </marker>
+                </defs>
+                {dependencies.map((dep) => {
+                  const pred = taskRowPositions.get(String(dep.predecessor_id));
+                  const succ = taskRowPositions.get(String(dep.successor_id));
+                  if (!pred || !succ) return null;
+
+                  const x1 = pred.xEnd;
+                  const y1 = pred.y;
+                  const x2 = succ.xStart;
+                  const y2 = succ.y;
+                  const midX = x1 + Math.max(12, (x2 - x1) / 2);
+
+                  return (
+                    <path
+                      key={dep.id}
+                      d={`M ${x1} ${y1} H ${midX} V ${y2} H ${x2}`}
+                      fill="none"
+                      stroke="#6366f1"
+                      strokeWidth="1.8"
+                      strokeDasharray={dep.dependency_type !== 'FS' ? '3 3' : undefined}
+                      markerEnd="url(#gantt-arrow)"
+                    />
+                  );
+                })}
+              </svg>
+
+              {/* Task rows with bars */}
+              {rows.map(({ task }) => {
+                const plannedBar = getPlannedBar(task);
+                const actualBar = getActualBar(task);
+                const colors = getStatusColor(task.status);
+                const plannedTitle = `${t('planned_dates')}: ${task.planned_start_date || '-'} ~ ${task.planned_end_date || '-'}`;
+                const actualTitle = `${t('actual_dates')}: ${task.actual_start_date || '-'} ~ ${task.actual_end_date || '-'}`;
+                const plannedHandle = plannedBar ? Math.max(3, Math.min(6, Math.floor(plannedBar.width / 3))) : 0;
+                const actualHandle = actualBar ? Math.max(3, Math.min(6, Math.floor(actualBar.width / 3))) : 0;
                 return (
                   <div
-                    key={column.key}
-                    className={`flex flex-col items-center justify-center border-r border-[var(--border)] overflow-hidden ${shaded ? 'bg-[var(--bg-surface)]' : ''} ${column.isToday ? 'bg-[var(--primary)] bg-opacity-10' : ''}`}
-                    style={{ width, minWidth: width }}
-                    title={column.start.toLocaleDateString('ko-KR')}
+                    key={task.id}
+                    className="relative border-b border-[var(--border)]"
+                    style={{ height: ROW_HEIGHT }}
                   >
-                    <span className={`text-[10px] whitespace-nowrap ${column.isToday ? 'font-bold text-[var(--primary)]' : 'text-[var(--text-muted)]'}`}>
-                      {column.topLabel}
-                    </span>
-                    <span className={`text-[9px] whitespace-nowrap ${column.isToday ? 'font-bold text-[var(--primary)]' : 'text-[var(--text-muted)]'}`}>
-                      {column.bottomLabel}
-                    </span>
+                    {/* Column grid lines */}
+                    {columns.map((column, i) => {
+                      const shaded = column.isWeekend || (scale !== 'day' && i % 2 === 1);
+                      return (
+                        <div
+                          key={column.key}
+                          className={`absolute top-0 bottom-0 border-r border-[var(--border)] ${shaded ? 'bg-[var(--bg-surface)]' : ''}`}
+                          style={{ left: column.offsetDays * pxPerDay, width: column.days * pxPerDay }}
+                        />
+                      );
+                    })}
+
+                    {/* Planned bar */}
+                    {plannedBar && (
+                      <div
+                        className="absolute rounded cursor-pointer flex items-center"
+                        style={{
+                          left: plannedBar.left,
+                          width: plannedBar.width,
+                          top: PLANNED_BAR_TOP,
+                          height: PLANNED_BAR_HEIGHT,
+                          backgroundColor: colors.bg,
+                          border: `1px solid ${colors.border}`,
+                        }}
+                        title={plannedTitle}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onTaskClick?.(task);
+                        }}
+                      >
+                        {canEdit && (
+                          <div
+                            className="h-full cursor-col-resize hover:bg-black/20 rounded-l shrink-0"
+                            style={{ width: plannedHandle }}
+                            onMouseDown={(e) => handleDragStart(e, task, 'planned', 'planned_start_date')}
+                          />
+                        )}
+
+                        <div className="flex-1 min-w-0 px-1 overflow-hidden">
+                          {plannedBar.width >= BAR_LABEL_MIN_WIDTH && (
+                            <div className="text-[10px] font-bold truncate" style={{ color: colors.text }}>
+                              {task.title}
+                            </div>
+                          )}
+                          {task.progress !== undefined && task.progress > 0 && (
+                            <div className="h-0.5 rounded-full bg-black/10 mt-0.5">
+                              <div
+                                className="h-full rounded-full"
+                                style={{ width: `${task.progress}%`, backgroundColor: colors.border }}
+                              />
+                            </div>
+                          )}
+                        </div>
+
+                        {canEdit && (
+                          <div
+                            className="h-full cursor-col-resize hover:bg-black/20 rounded-r shrink-0"
+                            style={{ width: plannedHandle }}
+                            onMouseDown={(e) => handleDragStart(e, task, 'planned', 'planned_end_date')}
+                          />
+                        )}
+                      </div>
+                    )}
+
+                    {/* Actual bar */}
+                    {actualBar && (
+                      <div
+                        className={`absolute cursor-pointer flex items-center justify-between rounded-l-sm ${actualBar.isOngoing ? '' : 'rounded-r-sm'}`}
+                        style={{
+                          left: actualBar.left,
+                          width: actualBar.width,
+                          top: ACTUAL_BAR_TOP,
+                          height: ACTUAL_BAR_HEIGHT,
+                          backgroundColor: colors.border,
+                          opacity: actualBar.isOngoing ? 0.6 : 0.9,
+                        }}
+                        title={actualTitle}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onTaskClick?.(task);
+                        }}
+                      >
+                        {canEdit && (
+                          <>
+                            <div
+                              className="h-full cursor-col-resize hover:bg-black/20 rounded-l-sm shrink-0"
+                              style={{ width: actualHandle }}
+                              onMouseDown={(e) => handleDragStart(e, task, 'actual', 'actual_start_date')}
+                            />
+                            <div
+                              className="h-full cursor-col-resize hover:bg-black/20 rounded-r-sm shrink-0"
+                              style={{ width: actualHandle }}
+                              onMouseDown={(e) => handleDragStart(e, task, 'actual', 'actual_end_date')}
+                            />
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}
             </div>
+          </div>
+        </div>
 
-            {/* Milestone lane */}
-            {hasMilestoneLane && (
-              <div
-                className="relative border-b border-[var(--border)] bg-[var(--bg-surface-2)]/60"
-                style={{ height: MILESTONE_LANE_HEIGHT }}
-              >
-                {visibleMilestones.map(({ milestone, offset }) => (
-                  <div
-                    key={milestone.id}
-                    className="absolute top-0 h-full flex items-center gap-1 pl-1 -translate-x-1/2"
-                    style={{ left: (offset + 0.5) * pxPerDay }}
-                    title={`${milestone.name} (${milestone.due_date ?? '-'})`}
-                  >
-                    <span className="w-2 h-2 rotate-45 bg-[var(--primary)] shrink-0" />
-                    <span className="text-[10px] font-semibold text-[var(--primary)] whitespace-nowrap max-w-[120px] truncate">
-                      {milestone.name}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
+        {/* Dedicated Bottom Footer Row for Horizontal Scrollbar Track */}
+        <div className="flex shrink-0 border-t border-[var(--border)] bg-[var(--bg-surface-2)] z-30">
+          {/* Sidebar Footer */}
+          <div className="shrink-0 border-r border-[var(--border)] flex items-center px-3 py-1" style={{ width: SIDEBAR_WIDTH }}>
+            <span className="text-[11px] font-medium text-[var(--text-muted)] truncate">
+              {t('tasks')}: {rows.length}
+            </span>
+          </div>
 
-            {/* Today marker */}
-            {todayOffset !== null && (
-              <div
-                className="absolute top-0 bottom-0 w-0.5 bg-[var(--primary)] z-10 pointer-events-none"
-                style={{ left: (todayOffset + 0.5) * pxPerDay }}
-              />
-            )}
-
-            {/* Milestone guide lines */}
-            {visibleMilestones.map(({ milestone, offset }) => (
-              <div
-                key={milestone.id}
-                className="absolute bottom-0 w-px z-10 pointer-events-none border-l border-dashed border-[var(--primary)]/50"
-                style={{ top: HEADER_HEIGHT, left: (offset + 0.5) * pxPerDay }}
-              />
-            ))}
-
-            {/* Task rows with bars */}
-            {rows.map(({ task }) => {
-              const plannedBar = getPlannedBar(task);
-              const actualBar = getActualBar(task);
-              const colors = getStatusColor(task.status);
-              const plannedTitle = `${t('planned_dates')}: ${task.planned_start_date || '-'} ~ ${task.planned_end_date || '-'}`;
-              const actualTitle = `${t('actual_dates')}: ${task.actual_start_date || '-'} ~ ${task.actual_end_date || '-'}`;
-              // 눈금이 좁아지면 핸들도 같이 줄여 막대를 덮어버리지 않게 한다.
-              const plannedHandle = plannedBar ? Math.max(3, Math.min(6, Math.floor(plannedBar.width / 3))) : 0;
-              const actualHandle = actualBar ? Math.max(3, Math.min(6, Math.floor(actualBar.width / 3))) : 0;
-              return (
-                <div
-                  key={task.id}
-                  className="relative border-b border-[var(--border)]"
-                  style={{ height: ROW_HEIGHT }}
-                >
-                  {/* Column grid lines */}
-                  {columns.map((column, i) => {
-                    const shaded = column.isWeekend || (scale !== 'day' && i % 2 === 1);
-                    return (
-                      <div
-                        key={column.key}
-                        className={`absolute top-0 bottom-0 border-r border-[var(--border)] ${shaded ? 'bg-[var(--bg-surface)]' : ''}`}
-                        style={{ left: column.offsetDays * pxPerDay, width: column.days * pxPerDay }}
-                      />
-                    );
-                  })}
-
-                  {/* Planned bar */}
-                  {plannedBar && (
-                    <div
-                      className="absolute rounded cursor-pointer flex items-center"
-                      style={{
-                        left: plannedBar.left,
-                        width: plannedBar.width,
-                        top: PLANNED_BAR_TOP,
-                        height: PLANNED_BAR_HEIGHT,
-                        backgroundColor: colors.bg,
-                        border: `1px solid ${colors.border}`,
-                      }}
-                      title={plannedTitle}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onTaskClick?.(task);
-                      }}
-                    >
-                      {canEdit && (
-                        <div
-                          className="h-full cursor-col-resize hover:bg-black/20 rounded-l shrink-0"
-                          style={{ width: plannedHandle }}
-                          onMouseDown={(e) => handleDragStart(e, task, 'planned', 'planned_start_date')}
-                        />
-                      )}
-
-                      {/* Bar content */}
-                      <div className="flex-1 min-w-0 px-1 overflow-hidden">
-                        {plannedBar.width >= BAR_LABEL_MIN_WIDTH && (
-                          <div className="text-[10px] font-bold truncate" style={{ color: colors.text }}>
-                            {task.title}
-                          </div>
-                        )}
-                        {task.progress !== undefined && task.progress > 0 && (
-                          <div className="h-0.5 rounded-full bg-black/10 mt-0.5">
-                            <div
-                              className="h-full rounded-full"
-                              style={{ width: `${task.progress}%`, backgroundColor: colors.border }}
-                            />
-                          </div>
-                        )}
-                      </div>
-
-                      {canEdit && (
-                        <div
-                          className="h-full cursor-col-resize hover:bg-black/20 rounded-r shrink-0"
-                          style={{ width: plannedHandle }}
-                          onMouseDown={(e) => handleDragStart(e, task, 'planned', 'planned_end_date')}
-                        />
-                      )}
-                    </div>
-                  )}
-
-                  {/* Actual bar — solid fill, ongoing tasks keep an open right edge */}
-                  {actualBar && (
-                    <div
-                      className={`absolute cursor-pointer flex items-center justify-between rounded-l-sm ${actualBar.isOngoing ? '' : 'rounded-r-sm'}`}
-                      style={{
-                        left: actualBar.left,
-                        width: actualBar.width,
-                        top: ACTUAL_BAR_TOP,
-                        height: ACTUAL_BAR_HEIGHT,
-                        backgroundColor: colors.border,
-                        opacity: actualBar.isOngoing ? 0.6 : 0.9,
-                      }}
-                      title={actualTitle}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onTaskClick?.(task);
-                      }}
-                    >
-                      {canEdit && (
-                        <>
-                          <div
-                            className="h-full cursor-col-resize hover:bg-black/20 rounded-l-sm shrink-0"
-                            style={{ width: actualHandle }}
-                            onMouseDown={(e) => handleDragStart(e, task, 'actual', 'actual_start_date')}
-                          />
-                          <div
-                            className="h-full cursor-col-resize hover:bg-black/20 rounded-r-sm shrink-0"
-                            style={{ width: actualHandle }}
-                            onMouseDown={(e) => handleDragStart(e, task, 'actual', 'actual_end_date')}
-                          />
-                        </>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+          {/* Dedicated Horizontal Scrollbar Track */}
+          <div
+            className="flex-1 overflow-x-auto overflow-y-hidden"
+            ref={bottomScrollbarRef}
+            onScroll={handleBottomScrollbarScroll}
+          >
+            <div style={{ width: timelineWidth, height: 1 }} />
           </div>
         </div>
       </div>

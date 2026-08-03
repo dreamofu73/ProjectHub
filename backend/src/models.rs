@@ -200,6 +200,18 @@ pub struct UpdateTaskRequest {
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct CreateTaskDependencyRequest {
+    #[serde(deserialize_with = "crate::serde_utils::string_or_number")]
+    pub project_id: i64,
+    #[serde(deserialize_with = "crate::serde_utils::string_or_number")]
+    pub predecessor_id: i64,
+    #[serde(deserialize_with = "crate::serde_utils::string_or_number")]
+    pub successor_id: i64,
+    pub dependency_type: Option<String>,
+    pub lag_days: Option<i64>,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct BulkUpdateTasksRequest {
     #[serde(default, deserialize_with = "crate::serde_utils::vec_string_or_number")]
     pub task_ids: Vec<i64>,

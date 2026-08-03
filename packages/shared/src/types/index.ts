@@ -43,6 +43,16 @@ export interface Project {
   task_statuses?: string | null;
 }
 
+export interface TaskDependency {
+  id: string;
+  project_id: string;
+  predecessor_id: string;
+  successor_id: string;
+  dependency_type: 'FS' | 'SS' | 'FF' | 'SF';
+  lag_days: number;
+  created_at: string;
+}
+
 export interface Task {
   id: string;
   project_id: string;
@@ -62,6 +72,8 @@ export interface Task {
   parent_task_id: string | null;
   created_at: string;
   updated_at: string;
+  /** 프론트엔드 연동용 확장 필드 */
+  is_critical?: boolean;
 }
 
 export interface Milestone {

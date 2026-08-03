@@ -339,6 +339,46 @@ async fn create_project_tables(pool: &AnyPool, kind: DbKind) {
         "tasks",
     )
     .await;
+
+    create_table(
+        pool,
+        Table::create()
+            .table("task_dependencies")
+            .if_not_exists()
+            .col(auto_pk("id", kind))
+            .col(int_required("project_id"))
+            .col(int_required("predecessor_id"))
+            .col(int_required("successor_id"))
+            .col(text_nn("dependency_type"))
+            .col(int_nn("lag_days", 0))
+            .col(text_nn("created_at"))
+            .foreign_key(&mut fk("task_dependencies", "project_id", "projects", "id", ForeignKeyAction::Cascade))
+            .foreign_key(&mut fk("task_dependencies", "predecessor_id", "tasks", "id", ForeignKeyAction::Cascade))
+            .foreign_key(&mut fk("task_dependencies", "successor_id", "tasks", "id", ForeignKeyAction::Cascade))
+            .to_owned(),
+        "task_dependencies",
+    )
+    .await;
+
+    create_table(
+        pool,
+        Table::create()
+            .table("sprints")
+            .if_not_exists()
+            .col(auto_pk("id", kind))
+            .col(int_required("project_id"))
+            .col(text_nn("name"))
+            .col(text("goal"))
+            .col(text("start_date"))
+            .col(text("end_date"))
+            .col(text_nn("status"))
+            .col(text_nn("created_at"))
+            .col(text_nn("updated_at"))
+            .foreign_key(&mut fk("sprints", "project_id", "projects", "id", ForeignKeyAction::Cascade))
+            .to_owned(),
+        "sprints",
+    )
+    .await;
 }
 
 /// JSON 배열 문자열을 담는 `TEXT NOT NULL DEFAULT '[]'` 컬럼.
@@ -1168,6 +1208,10 @@ async fn create_indexes(pool: &AnyPool) {
     create_index(pool, index("idx_issues_milestone", "issues", &["milestone_id"])).await;
     create_index(pool, index("idx_tasks_project", "tasks", &["project_id"])).await;
     create_index(pool, index("idx_tasks_parent", "tasks", &["parent_task_id"])).await;
+    create_index(pool, index("idx_task_deps_proj", "task_dependencies", &["project_id"])).await;
+    create_index(pool, index("idx_task_deps_pred", "task_dependencies", &["predecessor_id"])).await;
+    create_index(pool, index("idx_task_deps_succ", "task_dependencies", &["successor_id"])).await;
+    create_index(pool, index("idx_sprints_project", "sprints", &["project_id"])).await;
     create_index(pool, index("idx_activity_logs_recent", "activity_logs", &["created_at"])).await;
     create_index(pool, index("idx_activity_logs_user", "activity_logs", &["user_id"])).await;
     create_index(pool, index("idx_icf_project", "issue_custom_fields", &["project_id"])).await;

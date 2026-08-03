@@ -776,6 +776,30 @@ const en: Record<string, string> = {
   editorCancel: 'Cancel',
   editorOk: 'OK',
   editorEmojiLoading: 'Loading emoji...',
+
+  // Task Management i18n
+  wbsList: 'WBS List',
+  ganttChart: 'Gantt Chart',
+  workloadView: 'Resource Workload',
+  taskTitleSearch: 'Search task title...',
+  deleteSelected: 'Delete Selected',
+  newMilestone: 'New Milestone',
+  newTask: 'New Task',
+  resourceWorkloadTitle: 'Resource Workload by Assignee',
+  resourceWorkloadDesc: 'Check assigned tasks count and over-allocation status per team member.',
+  normalAllocation: 'Normal (1~4)',
+  overAllocation: 'Over-allocated (>5)',
+  unassignedAssignee: 'Unassigned',
+  completionRateLabel: 'Completion Rate',
+  expandAll: 'Expand All',
+  collapseAll: 'Collapse All',
+  taskCountLabel: 'Tasks',
+  zoomDay: 'Day',
+  zoomWeek: 'Week',
+  zoomMonth: 'Month',
+  noItemsFound: 'No items found.',
+  wipLimitExceeded: 'WIP limit exceeded! Check bottleneck.',
+  depAutoSyncToast: 'Dependency condition and planned dates updated automatically.',
 };
 
 export default en;

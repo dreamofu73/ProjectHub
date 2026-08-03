@@ -776,6 +776,30 @@ const ja: Record<string, string> = {
   editorCancel: 'キャンセル',
   editorOk: 'OK',
   editorEmojiLoading: '絵文字を読み込み中...',
+
+  // Task Management i18n
+  wbsList: 'WBS 一覧',
+  ganttChart: 'ガントチャート',
+  workloadView: 'リソース負荷',
+  taskTitleSearch: 'タスク件名で検索...',
+  deleteSelected: '選択した項目を削除',
+  newMilestone: '新規マイルストーン',
+  newTask: '新規タスク',
+  resourceWorkloadTitle: '担当者別リソース負荷 (Resource Workload)',
+  resourceWorkloadDesc: 'メンバーごとの割り当てタスク数と過多割り当て状態を確認します。',
+  normalAllocation: '適正割り当て (1~4件)',
+  overAllocation: '過多割り当て (>5件)',
+  unassignedAssignee: '未割り当て (Unassigned)',
+  completionRateLabel: '完了率',
+  expandAll: 'すべて展開',
+  collapseAll: 'すべて折りたたむ',
+  taskCountLabel: 'タスク数',
+  zoomDay: '日単位',
+  zoomWeek: '週単位',
+  zoomMonth: '月単位',
+  noItemsFound: '登録された項目がありません。',
+  wipLimitExceeded: 'WIP制限超過！ボトルネックを確認してください。',
+  depAutoSyncToast: '依存関係条件および計画日付が自動更新されました。',
 };
 
 export default ja;

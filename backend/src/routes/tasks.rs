@@ -70,7 +70,10 @@ pub fn router() -> crate::routes::ProtectedRoutes {
             .route("/tasks/:id", get(get_task_by_id))
             .route("/tasks", post(create_task))
             .route("/tasks/:id", put(update_task))
-            .route("/tasks/:id", delete(delete_task)),
+            .route("/tasks/:id", delete(delete_task))
+            .route("/projects/:id/task-dependencies", get(get_project_task_dependencies))
+            .route("/tasks/dependencies", post(create_task_dependency))
+            .route("/tasks/dependencies/:id", delete(delete_task_dependency)),
     )
 }
 
@@ -586,7 +589,7 @@ async fn bulk_update_tasks(
 
     for id in req.task_ids {
         let stmt = SeaQuery::select()
-            .column("project_id")
+            .columns(["project_id", "parent_task_id"])
             .from("tasks")
             .and_where(Expr::col("id").eq(id))
             .to_owned();
@@ -594,7 +597,7 @@ async fn bulk_update_tasks(
             .await
             .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()}))))?;
 
-        let project_id: i64 = match task_info {
+        let project_id: i64 = match &task_info {
             Some(info) => info.get("project_id"),
             None => return Err((StatusCode::NOT_FOUND, Json(json!({"success": false, "error": "Task not found"})))),
         };
@@ -636,6 +639,10 @@ async fn bulk_update_tasks(
         crate::db::execute(&pool, &stmt)
             .await
             .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()}))))?;
+
+        if let Some(parent_id) = task_info.as_ref().and_then(|info| info.get::<Option<i64>, _>("parent_task_id")) {
+            let _ = rollup_parent_task(&pool, parent_id).await;
+        }
 
         updated += 1;
     }
@@ -698,6 +705,178 @@ async fn delete_task(
         .from_table("tasks")
         .and_where(Expr::col("id").eq(id))
         .to_owned();
+    crate::db::execute(&pool, &stmt)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()}))))?;
+
+    Ok(Json(json!({ "success": true })))
+}
+
+async fn rollup_parent_task(pool: &AnyPool, parent_id: i64) -> Result<(), sqlx::Error> {
+    let stmt = SeaQuery::select()
+        .columns(["progress", "planned_start_date", "planned_end_date", "status"])
+        .from("tasks")
+        .and_where(Expr::col("parent_task_id").eq(parent_id))
+        .to_owned();
+    let children = crate::db::fetch_all(pool, &stmt).await?;
+    if children.is_empty() {
+        return Ok(());
+    }
+
+    let mut total_progress = 0i64;
+    let count = children.len() as i64;
+    let mut min_start: Option<String> = None;
+    let mut max_end: Option<String> = None;
+    let mut all_closed = true;
+
+    for child in &children {
+        let prog: i64 = child.get("progress");
+        total_progress += prog;
+
+        let status: Option<String> = child.get("status");
+        if status.as_deref() != Some("Closed") && status.as_deref() != Some("Resolved") {
+            all_closed = false;
+        }
+
+        if let Some(start) = child.get::<Option<String>, _>("planned_start_date") {
+            if !start.is_empty() {
+                if min_start.as_ref().map_or(true, |s| s > &start) {
+                    min_start = Some(start);
+                }
+            }
+        }
+        if let Some(end) = child.get::<Option<String>, _>("planned_end_date") {
+            if !end.is_empty() {
+                if max_end.as_ref().map_or(true, |e| e < &end) {
+                    max_end = Some(end);
+                }
+            }
+        }
+    }
+
+    let avg_progress = (total_progress / count).clamp(0, 100);
+    let mut update_stmt = SeaQuery::update();
+    update_stmt.table("tasks");
+    update_stmt.value("progress", avg_progress);
+    if all_closed {
+        update_stmt.value("status", "Closed");
+    }
+    if let Some(start) = min_start {
+        update_stmt.value("planned_start_date", start);
+    }
+    if let Some(end) = max_end {
+        update_stmt.value("planned_end_date", end);
+    }
+    update_stmt.value("updated_at", crate::db::now_string());
+    update_stmt.and_where(Expr::col("id").eq(parent_id));
+
+    crate::db::execute(pool, &update_stmt.to_owned()).await?;
+
+    let parent_parent_stmt = SeaQuery::select()
+        .column("parent_task_id")
+        .from("tasks")
+        .and_where(Expr::col("id").eq(parent_id))
+        .to_owned();
+    if let Ok(Some(row)) = crate::db::fetch_optional(pool, &parent_parent_stmt).await {
+        if let Some(g_parent) = row.get::<Option<i64>, _>("parent_task_id") {
+            let _ = Box::pin(rollup_parent_task(pool, g_parent)).await;
+        }
+    }
+
+    Ok(())
+}
+
+async fn get_project_task_dependencies(
+    Path(id_str): Path<String>,
+    user: AuthUser,
+    Extension(pool): Extension<Arc<AnyPool>>,
+) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    let project_id = check_project_access(&pool, &user, &id_str).await?;
+
+    let stmt = SeaQuery::select()
+        .columns(["id", "project_id", "predecessor_id", "successor_id", "dependency_type", "lag_days", "created_at"])
+        .from("task_dependencies")
+        .and_where(Expr::col("project_id").eq(project_id))
+        .to_owned();
+
+    let rows = crate::db::fetch_all(&pool, &stmt)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()}))))?;
+
+    let data: Vec<Value> = rows.into_iter().map(|r| {
+        json!({
+            "id": r.get::<i64, _>("id").to_string(),
+            "project_id": r.get::<i64, _>("project_id").to_string(),
+            "predecessor_id": r.get::<i64, _>("predecessor_id").to_string(),
+            "successor_id": r.get::<i64, _>("successor_id").to_string(),
+            "dependency_type": r.get::<String, _>("dependency_type"),
+            "lag_days": r.get::<i64, _>("lag_days"),
+            "created_at": r.get::<String, _>("created_at"),
+        })
+    }).collect();
+
+    Ok(Json(json!({ "success": true, "data": data })))
+}
+
+async fn create_task_dependency(
+    user: AuthUser,
+    Extension(pool): Extension<Arc<AnyPool>>,
+    axum::Json(req): axum::Json<crate::models::CreateTaskDependencyRequest>,
+) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    require_project_member(&pool, &user, req.project_id).await?;
+
+    if req.predecessor_id == req.successor_id {
+        return Err((StatusCode::BAD_REQUEST, Json(json!({"success": false, "error": "Predecessor and successor tasks cannot be the same"}))));
+    }
+
+    let dep_id = crate::db::new_id();
+    let dep_type = req.dependency_type.unwrap_or_else(|| "FS".to_string());
+    let lag = req.lag_days.unwrap_or(0);
+
+    let stmt = SeaQuery::insert()
+        .into_table("task_dependencies")
+        .columns(["id", "project_id", "predecessor_id", "successor_id", "dependency_type", "lag_days", "created_at"])
+        .values_panic([
+            dep_id.into(),
+            req.project_id.into(),
+            req.predecessor_id.into(),
+            req.successor_id.into(),
+            dep_type.clone().into(),
+            lag.into(),
+            crate::db::now_string().into(),
+        ])
+        .to_owned();
+
+    crate::db::execute(&pool, &stmt)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()}))))?;
+
+    Ok(Json(json!({
+        "success": true,
+        "data": {
+            "id": dep_id.to_string(),
+            "project_id": req.project_id.to_string(),
+            "predecessor_id": req.predecessor_id.to_string(),
+            "successor_id": req.successor_id.to_string(),
+            "dependency_type": dep_type,
+            "lag_days": lag,
+            "created_at": crate::db::now_string(),
+        }
+    })))
+}
+
+async fn delete_task_dependency(
+    Path(id_str): Path<String>,
+    _user: AuthUser,
+    Extension(pool): Extension<Arc<AnyPool>>,
+) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    let id = crate::serde_utils::parse_path_id(&id_str)?;
+
+    let stmt = SeaQuery::delete()
+        .from_table("task_dependencies")
+        .and_where(Expr::col("id").eq(id))
+        .to_owned();
+
     crate::db::execute(&pool, &stmt)
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()}))))?;

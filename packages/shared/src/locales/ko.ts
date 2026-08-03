@@ -776,6 +776,30 @@ const ko: Record<string, string> = {
   editorCancel: '취소',
   editorOk: '확인',
   editorEmojiLoading: '이모지 불러오는 중...',
+
+  // Task Management i18n
+  wbsList: 'WBS 목록',
+  ganttChart: '간트 차트',
+  workloadView: '리소스 부하',
+  taskTitleSearch: '일감 제목 검색...',
+  deleteSelected: '선택 삭제',
+  newMilestone: '새 마일스톤',
+  newTask: '새 일감',
+  resourceWorkloadTitle: '담당자별 업무 부하량 (Resource Workload)',
+  resourceWorkloadDesc: '팀원별 할당된 일감 수 및 과다 배정(Over-allocation) 상태를 점검합니다.',
+  normalAllocation: '적정 배정 (1~4건)',
+  overAllocation: '과다 배정 (>5건)',
+  unassignedAssignee: '미배정 (Unassigned)',
+  completionRateLabel: '완료율',
+  expandAll: '전체 펼치기',
+  collapseAll: '전체 접기',
+  taskCountLabel: '일감 수',
+  zoomDay: '일 단위',
+  zoomWeek: '주 단위',
+  zoomMonth: '월 단위',
+  noItemsFound: '등록된 항목이 없습니다.',
+  wipLimitExceeded: 'WIP 제한 초과! 병목을 점검하세요.',
+  depAutoSyncToast: '의존관계 조건 및 계획일자가 자동 변경되었습니다.',
 };
 
 export default ko;

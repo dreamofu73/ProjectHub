@@ -274,6 +274,14 @@ export function TaskDetailPanel({ taskId, project, isArchived, onClose, onUpdate
                 <span className="font-bold text-[var(--text-secondary)]">{t('description')}</span>
                 <div className="text-[var(--text-primary)] whitespace-pre-wrap">{task.description || '-'}</div>
               </div>
+
+              {/* ── Task Dependencies Section ── */}
+              <TaskDependenciesSection
+                task={task}
+                project={project}
+                isArchived={isArchived}
+                onUpdated={fetchData}
+              />
             </div>
           </>
         )}
@@ -288,6 +296,347 @@ export function TaskDetailPanel({ taskId, project, isArchived, onClose, onUpdate
         onConfirm={handleDelete}
         onCancel={() => setDeleteConfirmOpen(false)}
       />
+    </div>
+  );
+}
+
+import type { TaskDependency } from 'shared/types';
+import { Link2, Plus as PlusIcon, Trash2 as TrashIcon } from 'lucide-react';
+
+function addDaysStr(dateStr: string, days: number): string {
+  const parts = dateStr.split('-').map(Number);
+  if (parts.length !== 3) return dateStr;
+  const dt = new Date(parts[0], parts[1] - 1, parts[2] + days);
+  const ny = dt.getFullYear();
+  const nm = String(dt.getMonth() + 1).padStart(2, '0');
+  const nd = String(dt.getDate()).padStart(2, '0');
+  return `${ny}-${nm}-${nd}`;
+}
+
+function computeAdjustedDates(
+  predTask: Task,
+  currTask: Task,
+  depType: 'FS' | 'SS' | 'FF' | 'SF'
+): { planned_start_date: string; planned_end_date: string } | null {
+  let duration = 3;
+  if (currTask.planned_start_date && currTask.planned_end_date) {
+    const s = new Date(currTask.planned_start_date).getTime();
+    const e = new Date(currTask.planned_end_date).getTime();
+    if (!isNaN(s) && !isNaN(e) && e >= s) {
+      duration = Math.max(0, Math.round((e - s) / (1000 * 60 * 60 * 24)));
+    }
+  }
+
+  let newStart = '';
+  let newEnd = '';
+
+  if (depType === 'FS') {
+    const baseDate = predTask.planned_end_date || predTask.planned_start_date;
+    if (!baseDate) return null;
+    newStart = addDaysStr(baseDate, 1);
+    newEnd = addDaysStr(newStart, duration);
+  } else if (depType === 'SS') {
+    const baseDate = predTask.planned_start_date || predTask.planned_end_date;
+    if (!baseDate) return null;
+    newStart = baseDate;
+    newEnd = addDaysStr(newStart, duration);
+  } else if (depType === 'FF') {
+    const baseDate = predTask.planned_end_date || predTask.planned_start_date;
+    if (!baseDate) return null;
+    newEnd = baseDate;
+    newStart = addDaysStr(newEnd, -duration);
+  } else if (depType === 'SF') {
+    const baseDate = predTask.planned_start_date || predTask.planned_end_date;
+    if (!baseDate) return null;
+    newEnd = baseDate;
+    newStart = addDaysStr(newEnd, -duration);
+  }
+
+  if (!newStart || !newEnd) return null;
+  return { planned_start_date: newStart, planned_end_date: newEnd };
+}
+
+function TaskDependenciesSection({
+  task,
+  project,
+  isArchived,
+  onUpdated
+}: {
+  task: Task;
+  project: Project | null;
+  isArchived?: boolean;
+  onUpdated?: () => void;
+}) {
+  const { showToast } = useToast();
+  const [dependencies, setDependencies] = useState<TaskDependency[]>([]);
+  const [allTasks, setAllTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedPredId, setSelectedPredId] = useState('');
+  const [depType, setDepType] = useState<'FS'|'SS'|'FF'|'SF'>('FS');
+
+  const fetchDeps = useCallback(async () => {
+    if (!project?.id) return;
+    setLoading(true);
+    try {
+      const [depRes, taskRes] = await Promise.all([
+        api(`/api/projects/${project.id}/task-dependencies`),
+        api(`/api/tasks?project=${project.id}`)
+      ]);
+      const depJson = await depRes.json();
+      const taskJson = await taskRes.json();
+
+      if (depJson.success) setDependencies(depJson.data || []);
+      if (taskJson.success) setAllTasks(taskJson.data || []);
+    } catch {
+      // ignore
+    } finally {
+      setLoading(false);
+    }
+  }, [project?.id]);
+
+  useEffect(() => {
+    fetchDeps();
+  }, [fetchDeps]);
+
+  // Predecessors (tasks that this task depends on)
+  const predecessors = dependencies.filter(d => String(d.successor_id) === String(task.id));
+  // Successors (tasks that depend on this task)
+  const successors = dependencies.filter(d => String(d.predecessor_id) === String(task.id));
+
+  // Available tasks to add as predecessor (excluding self and already added predecessors)
+  const existingPredIds = new Set(predecessors.map(d => String(d.predecessor_id)));
+  const availablePredTasks = allTasks.filter(t => String(t.id) !== String(task.id) && !existingPredIds.has(String(t.id)));
+
+  const handleAddDep = async () => {
+    if (!project?.id || !selectedPredId) return;
+    try {
+      const res = await api('/api/tasks/dependencies', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          project_id: project.id,
+          predecessor_id: selectedPredId,
+          successor_id: task.id,
+          dependency_type: depType,
+        }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        // Auto-adjust planned dates of successor task
+        const predTask = allTasks.find(t => String(t.id) === String(selectedPredId));
+        if (predTask) {
+          const newDates = computeAdjustedDates(predTask, task, depType);
+          if (newDates) {
+            await api(`/api/tasks/${task.id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(newDates),
+            });
+          }
+        }
+
+        showToast('선후행 관계 추가 및 계획일자가 자동 변경되었습니다.', 'success');
+        setSelectedPredId('');
+        fetchDeps();
+        onUpdated?.();
+      } else {
+        showToast(json.error || '의존성 추가에 실패했습니다.', 'error');
+      }
+    } catch {
+      showToast('서버 연결 오류가 발생했습니다.', 'error');
+    }
+  };
+
+  const handleUpdateDepType = async (dep: TaskDependency, newType: 'FS'|'SS'|'FF'|'SF') => {
+    if (!project?.id || dep.dependency_type === newType) return;
+    try {
+      await api(`/api/tasks/dependencies/${dep.id}`, { method: 'DELETE' });
+      const res = await api('/api/tasks/dependencies', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          project_id: project.id,
+          predecessor_id: dep.predecessor_id,
+          successor_id: dep.successor_id,
+          dependency_type: newType,
+        }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        const predTask = allTasks.find(t => String(t.id) === String(dep.predecessor_id));
+        if (predTask) {
+          const newDates = computeAdjustedDates(predTask, task, newType);
+          if (newDates) {
+            await api(`/api/tasks/${task.id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(newDates),
+            });
+          }
+        }
+        showToast('의존관계 조건 및 계획일자가 자동 변경되었습니다.', 'success');
+        fetchDeps();
+        onUpdated?.();
+      } else {
+        showToast(json.error || '의존성 변경에 실패했습니다.', 'error');
+      }
+    } catch {
+      showToast('의존성 변경 중 오류가 발생했습니다.', 'error');
+    }
+  };
+
+  const handleDeleteDep = async (depId: string) => {
+    try {
+      const res = await api(`/api/tasks/dependencies/${depId}`, { method: 'DELETE' });
+      const json = await res.json();
+      if (json.success) {
+        showToast('선후행 관계가 삭제되었습니다.', 'success');
+        fetchDeps();
+        onUpdated?.();
+      }
+    } catch {
+      showToast('삭제 중 오류가 발생했습니다.', 'error');
+    }
+  };
+
+  return (
+    <div className="pt-3 border-t border-[var(--border)] space-y-3">
+      <div className="flex items-center justify-between">
+        <h4 className="font-bold text-xs text-[var(--text-secondary)] flex items-center gap-1.5">
+          <Link2 size={14} className="text-[var(--primary)]" />
+          <span>선후행 의존성 (Task Dependencies)</span>
+        </h4>
+        <span className="text-[11px] text-[var(--text-muted)]">
+          선행 {predecessors.length}건 / 후행 {successors.length}건
+        </span>
+      </div>
+
+      {loading ? (
+        <div className="text-xs text-[var(--text-muted)]">의존성 정보 로딩중...</div>
+      ) : (
+        <div className="space-y-2.5">
+          {/* Predecessors List */}
+          <div className="space-y-1.5">
+            <span className="text-[11px] font-semibold text-[var(--text-muted)] block">선행 일감 (Predecessors - 이 일감 전에 완료되어야 함):</span>
+            {predecessors.length === 0 ? (
+              <div className="text-xs text-[var(--text-muted)] italic pl-2">등록된 선행 일감이 없습니다.</div>
+            ) : (
+              predecessors.map(dep => {
+                const predTask = allTasks.find(t => String(t.id) === String(dep.predecessor_id));
+                return (
+                  <div key={dep.id} className="flex items-center justify-between p-2 rounded-lg bg-[var(--bg-surface-2)] border border-[var(--border)] text-xs">
+                    <div className="flex items-center gap-2 truncate">
+                      <select
+                        value={dep.dependency_type}
+                        onChange={(e) => handleUpdateDepType(dep, e.target.value as 'FS'|'SS'|'FF'|'SF')}
+                        className="px-1.5 py-0.5 text-[10px] font-bold rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 cursor-pointer focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        disabled={isArchived}
+                        title="의존관계 조건 변경 (FS/SS/FF/SF)"
+                      >
+                        <option value="FS">FS (Finish to Start)</option>
+                        <option value="SS">SS (Start to Start)</option>
+                        <option value="FF">FF (Finish to Finish)</option>
+                        <option value="SF">SF (Start to Finish)</option>
+                      </select>
+                      <span className="font-medium text-[var(--text-primary)] truncate">
+                        #{dep.predecessor_id} {predTask?.title || 'Unknown Task'}
+                      </span>
+                    </div>
+
+                    {!isArchived && (
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteDep(dep.id)}
+                        className="p-1 text-[var(--text-muted)] hover:text-rose-500 rounded transition-colors"
+                        title="의존성 삭제"
+                      >
+                        <TrashIcon size={12} />
+                      </button>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Successors List */}
+          <div className="space-y-1.5">
+            <span className="text-[11px] font-semibold text-[var(--text-muted)] block">후행 일감 (Successors - 이 일감 이후 진행됨):</span>
+            {successors.length === 0 ? (
+              <div className="text-xs text-[var(--text-muted)] italic pl-2">등록된 후행 일감이 없습니다.</div>
+            ) : (
+              successors.map(dep => {
+                const succTask = allTasks.find(t => String(t.id) === String(dep.successor_id));
+                return (
+                  <div key={dep.id} className="flex items-center justify-between p-2 rounded-lg bg-[var(--bg-surface-2)] border border-[var(--border)] text-xs">
+                    <div className="flex items-center gap-2 truncate">
+                      <span className="px-1.5 py-0.5 text-[10px] font-bold rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
+                        {dep.dependency_type}
+                      </span>
+                      <span className="font-medium text-[var(--text-primary)] truncate">
+                        #{dep.successor_id} {succTask?.title || 'Unknown Task'}
+                      </span>
+                    </div>
+
+                    {!isArchived && (
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteDep(dep.id)}
+                        className="p-1 text-[var(--text-muted)] hover:text-rose-500 rounded transition-colors"
+                        title="의존성 삭제"
+                      >
+                        <TrashIcon size={12} />
+                      </button>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Add Predecessor Form */}
+          {!isArchived && (
+            <div className="pt-2 border-t border-[var(--border)] space-y-2">
+              <span className="text-[11px] font-bold text-[var(--text-secondary)] block">+ 선행 일감 연결 추가</span>
+              <div className="flex items-center gap-2">
+                <select
+                  value={selectedPredId}
+                  onChange={(e) => setSelectedPredId(e.target.value)}
+                  className="flex-1 h-8 px-2 rounded-lg text-xs bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text-primary)] focus:border-[var(--primary)] outline-none"
+                >
+                  <option value="">선행 일감 선택...</option>
+                  {availablePredTasks.map(t => (
+                    <option key={t.id} value={t.id}>
+                      #{t.id} {t.title}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  value={depType}
+                  onChange={(e) => setDepType(e.target.value as any)}
+                  className="w-32 h-8 px-2 rounded-lg text-xs bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text-primary)] focus:border-[var(--primary)] outline-none"
+                >
+                  <option value="FS">FS (종료➔시작)</option>
+                  <option value="SS">SS (동시시작)</option>
+                  <option value="FF">FF (동시종료)</option>
+                  <option value="SF">SF (시작➔종료)</option>
+                </select>
+
+                <button
+                  type="button"
+                  disabled={!selectedPredId}
+                  onClick={handleAddDep}
+                  className="h-8 px-3 bg-[var(--primary)] hover:opacity-90 disabled:opacity-40 text-white rounded-lg text-xs font-bold transition-all cursor-pointer border-none flex items-center gap-1 shrink-0"
+                >
+                  <PlusIcon size={13} />
+                  <span>연결</span>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
