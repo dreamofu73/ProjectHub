@@ -19,6 +19,7 @@
   - When the dev server is already running, verify changes through that instance rather than restarting it.
 - **Do not run E2E tests**: Unless the user explicitly asks to run E2E tests, **never** run them automatically.
 - **Allowed verification methods**:
-  - Frontend build check: `npm run build` (the Vite build surfaces type errors and confirms the build succeeds)
+  - Monorepo build check (required before finishing a change): `npm run build --workspaces` — builds and type-checks `packages/shared`, `packages/ui`, `apps/web`, and `apps/desktop` together, so shared-package changes cannot silently break the other app
+  - Single-app build check: `npm run build` (the Vite build surfaces type errors and confirms the build succeeds)
   - Dev server check: `./scripts/web-dev.sh` (restart only if it is not already running)
   - UI verification through browser screenshots or DOM inspection

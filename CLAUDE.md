@@ -8,6 +8,26 @@ This project is a project management system built with a **Rust (Axum) backend**
 > - **Web frontend rules**: [apps/web/CLAUDE.md](apps/web/CLAUDE.md)
 > - **Desktop app rules**: [apps/desktop/CLAUDE.md](apps/desktop/CLAUDE.md)
 
+### Monorepo layout
+
+| Package | Responsibility |
+|---------|----------------|
+| `packages/shared` | Shared hooks, data types, API client, and i18n locales (`locales/{ko,en,ja,zh}.ts`) |
+| `packages/ui` | Shared UI components (buttons, cards, tables, Gantt chart, `KanbanBoard<T>`, and so on) |
+| `apps/web` | Web app pages and app-specific components |
+| `apps/desktop` | Tauri desktop app pages and app-specific components |
+
+Anything reused by both apps belongs in `packages/*`; only app-specific screens live in `apps/*`.
+
+### Mandatory frontend principles 🚨
+
+These apply to every screen, component, inline panel, and toast. Details live in [apps/web/CLAUDE.md](apps/web/CLAUDE.md) and [apps/desktop/CLAUDE.md](apps/desktop/CLAUDE.md).
+
+1. **i18n is mandatory** — never hardcode user-facing text; use `useLanguage()` / `t('key')` and register every new key in all four locale files under `packages/shared/src/locales/` in the same change.
+2. **Global theme sync is mandatory** — style through the semantic design tokens (`var(--bg-surface)`, `var(--border)`, `var(--primary)`, `var(--text-primary)`, …) so Dark/Light × Default/Warm/Lavender/Ocean/Amber all work. Hardcoded colour utilities such as `bg-white` or `border-gray-200` are forbidden.
+3. **Theme-aware scrollbars** — scrollable areas use the `custom-scrollbar` class (or the standard `scrollbar-color` variables), never per-component scrollbar styling.
+4. **Verify with `npm run build --workspaces`** — the whole monorepo must build and type-check before a change is considered done.
+
 ---
 
 ## 1. Agent Behaviour and Task Management

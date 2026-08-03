@@ -4,19 +4,36 @@ This document defines the project structure, how API calls are made, and the rou
 
 ## 1. Project structure
 
+### 1.1. Monorepo packages
+
+```
+packages/
+├── shared/      # Shared hooks, data types, API client, i18n locales
+│   └── src/
+│       ├── hooks/     # LanguageContext, useTasks, useMilestones, ...
+│       ├── locales/   # ko.ts, en.ts, ja.ts, zh.ts (single source of truth)
+│       ├── types/     # Shared TypeScript types
+│       └── lib/       # Shared utilities
+└── ui/          # Shared UI components (Button, Card, Pagination,
+                 #   TasksGanttChart, KanbanBoard<T>, ...)
+
+apps/
+├── web/         # Web app pages and app-specific components
+└── desktop/     # Tauri desktop app pages and app-specific components
+```
+
+Anything used by both apps belongs in `packages/*`; only app-specific screens stay in `apps/*`.
+
+### 1.2. App structure (`apps/web`, `apps/desktop`)
+
 ```
 src/
 ├── App.tsx                           # Route definitions (react-router-dom)
 ├── main.tsx                          # Entry point (LanguageProvider → App)
 ├── index.css                         # Design tokens, Tailwind CSS setup
 ├── context/
-│   ├── LanguageContext.tsx            # i18n context (t, formatDate, etc.)
-│   └── ThemeContext.tsx               # Theme context
-├── locales/
-│   ├── ko.ts                         # Korean translations
-│   ├── en.ts                         # English translations
-│   ├── ja.ts                         # Japanese translations
-│   └── zh.ts                         # Chinese translations
+│   ├── LanguageContext.tsx            # Re-export of shared/hooks/LanguageContext (t, formatDate, etc.)
+│   └── ThemeContext.tsx               # Theme context (Dark/Light × Default/Warm/Lavender/Ocean/Amber)
 ├── pages/                            # Page components (one per route)
 ├── components/                       # Reusable components
 │   ├── ui/                           # Shared UI components

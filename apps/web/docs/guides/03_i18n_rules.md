@@ -1,13 +1,13 @@
-# 03. Internationalisation (i18n) ⭐
+# 03. Internationalisation (i18n) ⭐ **[MANDATORY]**
 
-Every user-facing string (UI text) **must** be translated. Four languages are supported today: Korean (`ko`), English (`en`), Japanese (`ja`), and Chinese (`zh`).
+Every user-facing string (UI text) — screens, components, inline panels, toasts, and error messages — **must** be translated. Hardcoding literal text in the source is forbidden. Four languages are supported today: Korean (`ko`), English (`en`), Japanese (`ja`), and Chinese (`zh`).
 
 ## 1. Translation system
 
 The i18n system is implemented as a **custom React context**; no external library is used.
 
-- **Context file**: `src/context/LanguageContext.tsx`
-- **Translation data**: `src/locales/{ko,en,ja,zh}.ts` — TypeScript objects (`Record<string, string>`)
+- **Context file**: `packages/shared/src/hooks/LanguageContext.tsx` (each app re-exports it from `src/context/LanguageContext.tsx`, so `import { useLanguage } from '../context/LanguageContext'` keeps working)
+- **Translation data**: `packages/shared/src/locales/{ko,en,ja,zh}.ts` — TypeScript objects (`Record<string, string>`)
 - **Values provided** by the `useLanguage()` hook:
   - `t(key: string): string` — look up a string by translation key
   - `formatDate(date, options?)` — date formatting (locale-aware)
@@ -72,12 +72,12 @@ This pattern:
 
 ## 4. Adding translation keys
 
-When adding new UI text, **the same key must be added to all four files**:
+When adding new UI text, **the same key must be added to all four files in the same change**:
 
-1. `src/locales/ko.ts` — Korean
-2. `src/locales/en.ts` — English
-3. `src/locales/ja.ts` — Japanese
-4. `src/locales/zh.ts` — Chinese
+1. `packages/shared/src/locales/ko.ts` — Korean
+2. `packages/shared/src/locales/en.ts` — English
+3. `packages/shared/src/locales/ja.ts` — Japanese
+4. `packages/shared/src/locales/zh.ts` — Chinese
 
 **Key naming rules**:
 - Use **camelCase** (for example `loginTitle`, `noUsersFound`)

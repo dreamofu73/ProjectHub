@@ -13,9 +13,20 @@ Always follow this three-step flow when building a new screen or a complex UI co
 ## 2. Styling and UI rules
 
 - **Tailwind CSS v4**: Use Tailwind CSS for styling.
-- **Follow the design tokens**: Shared branding, tone, and theme styles come from the design token variables defined in `src/index.css` (`var(--bg-surface)`, `var(--text-primary)`, `var(--border)`, `var(--primary)`, and so on). Avoid hardcoded colours and ad-hoc layout utilities.
+- **Global theme sync (MANDATORY)** ⚠️: Every component and screen must follow the app-wide theme (Dark/Light × Default/Warm/Lavender/Ocean/Amber) automatically. This only works when styling goes through the semantic design tokens defined in `src/index.css`:
+
+  | Purpose | Token |
+  |---------|-------|
+  | Surface background | `bg-[var(--bg-surface)]`, `bg-[var(--bg-surface-2)]` |
+  | Border | `border-[var(--border)]` |
+  | Accent / primary | `bg-[var(--primary)]`, `text-[var(--primary)]` |
+  | Text | `text-[var(--text-primary)]`, `text-[var(--text-secondary)]`, `text-[var(--text-muted)]` |
+
+  - **Hardcoded colour utilities are forbidden**: `bg-white`, `bg-slate-50`, `border-gray-200`, `text-black`, and similar utilities do not react to the theme. Always prefer the CSS variables.
+- **Theme-aware scrollbars** 📜: Scrollable areas must use the global scrollbar rule — add the `custom-scrollbar` class (defined in `src/index.css`) or rely on the standard `scrollbar-color` variables. Do not restyle scrollbars per component.
 - **Shared components and icons**:
-  - When building UI, reuse the components in `frontend/src/components/ui/` (`Button`, `Input`, `Card`, `Toast`, `Pagination`, `FileUploader`, `HTMLEditor`, and others) as much as possible.
+  - When building UI, reuse the components in `src/components/ui/` and the shared package `packages/ui` (`Button`, `Input`, `Card`, `Toast`, `Pagination`, `FileUploader`, `HTMLEditor`, `KanbanBoard<T>`, `TasksGanttChart`, and others) as much as possible.
+  - When the same behaviour is needed by more than one screen or app, promote it to a **generic component in `packages/ui`** instead of duplicating the screen code.
   - Use `lucide-react` consistently for icons.
 - **Shared layout**: Use `src/components/Layout.tsx` (main shell) together with `src/components/layout/` (Header, Sidebar, ProfileDialog, PreferencesDialog).
 - **No modal dialogs** ⚠️:
