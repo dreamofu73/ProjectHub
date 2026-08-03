@@ -63,8 +63,15 @@ case "$OS" in
   MINGW*|CYGWIN*|MSYS*)
     EXE=$(find "$BUNDLE_DIR" -name "*.exe" -not -name "*setup*" -maxdepth 3 2>/dev/null | head -n 1)
     if [ -z "$EXE" ]; then
-      echo "❌ .exe 파일을 찾을 수 없습니다."
-      exit 1
+      BIN="$ROOT_DIR/target/release/project-hub-desktop.exe"
+      if [ ! -f "$BIN" ]; then
+        echo "❌ 실행 가능한 .exe 파일을 찾을 수 없습니다."
+        exit 1
+      fi
+      echo "  Binary: $BIN"
+      echo ""
+      start "" "$BIN"
+      exit 0
     fi
     echo "  Exe: $EXE"
     echo ""

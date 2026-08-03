@@ -61,6 +61,8 @@ const ko: Record<string, string> = {
   themeDark: '다크',
   themeSystem: '시스템',
   colorTheme: '컬러 테마',
+  themeSelect: '테마 선택',
+  themeChange: '테마 변경 ({name})',
   confirm: '확인',
   
   // Common actions & fields
@@ -211,6 +213,7 @@ const ko: Record<string, string> = {
   alreadyHaveAccount: '이미 계정이 있으신가요?',
   nameOptional: '이름 (선택)',
   pwLengthError: '비밀번호는 6자 이상이어야 합니다.',
+  pwMinLengthHint: '6자 이상',
   pwMismatchError: '비밀번호가 일치하지 않습니다.',
   networkError: '네트워크 오류가 발생했습니다.',
   registerFail: '회원가입에 실패했습니다.',

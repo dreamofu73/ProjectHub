@@ -7,6 +7,7 @@ import { Label } from 'ui/shadcn/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from 'ui/shadcn/card';
 import { useLanguage } from '../context/LanguageContext';
 import AuthControls from '@/components/AuthControls';
+import { api } from 'shared/lib/api';
 
 const CSS = `
 .login-bg {
@@ -86,7 +87,7 @@ export default function LoginPage() {
     setErrorKey('');
     setIsLoading(true);
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await api('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ login: identifier, password }),

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { UserPlus, Users } from 'lucide-react';
 import { useUsersManagement } from '../hooks/useUsersManagement';
+import { api } from 'shared/lib/api';
 import { UserList } from '../components/users/UserList';
 import { UserDetail } from '../components/users/UserDetail';
 import { UserToolbar } from '../components/users/UserToolbar';
@@ -75,7 +76,7 @@ export default function UsersManagementPage() {
     for (const id of selectedIds) {
       if (id === '1') continue; // Skip admin
       try {
-        const res = await fetch(`/api/users/${id}`, {
+        const res = await api(`/api/users/${id}`, {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         });
@@ -100,7 +101,7 @@ export default function UsersManagementPage() {
     for (const id of selectedIds) {
       if (id === '1') continue; // Skip admin
       try {
-        const res = await fetch(`/api/users/${id}`, {
+        const res = await api(`/api/users/${id}`, {
           method: 'PUT',
           headers: { 
             'Content-Type': 'application/json',
@@ -131,7 +132,7 @@ export default function UsersManagementPage() {
     for (const id of selectedIds) {
       if (id === '1') continue; // Skip admin
       try {
-        const res = await fetch(`/api/users/${id}`, {
+        const res = await api(`/api/users/${id}`, {
           method: 'PUT',
           headers: { 
             'Content-Type': 'application/json',

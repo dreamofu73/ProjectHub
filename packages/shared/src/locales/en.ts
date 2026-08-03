@@ -61,6 +61,8 @@ const en: Record<string, string> = {
   themeDark: 'Dark',
   themeSystem: 'System',
   colorTheme: 'Color Theme',
+  themeSelect: 'Theme selection',
+  themeChange: 'Change theme ({name})',
   confirm: 'Confirm',
   
   // Common actions & fields
@@ -211,6 +213,7 @@ const en: Record<string, string> = {
   alreadyHaveAccount: 'Already have an account?',
   nameOptional: 'Name (Optional)',
   pwLengthError: 'Password must be at least 6 characters.',
+  pwMinLengthHint: '6+ characters',
   pwMismatchError: 'Passwords do not match.',
   networkError: 'A network error occurred.',
   registerFail: 'Registration failed.',

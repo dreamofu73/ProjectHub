@@ -210,7 +210,7 @@ export default function RegisterPage() {
                       <Label htmlFor="password">{t('password')} <span className="text-red-500">*</span></Label>
                       <div className="reg-input-wrap">
                         <Lock size={14} className="reg-input-icon" />
-                        <Input id="password" type={showPw ? 'text' : 'password'} placeholder="6자 이상" value={form.password} onChange={set('password')} required disabled={isLoading} className="pl-8 pr-8" />
+                        <Input id="password" type={showPw ? 'text' : 'password'} placeholder={t('pwMinLengthHint')} value={form.password} onChange={set('password')} required disabled={isLoading} className="pl-8 pr-8" />
                         <button type="button" className="right-btn p-1.5 rounded border-none bg-transparent cursor-pointer text-muted-foreground hover:text-foreground transition-colors" onClick={() => setShowPw(!showPw)} tabIndex={-1}>
                           {showPw ? <EyeOff size={13} /> : <Eye size={13} />}
                         </button>

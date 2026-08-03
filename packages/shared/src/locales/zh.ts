@@ -61,6 +61,8 @@ const zh: Record<string, string> = {
   themeDark: '深色',
   themeSystem: '系统',
   colorTheme: '色彩主题',
+  themeSelect: '主题选择',
+  themeChange: '更换主题 ({name})',
   confirm: '确认',
   
   // Common actions & fields
@@ -211,6 +213,7 @@ const zh: Record<string, string> = {
   alreadyHaveAccount: '已有账号？',
   nameOptional: '姓名 (选填)',
   pwLengthError: '密码必须为6位以上。',
+  pwMinLengthHint: '至少 6 个字符',
   pwMismatchError: '密码不匹配。',
   networkError: '发生网络错误。',
   registerFail: '注册失败。',

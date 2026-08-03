@@ -61,6 +61,8 @@ const ja: Record<string, string> = {
   themeDark: 'ダーク',
   themeSystem: 'システム',
   colorTheme: 'カラーテーマ',
+  themeSelect: 'テーマ選択',
+  themeChange: 'テーマ変更 ({name})',
   confirm: '確認',
   
   // Common actions & fields
@@ -211,6 +213,7 @@ const ja: Record<string, string> = {
   alreadyHaveAccount: 'すでにアカウントをお持ちですか？',
   nameOptional: 'お名前 (任意)',
   pwLengthError: 'パスワードは6文字以上でなければなりません。',
+  pwMinLengthHint: '6文字以上',
   pwMismatchError: 'パスワードが一致しません。',
   networkError: 'ネットワークエラーが発生しました。',
   registerFail: '会員登録に失敗しました。',

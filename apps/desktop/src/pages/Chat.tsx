@@ -5,6 +5,7 @@ import { useToast } from 'ui/Toast';
 import { ConfirmDialog } from 'ui/ConfirmDialog';
 import { useLanguage } from '../context/LanguageContext';
 import { api, fetchBlobUrl } from 'shared/lib/api';
+import { isTauri, getBackendUrl } from 'shared/lib/desktop-config';
 
 import type { Message } from 'shared/types';
 import { useChat } from './chat/hooks/useChat';
@@ -144,9 +145,17 @@ export default function ChatPage() {
     if (!token) return;
     let closedByUnmount = false;
 
-    const connect = () => {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/api/ws/chat?token=${encodeURIComponent(token)}`;
+    const connect = async () => {
+      let wsBase = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`;
+      if (isTauri()) {
+        // 프로덕션 Tauri 웹뷰(tauri://localhost)에서는 상대 호스트로 WebSocket을
+        // 열 수 없으므로 저장된 백엔드 주소를 사용한다.
+        const backendUrl = await getBackendUrl();
+        if (backendUrl) {
+          wsBase = backendUrl.replace(/^http/, 'ws');
+        }
+      }
+      const wsUrl = `${wsBase}/api/ws/chat?token=${encodeURIComponent(token)}`;
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
