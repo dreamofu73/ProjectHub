@@ -51,7 +51,7 @@ export function ChatMemberManagerModal({
         }
       }).catch(err => {
         console.error('Failed to load data for ChatMemberManagerModal', err);
-        showToast(t('errOccurred') || '데이터를 불러오는데 실패했습니다.', 'error');
+        showToast(t('errOccurred'), 'error');
       }).finally(() => {
         setLoading(false);
       });
@@ -83,14 +83,14 @@ export function ChatMemberManagerModal({
       }
       
       if (errorCount === 0) {
-        showToast(t('saved') || '저장되었습니다.', 'success');
+        showToast(t('saved'), 'success');
         onClose();
       } else {
-        showToast(t('saveFailed') || '일부 멤버 관리에 실패했습니다.', 'error');
+        showToast(t('saveFailed'), 'error');
       }
     } catch (err) {
       console.error(err);
-      showToast(t('saveFailed') || '저장에 실패했습니다.', 'error');
+      showToast(t('saveFailed'), 'error');
     } finally {
       setSaving(false);
     }
@@ -113,7 +113,7 @@ export function ChatMemberManagerModal({
             title={
               <span className="flex items-center gap-2">
                 <Users size={18} className="text-primary" />
-                {t('chatRoomMembers') || '채팅 멤버 관리'}
+                {t('chatRoomMembers')}
               </span>
             }
             allUsers={allUsers}

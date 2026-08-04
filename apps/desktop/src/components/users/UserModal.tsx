@@ -63,8 +63,8 @@ export function UserModal({
                 <Edit2 size={20} className="text-primary" />
               )}
               {showModal === 'create'
-                ? t('addNewUser') || '새 사용자 추가'
-                : t('editUserInfo') || '사용자 정보 수정'}
+                ? t('addNewUser')
+                : t('editUserInfo')}
             </h3>
             <button
               onClick={onClose}
@@ -82,7 +82,7 @@ export function UserModal({
 
           <div className="flex flex-col gap-4">
             <Input
-              label={t('loginId') || '아이디'}
+              label={t('loginId')}
               value={currentUser.login || ''}
               onChange={(e) =>
                 setCurrentUser({ ...currentUser, login: e.target.value })
@@ -92,7 +92,7 @@ export function UserModal({
               fullWidth
             />
             <Input
-              label={t('email') || '이메일'}
+              label={t('email')}
               value={currentUser.email || ''}
               onChange={(e) =>
                 setCurrentUser({ ...currentUser, email: e.target.value })
@@ -102,7 +102,7 @@ export function UserModal({
             />
             {showModal === 'create' && setPassword && setShowPassword && (
               <Input
-                label={t('password') || '비밀번호'}
+                label={t('password')}
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -115,8 +115,8 @@ export function UserModal({
                     className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg border-none bg-transparent cursor-pointer text-slate-500 dark:text-slate-400 transition-colors flex items-center justify-center"
                     title={
                       showPassword
-                        ? t('hidePassword') || '비밀번호 숨기기'
-                        : t('showPasswordLabel') || '비밀번호 보기'
+                        ? t('hidePassword')
+                        : t('showPasswordLabel')
                     }
                   >
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -126,14 +126,14 @@ export function UserModal({
             )}
             <div className="grid grid-cols-2 gap-4">
               <Input
-                label={t('firstNameLabel') || '이름(First)'}
+                label={t('firstNameLabel')}
                 value={currentUser.firstname || ''}
                 onChange={(e) =>
                   setCurrentUser({ ...currentUser, firstname: e.target.value })
                 }
               />
               <Input
-                label={t('lastNameLabel') || '성(Last)'}
+                label={t('lastNameLabel')}
                 value={currentUser.lastname || ''}
                 onChange={(e) =>
                   setCurrentUser({ ...currentUser, lastname: e.target.value })
@@ -143,7 +143,7 @@ export function UserModal({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  {t('role') || '권한'}
+                  {t('role')}
                 </label>
                 <Select
                   required
@@ -155,19 +155,19 @@ export function UserModal({
                     })
                   }
                   options={[
-                    { value: 'user', label: t('regularUser') || '일반 사용자' },
+                    { value: 'user', label: t('regularUser') },
                     {
                       value: 'overseer',
-                      label: t('overseer') || '프로젝트 감시자',
+                      label: t('overseer'),
                     },
-                    { value: 'admin', label: t('admin') || '시스템 관리자' },
+                    { value: 'admin', label: t('admin') },
                   ]}
                   fullWidth
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  {t('status') || '상태'}
+                  {t('status')}
                 </label>
                 <Select
                   required
@@ -179,8 +179,8 @@ export function UserModal({
                     })
                   }
                   options={[
-                    { value: '1', label: t('activeUser') || '활성' },
-                    { value: '0', label: t('inactiveUser') || '비활성' },
+                    { value: '1', label: t('activeUser') },
+                    { value: '0', label: t('inactiveUser') },
                   ]}
                   fullWidth
                 />
@@ -190,11 +190,11 @@ export function UserModal({
             {/* 조직 정보 */}
             <div className="border-t border-slate-200 dark:border-slate-800 pt-4 mt-2">
               <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mb-3">
-                <Building2 size={14} /> 조직 정보
+                <Building2 size={14} /> {t('orgInfo')}
               </h4>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">조직</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('organization')}</label>
                   <input
                     type="text"
                     value={organizationName}
@@ -203,7 +203,7 @@ export function UserModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">부서</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('department')}</label>
                   <select
                     value={currentUser.department_id?.toString() || ''}
                     onChange={(e) =>
@@ -214,7 +214,7 @@ export function UserModal({
                     }
                     className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all cursor-pointer"
                   >
-                    <option value="">부서 없음</option>
+                    <option value="">{t('noDept')}</option>
                     {departments.map((dept) => (
                       <option key={dept.id} value={dept.id}>
                         {dept.name}
@@ -227,12 +227,12 @@ export function UserModal({
 
             <div className="flex gap-2 mt-4">
               <Button variant="secondary" onClick={onClose} fullWidth>
-                {t('cancel') || '취소'}
+                {t('cancel')}
               </Button>
               <Button icon={Save} onClick={onSubmit} fullWidth>
                 {showModal === 'create'
-                  ? t('submitAdd') || '추가하기'
-                  : t('submitUpdate') || '수정완료'}
+                  ? t('submitAdd')
+                  : t('submitUpdate')}
               </Button>
             </div>
           </div>

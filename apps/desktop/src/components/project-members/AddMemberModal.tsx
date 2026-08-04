@@ -4,6 +4,7 @@ import { Card, CardBody } from 'ui/Card';
 import { Button } from 'ui/Button';
 import { Input, Select } from 'ui/Input';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
+import { useLanguage } from 'shared/hooks/LanguageContext';
 
 interface UserData {
   id: string;
@@ -46,6 +47,7 @@ export function AddMemberModal({
   adding,
   addError,
 }: AddMemberModalProps) {
+  const { t } = useLanguage();
   const containerRef = useFocusTrap(show);
 
   if (!show) return null;
@@ -63,12 +65,12 @@ export function AddMemberModal({
           <div className="flex justify-between items-center mb-6">
             <h3 id="add-member-title" className="text-xl font-bold text-gray-900 flex items-center gap-2">
               <UserPlus size={20} className="text-primary" />
-              새 멤버 초대
+              {t('inviteNewMember')}
             </h3>
             <button
               onClick={onClose}
               className="p-2 hover:bg-gray-100 rounded-full border-none bg-transparent cursor-pointer"
-              aria-label="닫기"
+              aria-label={t('close')}
             >
               <X size={20} />
             </button>
@@ -83,11 +85,11 @@ export function AddMemberModal({
           <div className="flex flex-col gap-4">
             {/* Search */}
             <div>
-              <label htmlFor="add-user-search" className="form-label mb-2 block text-sm font-medium">사용자 검색</label>
+              <label htmlFor="add-user-search" className="form-label mb-2 block text-sm font-medium">{t('searchUser')}</label>
               <Input
                 id="add-user-search"
                 icon={Search}
-                placeholder="이름, 아이디 또는 이메일로 검색..."
+                placeholder={t('searchByNameIdEmail')}
                 value={addUserSearch}
                 onChange={(e) => setAddUserSearch(e.target.value)}
                 fullWidth
@@ -99,15 +101,15 @@ export function AddMemberModal({
               <div className="flex items-center justify-between mb-2">
                 <span className="form-label text-sm font-medium">
                   {selectedUserIds.size > 0
-                    ? `${selectedUserIds.size}명 선택됨`
-                    : '추가할 사용자를 선택하세요'}
+                    ? t('selectedCountSuffix').replace('{count}', String(selectedUserIds.size))
+                    : t('selectUsersToAdd')}
                 </span>
                 {filteredAvailable.length > 0 && (
                   <button
                     onClick={toggleAllAvailable}
                     className="text-xs text-primary hover:underline bg-transparent border-none cursor-pointer"
                   >
-                    {selectedUserIds.size === filteredAvailable.length ? '전체 해제' : '전체 선택'}
+                    {selectedUserIds.size === filteredAvailable.length ? t('deselectAll') : t('selectAllLabel')}
                   </button>
                 )}
               </div>
@@ -115,11 +117,11 @@ export function AddMemberModal({
                 className="max-h-48 overflow-y-auto border border-border rounded-lg divide-y divide-border"
                 role="listbox"
                 aria-multiselectable="true"
-                aria-label="추가할 사용자 목록"
+                aria-label={t('usersToAdd')}
               >
                 {filteredAvailable.length === 0 ? (
                   <div className="py-8 text-center text-sm text-muted">
-                    {addUserSearch ? '검색 결과가 없습니다.' : '추가 가능한 사용자가 없습니다.'}
+                    {addUserSearch ? t('chatNoUsersFound') : t('noUsersAvailable')}
                   </div>
                 ) : (
                   filteredAvailable.map(u => (
@@ -136,7 +138,7 @@ export function AddMemberModal({
                         className="w-4 h-4 rounded border-gray-300 text-primary cursor-pointer accent-current shrink-0"
                         checked={selectedUserIds.has(u.id)}
                         onChange={() => toggleUserSelection(u.id)}
-                        aria-label={`${u.firstname} ${u.lastname} 선택`}
+                        aria-label={t('selectUserAria').replace('{name}', `${u.firstname} ${u.lastname}`)}
                       />
                       <div className="w-7 h-7 rounded-full bg-primary-bg text-primary flex items-center justify-center font-bold text-xs shrink-0">
                         {u.firstname?.[0] || u.login[0].toUpperCase()}
@@ -158,7 +160,7 @@ export function AddMemberModal({
 
             {/* Role Selection */}
             <div>
-              <label htmlFor="add-role-select" className="form-label mb-2 block text-sm font-medium">프로젝트 권한</label>
+              <label htmlFor="add-role-select" className="form-label mb-2 block text-sm font-medium">{t('projectRole')}</label>
               <Select
                 id="add-role-select"
                 value={addRole}
@@ -170,13 +172,13 @@ export function AddMemberModal({
 
             {/* Actions */}
             <div className="flex gap-2 mt-2">
-              <Button variant="secondary" onClick={onClose} fullWidth>취소</Button>
+              <Button variant="secondary" onClick={onClose} fullWidth>{t('cancel')}</Button>
               <Button
                 onClick={handleAddMembers}
                 disabled={selectedUserIds.size === 0 || adding}
                 fullWidth
               >
-                {adding ? '추가 중...' : `${selectedUserIds.size}명 초대하기`}
+                {adding ? t('adding') : t('inviteCount').replace('{count}', String(selectedUserIds.size))}
               </Button>
             </div>
           </div>

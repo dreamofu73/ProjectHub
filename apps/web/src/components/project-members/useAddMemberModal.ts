@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { api } from 'shared/lib/api';
 import type { Member, UserData } from 'shared/hooks/useProjectMembers';
 
+import { useLanguage } from 'shared/hooks/LanguageContext';
 export function useAddMemberModal(
   projectId: string | undefined,
   _members: Member[],
   _allUsers: UserData[],
   fetchMembers: () => void
 ) {
+  const { t } = useLanguage();
   const [showAddModal, setShowAddModal] = useState(false);
   const [addRole, setAddRole] = useState<'manager' | 'developer' | 'reporter' | 'viewer' | 'lead' | 'overseer'>('developer');
   const [addError, setAddError] = useState('');
@@ -36,10 +38,10 @@ export function useAddMemberModal(
         closeAddModal();
         fetchMembers();
       } else {
-        setAddError(json.error || '멤버 추가에 실패했습니다.');
+        setAddError(json.error || t('memberAddFailed'));
       }
     } catch (err) {
-      setAddError('서버 통신 오류가 발생했습니다.');
+      setAddError(t('serverCommError'));
     } finally {
       setAdding(false);
     }

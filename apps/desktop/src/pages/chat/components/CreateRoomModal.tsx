@@ -47,7 +47,7 @@ export function CreateRoomModal({
         }
       }).catch(err => {
         console.error('Failed to load data for CreateRoomModal', err);
-        showToast(t('errOccurred') || '데이터를 불러오는데 실패했습니다.', 'error');
+        showToast(t('errOccurred'), 'error');
       }).finally(() => {
         setLoading(false);
       });
@@ -58,7 +58,7 @@ export function CreateRoomModal({
 
   const handleSave = async (finalIds: string[]) => {
     if (!roomName.trim()) {
-      showToast(t('chatRoomNamePlaceholder') || '채팅방 이름을 입력하세요', 'error');
+      showToast(t('chatRoomNamePlaceholder'), 'error');
       return;
     }
     setSaving(true);
@@ -77,15 +77,15 @@ export function CreateRoomModal({
             body: JSON.stringify({ user_id: userId }) 
           });
         }
-        showToast(t('chatRoomCreateSuccess') || '채팅방이 생성되었습니다.', 'success');
+        showToast(t('chatRoomCreateSuccess'), 'success');
         onRoomCreated(json.id.toString());
         onClose();
       } else {
-        showToast(t('errOccurred') || '채팅방 생성에 실패했습니다.', 'error');
+        showToast(t('errOccurred'), 'error');
       }
     } catch (err) {
       console.error(err);
-      showToast(t('errOccurred') || '채팅방 생성에 실패했습니다.', 'error');
+      showToast(t('errOccurred'), 'error');
     } finally {
       setSaving(false);
     }
@@ -108,7 +108,7 @@ export function CreateRoomModal({
             titleInput={{
               value: roomName,
               onChange: setRoomName,
-              placeholder: t('chatRoomNamePlaceholder') || '채팅방 이름을 입력하세요'
+              placeholder: t('chatRoomNamePlaceholder')
             }}
             allUsers={allUsers}
             departments={departments}

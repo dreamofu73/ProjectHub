@@ -39,8 +39,8 @@ export function OrgForm({
               <Edit2 size={20} className="text-[var(--primary)]" />
             )}
             {formMode === 'create'
-              ? t('addDepartment') || '새 부서 추가'
-              : t('editDepartment') || '부서 정보 수정'}
+              ? t('addDepartment')
+              : t('editDepartment')}
           </h3>
           <button
             onClick={onClose}
@@ -61,7 +61,7 @@ export function OrgForm({
 
         <div className="flex flex-col gap-5">
           <Input
-            label={t('deptName') || '부서명'}
+            label={t('deptName')}
             value={currentDept.name || ''}
             onChange={(e) =>
               setCurrentDept({ ...currentDept, name: e.target.value })
@@ -72,7 +72,7 @@ export function OrgForm({
 
           <div>
             <label className="block text-sm font-bold text-[var(--text-primary)] mb-2">
-              {t('parentDept') || '상위 부서'}
+              {t('parentDept')}
             </label>
             <select
               className="w-full h-10 px-3 rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)] transition-colors"
@@ -84,7 +84,7 @@ export function OrgForm({
                 })
               }
             >
-              <option value="">{t('none') || '없음 (최상위 부서)'}</option>
+              <option value="">{t('none')}</option>
               {parentOptions.map((dept) => (
                 <option key={dept.id} value={dept.id}>
                   {dept.name}
@@ -95,7 +95,7 @@ export function OrgForm({
 
           <div>
             <label className="block text-sm font-bold text-[var(--text-primary)] mb-2">
-              {t('description') || '설명'}
+              {t('description')}
             </label>
             <textarea
               className="w-full min-h-[100px] px-3 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)] transition-colors resize-y"
@@ -103,7 +103,7 @@ export function OrgForm({
               onChange={(e) =>
                 setCurrentDept({ ...currentDept, description: e.target.value })
               }
-              placeholder={t('deptDescriptionPlaceholder') || '부서 설명을 입력하세요.'}
+              placeholder={t('deptDescriptionPlaceholder')}
             />
           </div>
         </div>
@@ -115,7 +115,7 @@ export function OrgForm({
           onClick={onClose}
           className="flex-1 h-10 rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] hover:bg-[var(--bg-surface-2)] text-[var(--text-secondary)] text-sm font-bold transition-colors cursor-pointer"
         >
-          {t('cancel') || '취소'}
+          {t('cancel')}
         </button>
         <button
           onClick={onSubmit}
@@ -123,8 +123,8 @@ export function OrgForm({
         >
           <Save size={15} />
           {formMode === 'create'
-            ? t('submitAdd') || '추가하기'
-            : t('submitUpdate') || '수정완료'}
+            ? t('submitAdd')
+            : t('submitUpdate')}
         </button>
       </div>
     </div>

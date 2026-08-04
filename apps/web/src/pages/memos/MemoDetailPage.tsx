@@ -6,7 +6,9 @@ import { sanitizeHtml } from 'shared/lib/sanitize';
 import { useToast } from 'ui/Toast';
 import type { Memo } from 'shared/types';
 
+import { useLanguage } from 'shared/hooks/LanguageContext';
 export default function MemoDetailPage() {
+  const { t } = useLanguage();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -26,7 +28,7 @@ export default function MemoDetailPage() {
       const res = await api(`/api/memos/${id}/extend`, { method: 'POST' });
       const json = await res.json();
       if (json.success) {
-        showToast('보관 만료 기한이 30일 연장되었습니다.', 'success');
+        showToast(t('archiveExtended30'), 'success');
         setMemo(prev => {
           if (prev) {
             return { ...prev, expires_at: json.data.new_expires_at };
@@ -34,11 +36,11 @@ export default function MemoDetailPage() {
           return prev;
         });
       } else {
-        showToast(json.error || '연장에 실패했습니다.', 'error');
+        showToast(json.error || t('extendFailed'), 'error');
       }
     } catch (err) {
       console.error(err);
-      showToast('네트워크 오류가 발생했습니다.', 'error');
+      showToast(t('networkError'), 'error');
     }
   };
 
@@ -80,7 +82,7 @@ export default function MemoDetailPage() {
       <div className="w-full h-[calc(100vh-105px)] p-6 flex items-center justify-center bg-[var(--bg-surface)]">
         <div className="text-center">
           <RefreshCw size={22} className="animate-spin mx-auto mb-2 text-[var(--primary)]" />
-          <p className="text-xs font-medium text-[var(--text-muted)]">로딩 중...</p>
+          <p className="text-xs font-medium text-[var(--text-muted)]">{t('logsLoading')}</p>
         </div>
       </div>
     );
@@ -90,12 +92,12 @@ export default function MemoDetailPage() {
     return (
       <div className="w-full h-[calc(100vh-105px)] p-6 flex items-center justify-center bg-[var(--bg-surface)]">
         <div className="text-center text-[var(--text-muted)]">
-          <p className="text-sm font-semibold">쪽지를 찾을 수 없습니다.</p>
+          <p className="text-sm font-semibold">{t('memoNotFound')}</p>
           <button
             onClick={goBack}
             className="mt-3 text-[var(--primary)] hover:underline text-xs font-semibold border-none bg-transparent cursor-pointer"
           >
-            목록으로 돌아가기
+            {t('backToList')}
           </button>
         </div>
       </div>
@@ -111,7 +113,7 @@ export default function MemoDetailPage() {
         <button
           onClick={goBack}
           className="p-1.5 mt-0.5 rounded-lg hover:bg-[var(--bg-surface-2)] text-[var(--text-secondary)] transition-colors border-none bg-transparent cursor-pointer shrink-0"
-          title="목록으로"
+          title={t('backToVersionList')}
         >
           <ArrowLeft size={18} />
         </button>
@@ -127,14 +129,14 @@ export default function MemoDetailPage() {
         {/* 메타데이터 */}
         <div className="px-6 py-4 border-b border-[var(--border)] text-xs flex items-center gap-6 bg-[var(--bg-surface-2)]/20">
           <div className="flex items-center gap-2">
-            <span className="text-[var(--text-muted)] font-medium shrink-0">보낸사람</span>
+            <span className="text-[var(--text-muted)] font-medium shrink-0">{t('sender')}</span>
             <span className="text-[var(--text-primary)] font-bold flex items-center gap-1">
               {senderLabel}
               {memo.sender_login && <span className="text-[var(--text-muted)] font-normal">@{memo.sender_login}</span>}
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-[var(--text-muted)] font-medium shrink-0">받은시간</span>
+            <span className="text-[var(--text-muted)] font-medium shrink-0">{t('receivedTime')}</span>
             <span className="text-[var(--text-secondary)] font-medium">
               {formatMemoDate(memo.created_at)}
             </span>
@@ -145,16 +147,16 @@ export default function MemoDetailPage() {
         {memo.is_read === 1 && memo.is_archived === 0 && memo.expires_at && (
           <div className="mx-6 mt-4 p-3.5 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs flex items-center justify-between animate-in fade-in duration-200 select-text bg-[var(--bg-surface)]">
             <div className="flex flex-col gap-0.5 min-w-0">
-              <span className="text-amber-600 dark:text-amber-400 font-bold">보관 만료 예정일</span>
+              <span className="text-amber-600 dark:text-amber-400 font-bold">{t('archiveExpiryDate')}</span>
               <span className="text-[var(--text-secondary)] font-semibold truncate">
-                {formatMemoDate(memo.expires_at)} (30일 후 자동 삭제)
+                {formatMemoDate(memo.expires_at)} {t('autoDeleteIn30Days')}
               </span>
             </div>
             <button
               onClick={handleExtendExpiry}
               className="px-3 py-1.5 h-8 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg transition-colors border-none cursor-pointer text-xs shrink-0 select-none"
             >
-              30일 연장하기
+              {t('extend30Days')}
             </button>
           </div>
         )}
@@ -171,14 +173,14 @@ export default function MemoDetailPage() {
             <div className="pt-4 border-t border-[var(--border)] space-y-2.5">
               <div className="flex items-center justify-between">
                 <h4 className="text-xs font-bold text-[var(--text-primary)] flex items-center gap-1.5">
-                  첨부파일 ({memo.attachments.length})
+                  {t('attachedFilesCount').replace('{count}', String(memo.attachments.length))}
                 </h4>
                 {memo.attachments.length > 1 && (
                   <a
                     href={`/api/attachments/batch-download?memo_id=${memo.id}`}
                     className="text-xs font-bold hover:opacity-85 flex items-center gap-1 cursor-pointer text-[var(--primary)]"
                   >
-                    전체 다운로드
+                    {t('downloadAll')}
                   </a>
                 )}
               </div>

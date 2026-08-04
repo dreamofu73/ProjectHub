@@ -57,10 +57,10 @@ export default function ProjectsPage() {
         setProjects(json.data);
         setTotalCount(json.total || 0);
       } else {
-        setError(json.error || t('failToLoadProjects') || '프로젝트를 불러오는데 실패했습니다.');
+        setError(json.error || t('failToLoadProjects'));
       }
     } catch {
-      setError(t('serverConnectionError') || '서버 연결 오류가 발생했습니다.');
+      setError(t('serverConnectionError'));
     } finally {
       setLoading(false);
     }
@@ -84,11 +84,11 @@ export default function ProjectsPage() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader 
-        title={t('projects') || '프로젝트'} 
-        description={t('projectsPageDesc') || '참여 중이거나 공개된 프로젝트 목록입니다.'}
+        title={t('projects')} 
+        description={t('projectsPageDesc')}
         actions={
           <Link to="/projects/new">
-            <Button icon={Plus}>{t('newProject') || '새 프로젝트 생성'}</Button>
+            <Button icon={Plus}>{t('newProject')}</Button>
           </Link>
         }
       />
@@ -98,14 +98,14 @@ export default function ProjectsPage() {
           <button
             onClick={() => setViewMode('card')}
             className={`p-2 rounded-md transition-all ${viewMode === 'card' ? 'bg-white dark:bg-slate-700 shadow-sm text-primary' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-            title={t('cardView') || '카드 뷰'}
+            title={t('cardView')}
           >
             <LayoutGrid size={18} />
           </button>
           <button
             onClick={() => setViewMode('table')}
             className={`p-2 rounded-md transition-all ${viewMode === 'table' ? 'bg-white dark:bg-slate-700 shadow-sm text-primary' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-            title={t('tableView') || '테이블 뷰'}
+            title={t('tableView')}
           >
             <List size={18} />
           </button>
@@ -119,9 +119,9 @@ export default function ProjectsPage() {
                   value={statusFilter} 
                   onChange={(e) => setStatusFilter(e.target.value)}
                   options={[
-                    { value: 'active', label: t('active') || '활성' },
-                    { value: 'archived', label: t('archived') || '보관됨' },
-                    { value: 'all', label: t('all') || '전체' }
+                    { value: 'active', label: t('active') },
+                    { value: 'archived', label: t('archived') },
+                    { value: 'all', label: t('all') }
                   ]}
                   fullWidth
                   className="bg-gray-50 dark:bg-slate-800"
@@ -131,7 +131,7 @@ export default function ProjectsPage() {
               <div className="w-64">
                 <Input 
                   icon={Search}
-                  placeholder={t('searchProjectsPlaceholder') || '프로젝트명, 설명 또는 식별자 검색'} 
+                  placeholder={t('searchProjectsPlaceholder')} 
                   value={searchTerm} 
                   onChange={(e) => setSearchTerm(e.target.value)}
                   fullWidth
@@ -139,7 +139,7 @@ export default function ProjectsPage() {
                 />
               </div>
               
-              <Button type="submit" variant="primary" size="sm" className="shrink-0">{t('search') || '검색'}</Button>
+              <Button type="submit" variant="primary" size="sm" className="shrink-0">{t('search')}</Button>
             </form>
           </CardBody>
         </Card>
@@ -155,14 +155,14 @@ export default function ProjectsPage() {
         <Card className="border-danger">
           <CardBody className="text-center py-12">
             <p className="text-danger font-semibold">{error}</p>
-            <Button variant="secondary" className="mt-4" onClick={fetchProjects}>{t('retry') || '다시 시도'}</Button>
+            <Button variant="secondary" className="mt-4" onClick={fetchProjects}>{t('retry')}</Button>
           </CardBody>
         </Card>
       ) : projects.length === 0 ? (
         <Card>
           <CardBody className="text-center py-20 text-muted">
             <FolderKanban size={48} className="mx-auto mb-4 opacity-20" />
-            <p>{t('noProjects') || '프로젝트가 존재하지 않습니다.'}</p>
+            <p>{t('noProjects')}</p>
           </CardBody>
         </Card>
       ) : viewMode === 'card' ? (
@@ -186,22 +186,22 @@ export default function ProjectsPage() {
                     </Link>
                     <div className="flex items-center gap-1.5 flex-shrink-0">
                       {project.is_public === 1 ? (
-                        <Badge variant="info" icon={<Globe size={10} />}>{t('public') || '공개'}</Badge>
+                        <Badge variant="info" icon={<Globe size={10} />}>{t('public')}</Badge>
                       ) : (
-                        <Badge variant="default" icon={<Lock size={10} />}>{t('private') || '비공개'}</Badge>
+                        <Badge variant="default" icon={<Lock size={10} />}>{t('private')}</Badge>
                       )}
                     </div>
                   </div>
 
                   <p className="mt-3 text-sm text-secondary dark:text-slate-400 line-clamp-2 leading-relaxed min-h-[2.5em]">
-                    {project.description || t('noDescriptionRegistered') || '프로젝트 설명이 등록되지 않았습니다.'}
+                    {project.description || t('noDescriptionRegistered')}
                   </p>
                 </div>
 
                 {/* Progress */}
                 <div className="px-5 pb-3">
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[11px] font-bold text-muted dark:text-slate-500 uppercase tracking-wider">{t('progress') || '진행률'}</span>
+                    <span className="text-[11px] font-bold text-muted dark:text-slate-500 uppercase tracking-wider">{t('progress')}</span>
                     <span className="text-sm font-bold text-primary">{Math.round(((project.issue_count - project.open_issue_count) / (project.issue_count || 1)) * 100)}%</span>
                   </div>
                   <div className="progress-bar h-2 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
@@ -221,7 +221,7 @@ export default function ProjectsPage() {
                       className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-primary hover:bg-primary/10 transition-colors cursor-pointer"
                     >
                       <Users size={13} />
-                      {t('members') || '맴버'} <span className="text-gray-500 dark:text-slate-400 font-normal">{project.member_count}</span>
+                      {t('members')} <span className="text-gray-500 dark:text-slate-400 font-normal">{project.member_count}</span>
                     </Link>
                     <Link
                       to={`/projects/${project.identifier}/issues`}
@@ -229,7 +229,7 @@ export default function ProjectsPage() {
                       className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-danger hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors cursor-pointer"
                     >
                       <Bug size={13} />
-                      {t('issues') || '이슈'} <span className="text-gray-500 dark:text-slate-400 font-normal">{project.open_issue_count}</span>
+                      {t('issues')} <span className="text-gray-500 dark:text-slate-400 font-normal">{project.open_issue_count}</span>
                     </Link>
                   </div>
                   <Link to={`/projects/${project.identifier}/dashboard`} className="w-7 h-7 rounded-full bg-white dark:bg-slate-900 border border-border flex items-center justify-center text-primary shadow-sm group-hover:bg-primary group-hover:text-white transition-all">
@@ -258,12 +258,12 @@ export default function ProjectsPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-gray-50 dark:bg-slate-800/50 border-b border-border">
-                  <th className="py-3 px-4 text-xs font-semibold text-muted uppercase tracking-wider">{t('projects') || '프로젝트'}</th>
-                  <th className="py-3 px-4 text-xs font-semibold text-muted uppercase tracking-wider">{t('visibility') || '공개 여부'}</th>
-                  <th className="py-3 px-4 text-xs font-semibold text-muted uppercase tracking-wider">{t('progress') || '진행률'}</th>
-                  <th className="py-3 px-4 text-xs font-semibold text-muted uppercase tracking-wider">{t('members') || '멤버'}</th>
-                  <th className="py-3 px-4 text-xs font-semibold text-muted uppercase tracking-wider">{t('issues') || '이슈'}</th>
-                  <th className="py-3 px-4 text-xs font-semibold text-muted uppercase tracking-wider text-right">{t('details') || '상세'}</th>
+                  <th className="py-3 px-4 text-xs font-semibold text-muted uppercase tracking-wider">{t('projects')}</th>
+                  <th className="py-3 px-4 text-xs font-semibold text-muted uppercase tracking-wider">{t('visibility')}</th>
+                  <th className="py-3 px-4 text-xs font-semibold text-muted uppercase tracking-wider">{t('progress')}</th>
+                  <th className="py-3 px-4 text-xs font-semibold text-muted uppercase tracking-wider">{t('members')}</th>
+                  <th className="py-3 px-4 text-xs font-semibold text-muted uppercase tracking-wider">{t('issues')}</th>
+                  <th className="py-3 px-4 text-xs font-semibold text-muted uppercase tracking-wider text-right">{t('details')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -279,16 +279,16 @@ export default function ProjectsPage() {
                             {project.name}
                           </Link>
                           <div className="text-sm text-muted truncate max-w-xs">
-                            {project.description || t('noDescription') || '설명 없음'}
+                            {project.description || t('noDescription')}
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="py-3 px-4">
                       {project.is_public === 1 ? (
-                        <Badge variant="info" icon={<Globe size={10} />}>{t('public') || '공개'}</Badge>
+                        <Badge variant="info" icon={<Globe size={10} />}>{t('public')}</Badge>
                       ) : (
-                        <Badge variant="default" icon={<Lock size={10} />}>{t('private') || '비공개'}</Badge>
+                        <Badge variant="default" icon={<Lock size={10} />}>{t('private')}</Badge>
                       )}
                     </td>
                     <td className="py-3 px-4 w-48">
@@ -317,7 +317,7 @@ export default function ProjectsPage() {
                     <td className="py-3 px-4 text-right">
                       <Link to={`/projects/${project.identifier}/dashboard`}>
                         <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity" icon={ArrowRight}>
-                          {t('view') || '보기'}
+                          {t('view')}
                         </Button>
                       </Link>
                     </td>

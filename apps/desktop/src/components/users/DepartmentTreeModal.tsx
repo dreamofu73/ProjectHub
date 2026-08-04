@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { X, FolderTree, FolderOpen, ChevronRight, ChevronDown, Search, Building2, UserMinus } from 'lucide-react';
 import type { Department } from 'shared/types/organization';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
+import { useLanguage } from 'shared/hooks/LanguageContext';
 
 interface DepartmentTreeModalProps {
   isOpen: boolean;
@@ -17,6 +18,7 @@ interface TreeNode {
 }
 
 export function DepartmentTreeModal({ isOpen, onClose, onSelect, departments }: DepartmentTreeModalProps) {
+  const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const containerRef = useFocusTrap(isOpen);
@@ -112,7 +114,7 @@ export function DepartmentTreeModal({ isOpen, onClose, onSelect, departments }: 
         <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)] shrink-0">
           <h3 className="text-sm font-bold text-[var(--text-primary)] flex items-center gap-2">
             <Building2 size={16} className="text-[var(--primary)]" />
-            부서 선택
+            {t('selectDept')}
           </h3>
           <button
             onClick={onClose}
@@ -128,7 +130,7 @@ export function DepartmentTreeModal({ isOpen, onClose, onSelect, departments }: 
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
             <input
               type="text"
-              placeholder="부서 검색..."
+              placeholder={t('searchDeptPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full h-9 pl-9 pr-3 rounded-lg border border-[var(--border)] bg-[var(--bg-surface-2)]/40 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)] transition-all"
@@ -139,7 +141,7 @@ export function DepartmentTreeModal({ isOpen, onClose, onSelect, departments }: 
 
         {/* Tree */}
         <div className="flex-1 overflow-y-auto px-3 pb-3 custom-scrollbar min-h-0">
-          {/* "부서 없음" option */}
+          {/* t('noDept') option */}
           <div
             onClick={() => handleSelect(null)}
             className="flex items-center gap-2 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-[var(--bg-surface-2)]/50 text-[var(--text-muted)] transition-colors mb-1"
@@ -147,16 +149,16 @@ export function DepartmentTreeModal({ isOpen, onClose, onSelect, departments }: 
             <div className="w-6 h-6 rounded-lg bg-[var(--bg-surface-2)] flex items-center justify-center shrink-0">
               <UserMinus size={13} className="text-[var(--text-muted)]" />
             </div>
-            <span className="text-xs font-medium">부서 없음</span>
+            <span className="text-xs font-medium">{t('noDept')}</span>
           </div>
 
           {departments.length === 0 ? (
             <div className="py-12 text-center text-xs text-[var(--text-muted)]">
-              등록된 부서가 없습니다.
+              {t('noDeptsFound')}
             </div>
           ) : visibleTree.length === 0 ? (
             <div className="py-12 text-center text-xs text-[var(--text-muted)]">
-              검색 결과가 없습니다.
+              {t('chatNoUsersFound')}
             </div>
           ) : (
             visibleTree.map((node, idx) => {

@@ -42,7 +42,7 @@ export function EditMembersModal({
       titleInput={{
         value: groupName,
         onChange: setGroupName,
-        placeholder: t('groupNamePlaceholder') || '그룹 이름을 입력하세요'
+        placeholder: t('groupNamePlaceholder')
       }}
       allUsers={allUsers}
       departments={departments}

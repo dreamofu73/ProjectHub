@@ -9,12 +9,12 @@ export const STATUS_CONFIG: Record<string, { color: string; bg: string; border: 
   rejected:    { color: '#dc2626', bg: 'rgba(239,68,68,0.12)',   border: 'rgba(239,68,68,0.25)',   dot: '#ef4444' },
 };
 
-export const PRIORITY_CONFIG: Record<string, { color: string; bg: string; border: string; label: string }> = {
-  low:       { color: '#64748b', bg: 'rgba(100,116,139,0.08)', border: 'rgba(100,116,139,0.2)', label: '낮음' },
-  normal:    { color: '#2563eb', bg: 'rgba(37,99,235,0.08)',   border: 'rgba(37,99,235,0.2)',   label: '보통' },
-  high:      { color: '#d97706', bg: 'rgba(217,119,6,0.08)',   border: 'rgba(217,119,6,0.2)',   label: '높음' },
-  urgent:    { color: '#dc2626', bg: 'rgba(220,38,38,0.08)',   border: 'rgba(220,38,38,0.2)',   label: '긴급' },
-  immediate: { color: '#7c3aed', bg: 'rgba(124,58,237,0.08)',  border: 'rgba(124,58,237,0.2)',  label: '즉시' },
+export const PRIORITY_CONFIG: Record<string, { color: string; bg: string; border: string; labelKey: string }> = {
+  low:       { color: '#64748b', bg: 'rgba(100,116,139,0.08)', border: 'rgba(100,116,139,0.2)', labelKey: 'low' },
+  normal:    { color: '#2563eb', bg: 'rgba(37,99,235,0.08)',   border: 'rgba(37,99,235,0.2)',   labelKey: 'normal' },
+  high:      { color: '#d97706', bg: 'rgba(217,119,6,0.08)',   border: 'rgba(217,119,6,0.2)',   labelKey: 'high' },
+  urgent:    { color: '#dc2626', bg: 'rgba(220,38,38,0.08)',   border: 'rgba(220,38,38,0.2)',   labelKey: 'urgent' },
+  immediate: { color: '#7c3aed', bg: 'rgba(124,58,237,0.08)',  border: 'rgba(124,58,237,0.2)',  labelKey: 'immediate' },
 };
 
 export const TRACKER_CONFIG: Record<string, { emoji: string; color: string; bg: string; border: string }> = {
@@ -77,3 +77,12 @@ export const PRIORITY_LABEL_KEYS: Record<string, string> = {
   urgent: 'urgent',
   immediate: 'immediate',
 };
+
+/** PRIORITY_CONFIG with i18n labels resolved. Call from a component that has t(). */
+export function buildPriorityConfig(
+  t: (key: string) => string
+): Record<string, { color: string; bg: string; border: string; label: string }> {
+  return Object.fromEntries(
+    Object.entries(PRIORITY_CONFIG).map(([k, v]) => [k, { ...v, label: t(v.labelKey) }])
+  );
+}

@@ -6,7 +6,7 @@ export type LightDark = 'light' | 'dark' | 'system';
 export interface ThemeConfig {
   id: ColorTheme;
   name: string;
-  desc: string;
+  descKey?: string;
   swatch: string;
   accent: string;
   forceDark?: boolean;
@@ -16,35 +16,35 @@ export const THEMES: ThemeConfig[] = [
   {
     id: 'default',
     name: 'Classic',
-    desc: '깔끔한 화이트 · 블루',
+    descKey: 'themeDefaultDesc',
     swatch: 'linear-gradient(135deg, #f5f5f5 50%, #0070f3 50%)',
     accent: '#0070f3',
   },
   {
     id: 'warm',
     name: 'Warm',
-    desc: '부드러운 종이 질감 · 독서 최적',
+    descKey: 'themeWarmDesc',
     swatch: 'linear-gradient(135deg, #fef9ef 50%, #d97706 50%)',
     accent: '#d97706',
   },
   {
     id: 'lavender',
     name: 'Lavender',
-    desc: '우아한 퍼플 바이올렛 · 라이트/다크',
+    descKey: 'themeLavenderDesc',
     swatch: 'linear-gradient(135deg, #faf5ff 50%, #7c3aed 50%)',
     accent: '#7c3aed',
   },
   {
     id: 'ocean',
     name: 'Ocean',
-    desc: '코스탈 틸 프레시 · 라이트/다크',
+    descKey: 'themeOceanDesc',
     swatch: 'linear-gradient(135deg, #f0fdfa 50%, #0d9488 50%)',
     accent: '#0d9488',
   },
   {
     id: 'amber',
     name: 'Amber',
-    desc: '따뜻한 골드 허니 · 라이트/다크',
+    descKey: 'themeAmberDesc',
     swatch: 'linear-gradient(135deg, #fffbeb 50%, #f59e0b 50%)',
     accent: '#f59e0b',
   },

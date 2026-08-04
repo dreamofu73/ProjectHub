@@ -734,12 +734,12 @@ export default function WikiClient({ project, wikiList, activePage, initialId, i
             </button>
             <div className="px-4 pt-5 pb-4 mb-2 flex items-center gap-1.5 text-[var(--text-primary)] shrink-0 border-b border-[var(--border)] bg-white dark:bg-slate-950">
               <BookOpen size={14} className="text-[var(--primary)]" />
-              <span className="text-sm font-bold">{t('tocHeader') || '목차'}</span>
+              <span className="text-sm font-bold">{t('tocHeader')}</span>
             </div>
             <nav className="overflow-y-auto px-4 pb-4 flex flex-col gap-1 custom-scrollbar">
               {toc.length === 0 ? (
                 <div className="text-xs text-[var(--text-muted)] py-2 px-1">
-                  {t('noToc') || '목차가 없습니다.'}
+                  {t('noToc')}
                 </div>
               ) : (
                 toc.map((item, idx) => {
@@ -769,7 +769,7 @@ export default function WikiClient({ project, wikiList, activePage, initialId, i
             <button 
               onClick={() => setShowToc(!showToc)}
               className="absolute -left-[12px] top-[20px] w-[24px] h-[24px] bg-[var(--bg-surface)] border border-[var(--border)] rounded-full flex items-center justify-center shadow-sm text-[var(--text-muted)] hover:text-white hover:bg-[var(--primary)] hover:border-[var(--primary)] z-20 hidden lg:flex cursor-pointer transition-all"
-              aria-label={showToc ? t('collapseToc') || '목차 접기' : t('expandToc') || '목차 펼치기'}
+              aria-label={showToc ? t('collapseToc') : t('expandToc')}
             >
               <ChevronRight size={14} className={showToc ? '' : 'rotate-180 transition-transform'} />
             </button>

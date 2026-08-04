@@ -90,10 +90,10 @@ export function IssueDetailPanel({
         setEditDescription(json.data.issue.description || '');
         setError('');
       } else {
-        setError(json.error || '이슈를 가져오지 못했습니다.');
+        setError(json.error || t('issueFetchError'));
       }
     } catch {
-      setError('서버 연결 오류가 발생했습니다.');
+      setError(t('serverConnError'));
     }
   }, [issueId]);
 
@@ -165,10 +165,10 @@ export function IssueDetailPanel({
         await fetchData();
         setIsEditMode(false);
         onUpdated?.();
-        showToast('이슈가 성공적으로 수정되었습니다.', 'success');
+        showToast(t('issueUpdatedSuccess'), 'success');
       }
     } catch {
-      showToast('이슈 수정 중 오류가 발생했습니다.', 'error');
+      showToast(t('issueUpdateError'), 'error');
     } finally {
       setIsUpdatingIssue(false);
     }
@@ -196,13 +196,13 @@ export function IssueDetailPanel({
       if (res.ok) {
         await fetchData();
         onUpdated?.();
-        showToast('정보가 업데이트되었습니다.', 'success');
+        showToast(t('infoUpdated'), 'success');
       } else {
         const json = await res.json();
-        showToast(json.error || '업데이트 중 오류가 발생했습니다.', 'error');
+        showToast(json.error || t('updateError'), 'error');
       }
     } catch {
-      showToast('서버 연결 오류가 발생했습니다.', 'error');
+      showToast(t('serverConnError'), 'error');
     } finally {
       setIsUpdatingField(null);
     }
@@ -215,13 +215,13 @@ export function IssueDetailPanel({
         method: 'DELETE',
       });
       if (res.ok) {
-        showToast('이슈가 삭제되었습니다.', 'info');
+        showToast(t('issueDeletedSuccess'), 'info');
         onDeleted?.();
       } else {
-        showToast('이슈 삭제 중 오류가 발생했습니다.', 'error');
+        showToast(t('issueDeleteError'), 'error');
       }
     } catch {
-      showToast('서버 연결 오류가 발생했습니다.', 'error');
+      showToast(t('serverConnError'), 'error');
     }
   };
 
@@ -251,7 +251,7 @@ export function IssueDetailPanel({
           <div className="flex flex-col items-center gap-3 text-[var(--text-muted)]">
             <MessageSquare size={40} strokeWidth={1.5} />
             <span className="text-sm font-semibold">
-              이슈를 선택하면 상세 정보가 표시됩니다.
+              {t('selectIssueHint')}
             </span>
           </div>
         </div>
@@ -276,13 +276,13 @@ export function IssueDetailPanel({
       <div className="flex flex-col h-full select-none overflow-hidden bg-[var(--bg-surface)]">
         <div className="flex flex-col items-center justify-center flex-1 gap-3 px-6">
           <p className="text-sm font-bold text-red-500 text-center">
-            {error || '이슈 데이터를 찾을 수 없습니다.'}
+            {error || t('issueNotFound')}
           </p>
           <button
             onClick={onClose}
             className="text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border)] rounded-lg px-3 py-1.5 bg-transparent cursor-pointer"
           >
-            닫기
+            {t('close')}
           </button>
         </div>
       </div>
@@ -305,14 +305,14 @@ export function IssueDetailPanel({
                   className="form-control text-lg font-bold w-full"
                   value={editSubject}
                   onChange={(e) => setEditSubject(e.target.value)}
-                  placeholder="이슈 제목"
+                  placeholder={t('issueTitle')}
                 />
                 <textarea
                   rows={4}
                   className="form-control text-sm w-full"
                   value={editDescription}
                   onChange={(e) => setEditDescription(e.target.value)}
-                  placeholder="이슈 설명 (Markdown 지원)"
+                  placeholder={t('issueDescMarkdownPlaceholder')}
                 />
                 <div className="flex gap-2 justify-end mt-1">
                   <button
@@ -326,14 +326,14 @@ export function IssueDetailPanel({
                     disabled={isUpdatingIssue}
                     className="px-3 py-1.5 bg-[var(--primary)] text-white text-xs font-bold rounded-lg border-none cursor-pointer disabled:opacity-50"
                   >
-                    {isUpdatingIssue ? '저장 중...' : '저장'}
+                    {isUpdatingIssue ? t('saving') : t('save')}
                   </button>
                   <button
                     type="button"
                     onClick={() => setIsEditMode(false)}
                     className="px-3 py-1.5 text-xs font-bold rounded-lg border border-[var(--border)] bg-transparent text-[var(--text-secondary)] cursor-pointer"
                   >
-                    취소
+                    {t('cancel')}
                   </button>
                 </div>
               </div>
@@ -366,7 +366,7 @@ export function IssueDetailPanel({
                   setIsEditMode(true);
                 }}
                 className="p-2 rounded-lg border border-[var(--border)] bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-2)] cursor-pointer"
-                title="수정"
+                title={t('edit')}
               >
                 <Edit3 size={14} />
               </button>
@@ -376,7 +376,7 @@ export function IssueDetailPanel({
                 type="button"
                 onClick={() => setShowDeleteConfirm(true)}
                 className="p-2 rounded-lg border border-[var(--border)] bg-transparent text-red-500 hover:bg-red-500/10 cursor-pointer"
-                title="삭제"
+                title={t('delete')}
               >
                 <Trash2 size={14} />
               </button>
@@ -385,7 +385,7 @@ export function IssueDetailPanel({
               type="button"
               onClick={onClose}
               className="p-2 rounded-lg border border-[var(--border)] bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-2)] cursor-pointer"
-              title="닫기"
+              title={t('close')}
             >
               <X size={16} />
             </button>
@@ -396,7 +396,7 @@ export function IssueDetailPanel({
         {showDeleteConfirm && (
           <div className="mt-3 flex items-center justify-between flex-wrap gap-3 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20">
             <span className="text-xs font-bold text-red-500">
-              이 이슈를 정말로 삭제하시겠습니까? 되돌릴 수 없습니다.
+              {t('confirmDeleteIssue')}
             </span>
             <div className="flex gap-2">
               <button
@@ -404,14 +404,14 @@ export function IssueDetailPanel({
                 onClick={handleDeleteIssue}
                 className="px-3 py-1.5 bg-red-500 text-white text-xs font-bold rounded-lg border-none cursor-pointer"
               >
-                예, 삭제합니다
+                {t('yesDelete')}
               </button>
               <button
                 type="button"
                 onClick={() => setShowDeleteConfirm(false)}
                 className="px-3 py-1.5 text-xs font-bold rounded-lg border border-[var(--border)] bg-transparent text-[var(--text-secondary)] cursor-pointer"
               >
-                취소
+                {t('cancel')}
               </button>
             </div>
           </div>
@@ -424,7 +424,7 @@ export function IssueDetailPanel({
           {/* Status */}
           <div className="flex items-center gap-2">
             <span className="text-[var(--text-muted)] font-medium shrink-0">
-              상태
+              {t('status')}
             </span>
             <select
               className="form-control text-xs font-bold bg-transparent border border-[var(--border)] rounded-lg px-2 py-1"
@@ -446,7 +446,7 @@ export function IssueDetailPanel({
           {/* Assignee */}
           <div className="flex items-center gap-2">
             <span className="text-[var(--text-muted)] font-medium shrink-0">
-              담당자
+              {t('assignee')}
             </span>
             <select
               className="form-control text-xs font-bold bg-transparent border border-[var(--border)] rounded-lg px-2 py-1"
@@ -461,7 +461,7 @@ export function IssueDetailPanel({
               }
               disabled={isUpdatingField === 'assigned_to_id'}
             >
-              <option value="">미배정</option>
+              <option value="">{t('unassigned')}</option>
               {members.map((member) => (
                 <option key={member.user_id} value={member.user_id}>
                   {member.firstname} {member.lastname} (@{member.login})
@@ -476,7 +476,7 @@ export function IssueDetailPanel({
           {/* Priority */}
           <div className="flex items-center gap-2">
             <span className="text-[var(--text-muted)] font-medium shrink-0">
-              우선순위
+              {t('priority')}
             </span>
             <select
               className="form-control text-xs font-bold bg-transparent border border-[var(--border)] rounded-lg px-2 py-1"
@@ -498,7 +498,7 @@ export function IssueDetailPanel({
           {/* Tracker (shown with badge) */}
           <div className="flex items-center gap-2">
             <span className="text-[var(--text-muted)] font-medium shrink-0">
-              유형
+              {t('tracker')}
             </span>
             <select
               className="form-control text-xs font-bold bg-transparent border border-[var(--border)] rounded-lg px-2 py-1"
@@ -520,7 +520,7 @@ export function IssueDetailPanel({
           {/* Done ratio slider */}
           <div className="flex items-center gap-2">
             <span className="text-[var(--text-muted)] font-medium shrink-0">
-              진행률
+              {t('progress')}
             </span>
             <div className="flex items-center gap-1.5">
               <input
@@ -572,7 +572,7 @@ export function IssueDetailPanel({
             <div className="text-sm leading-relaxed text-[var(--text-secondary)] whitespace-pre-wrap">
               {issue.description || (
                 <span className="text-[var(--text-muted)] italic">
-                  작성된 설명이 없습니다.
+                  {t('noDescriptionWritten')}
                 </span>
               )}
             </div>
@@ -582,7 +582,7 @@ export function IssueDetailPanel({
         {/* Custom Fields */}
         {customFields.length > 0 && !isEditMode && (
           <div className="pt-2 border-t border-[var(--border)]">
-            <h4 className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-3">커스텀 속성</h4>
+            <h4 className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-3">{t('customFields')}</h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {customFields.map(field => (
                 <div key={field.id} className="flex flex-col gap-1">
@@ -593,8 +593,8 @@ export function IssueDetailPanel({
                   {field.field_type === 'boolean' ? (
                     <select className="form-control text-xs" value={customValues[field.id] || ''} onChange={(e) => handleCustomValueSave(field.id, e.target.value)}>
                       <option value="">--</option>
-                      <option value="true">예</option>
-                      <option value="false">아니오</option>
+                      <option value="true">{t('yesLabel')}</option>
+                      <option value="false">{t('noLabel')}</option>
                     </select>
                   ) : field.field_type === 'date' ? (
                     <input type="date" className="form-control text-xs" value={customValues[field.id] || ''} onChange={(e) => handleCustomValueSave(field.id, e.target.value)} />

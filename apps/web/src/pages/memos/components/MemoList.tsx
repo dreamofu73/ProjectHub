@@ -1,5 +1,6 @@
 import { CheckSquare, Square, Minus, RefreshCw, Coffee, Clock, Check } from 'lucide-react';
 import type { Memo, FolderType } from 'shared/types';
+import { useLanguage } from 'shared/hooks/LanguageContext';
 
 interface MemoListProps {
   memos: Memo[];
@@ -25,6 +26,7 @@ export function MemoList({
   handleOpenDetail,
   toggleSelectAll
 }: MemoListProps) {
+  const { t } = useLanguage();
 
   const formatMemoDate = (dateStr: string) => {
     try {
@@ -45,7 +47,7 @@ export function MemoList({
     return (
       <div className="py-20 text-center text-[var(--text-muted)]">
         <RefreshCw size={22} className="animate-spin mx-auto mb-2 text-[var(--primary)]" />
-        <p className="font-medium text-xs">로딩 중...</p>
+        <p className="font-medium text-xs">{t('logsLoading')}</p>
       </div>
     );
   }
@@ -53,7 +55,7 @@ export function MemoList({
   if (memos.length === 0) {
     return (
       <div className="py-24 text-center text-[var(--text-muted)] font-medium text-xs">
-        쪽지가 없습니다.
+        {t('noMemos')}
       </div>
     );
   }
@@ -70,7 +72,7 @@ export function MemoList({
                   e.stopPropagation();
                   toggleSelectAll?.();
                 }}
-                title={memos.length > 0 && memos.every(m => selectedIds.has(m.id)) ? '선택해제' : '전체선택'}
+                title={memos.length > 0 && memos.every(m => selectedIds.has(m.id)) ? t('deselect') : t('selectAll')}
               >
                 {memos.length > 0 && memos.every(m => selectedIds.has(m.id)) ? (
                   <CheckSquare size={14} className="text-[var(--primary)]" />
@@ -81,9 +83,9 @@ export function MemoList({
                 )}
               </div>
             </th>
-            <th className="w-28 p-2 text-xs font-semibold text-[var(--text-muted)]">{currentFolder === 'sent' || currentFolder === 'reserved' ? '받는사람' : '보낸사람'}</th>
-            <th className="p-2 text-xs font-semibold text-[var(--text-muted)]">제목</th>
-            <th className="w-36 p-2 text-right pr-4 text-xs font-semibold text-[var(--text-muted)]">{currentFolder === 'reserved' ? '발송예정' : '날짜'}</th>
+            <th className="w-28 p-2 text-xs font-semibold text-[var(--text-muted)]">{currentFolder === 'sent' || currentFolder === 'reserved' ? t('recipient') : t('sender')}</th>
+            <th className="p-2 text-xs font-semibold text-[var(--text-muted)]">{t('title')}</th>
+            <th className="w-36 p-2 text-right pr-4 text-xs font-semibold text-[var(--text-muted)]">{currentFolder === 'reserved' ? t('scheduledTime') : t('date')}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-[var(--border)]">

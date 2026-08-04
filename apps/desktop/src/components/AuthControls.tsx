@@ -6,9 +6,9 @@ import ThemeSelector from './ThemeSelector';
 
 const LANGS: { code: Language; label: string; flag: string }[] = [
   { code: 'ko', label: '한국어', flag: '🇰🇷' },
-  { code: 'en', label: 'English', flag: '🇺🇸' },
   { code: 'ja', label: '日本語', flag: '🇯🇵' },
-  { code: 'zh', label: '简体中文', flag: '🇨🇳' },
+  { code: 'en', label: 'English', flag: '🇺🇸' },
+  { code: 'es', label: 'Español', flag: '🇪🇸' },
 ];
 
 export default function AuthControls() {

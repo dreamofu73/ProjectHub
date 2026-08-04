@@ -88,7 +88,7 @@ export function useUsersManagement() {
 
   const handleCreate = async () => {
     if (!currentUser.login || !currentUser.email || !password) {
-      setError(t('fillRequiredFields') || '필수 항목을 모두 입력하세요.');
+      setError(t('fillRequiredFields'));
       return;
     }
     
@@ -105,10 +105,10 @@ export function useUsersManagement() {
         setPassword('');
         fetchUsers();
       } else {
-        setError(json.error || t('userCreateFailed') || '사용자 생성 실패');
+        setError(json.error || t('userCreateFailed'));
       }
     } catch (err) {
-      setError(t('serverCommunicationError') || '서버 통신 오류');
+      setError(t('serverCommunicationError'));
     }
   };
 
@@ -126,10 +126,10 @@ export function useUsersManagement() {
         setCurrentUser({});
         fetchUsers();
       } else {
-        setError(json.error || t('userUpdateFailed') || '사용자 정보 수정 실패');
+        setError(json.error || t('userUpdateFailed'));
       }
     } catch (err) {
-      setError(t('serverCommunicationError') || '서버 통신 오류');
+      setError(t('serverCommunicationError'));
     }
   };
 
@@ -146,21 +146,21 @@ export function useUsersManagement() {
         setShowModal(null);
         setPassword('');
         setCurrentUser({});
-        alert(t('passwordResetSuccess') || '비밀번호가 초기화되었습니다.');
+        alert(t('passwordResetSuccess'));
       } else {
-        setError(json.error || t('passwordResetFailed') || '비밀번호 초기화 실패');
+        setError(json.error || t('passwordResetFailed'));
       }
     } catch (err) {
-      setError(t('serverCommunicationError') || '서버 통신 오류');
+      setError(t('serverCommunicationError'));
     }
   };
 
   const handleDelete = async (id: string) => {
     if (id === '1') {
-      alert(t('cannotDeleteAdmin') || '시스템 관리자 계정은 삭제할 수 없습니다.');
+      alert(t('cannotDeleteAdmin'));
       return;
     }
-    if (!window.confirm(t('confirmDeleteUser') || '이 사용자를 삭제하시겠습니까?')) return;
+    if (!window.confirm(t('confirmDeleteUser'))) return;
     try {
       const res = await api(`/api/users/${id}`, { method: 'DELETE' });
       if (res.ok) fetchUsers();

@@ -75,14 +75,14 @@ export function KanbanBoard<T>({
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
 
   const PRIORITY_STYLES: Record<string, { label: string; color: string }> = useMemo(() => ({
-    low: { label: t('low') || '낮음', color: 'text-slate-500 bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700' },
-    normal: { label: t('normal') || '보통', color: 'text-blue-600 bg-blue-50 dark:bg-blue-950/60 border-blue-200 dark:border-blue-900/50' },
-    high: { label: t('high') || '높음', color: 'text-amber-600 bg-amber-50 dark:bg-amber-950/60 border-amber-200 dark:border-amber-900/50' },
-    urgent: { label: t('urgent') || '긴급', color: 'text-rose-600 bg-rose-50 dark:bg-rose-950/60 border-rose-200 dark:border-rose-900/50' },
-    immediate: { label: t('immediate') || '즉시', color: 'text-white bg-rose-600 animate-pulse border-rose-700' },
+    low: { label: t('low') || 'Low', color: 'text-slate-500 bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700' },
+    normal: { label: t('normal') || 'Normal', color: 'text-blue-600 bg-blue-50 dark:bg-blue-950/60 border-blue-200 dark:border-blue-900/50' },
+    high: { label: t('high') || 'High', color: 'text-amber-600 bg-amber-50 dark:bg-amber-950/60 border-amber-200 dark:border-amber-900/50' },
+    urgent: { label: t('urgent') || 'Urgent', color: 'text-rose-600 bg-rose-50 dark:bg-rose-950/60 border-rose-200 dark:border-rose-900/50' },
+    immediate: { label: t('immediate') || 'Immediate', color: 'text-white bg-rose-600 animate-pulse border-rose-700' },
   }), [t]);
 
-  const resolvedEmptyMsg = emptyMessage || t('noItemsFound') || '등록된 항목이 없습니다.';
+  const resolvedEmptyMsg = emptyMessage || t('noItemsFound') || 'No items found.';
 
   const itemsByStatus = useMemo(() => {
     const map: Record<string, T[]> = {};
@@ -192,7 +192,7 @@ export function KanbanBoard<T>({
                 {isExceeded && (
                   <div className="mx-3 mt-2 px-2.5 py-1.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-lg flex items-center gap-1.5 text-xs text-rose-700 dark:text-rose-300 font-semibold">
                     <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                    <span>{t('wipLimitExceeded') || 'WIP 제한 초과! 병목을 점검하세요.'}</span>
+                    <span>{t('wipLimitExceeded') || 'WIP limit exceeded! Check bottlenecks.'}</span>
                   </div>
                 )}
 
@@ -283,7 +283,7 @@ export function KanbanBoard<T>({
                                 </>
                               )}
                               {!cardProps.assigneeName && (
-                                <span className="italic text-[var(--text-muted)] text-xs">{t('unassigned') || '담당자 미지정'}</span>
+                                <span className="italic text-[var(--text-muted)] text-xs">{t('unassigned') || 'Unassigned'}</span>
                               )}
                             </div>
 

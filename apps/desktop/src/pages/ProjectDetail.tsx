@@ -42,7 +42,7 @@ export default function ProjectDetail() {
         if (json.success) setProject(json.data);
         else setError(json.error);
       })
-      .catch(() => setError(t('serverConnectionError') || '서버 연결 오류가 발생했습니다.'))
+      .catch(() => setError(t('serverConnectionError')))
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -58,9 +58,9 @@ export default function ProjectDetail() {
     return (
       <Card className="border-danger max-w-xl mx-auto mt-8">
         <CardBody className="text-center py-8">
-          <p className="text-danger font-semibold mb-4">{error || t('projectNotFound') || '프로젝트를 찾을 수 없습니다.'}</p>
+          <p className="text-danger font-semibold mb-4">{error || t('projectNotFound')}</p>
           <Link to="/projects">
-            <Button variant="secondary">{t('goToProjectList') || '프로젝트 목록으로 이동'}</Button>
+            <Button variant="secondary">{t('goToProjectList')}</Button>
           </Link>
         </CardBody>
       </Card>
@@ -72,29 +72,29 @@ export default function ProjectDetail() {
       <div className="flex items-center gap-4">
         <PageHeader 
           title={project.name} 
-          description={`식별자: ${project.identifier}`}
+          description={t('identifierPrefix').replace('{id}', project.identifier)}
           className="mb-0 flex-1"
           actions={
             <div className="flex gap-2">
               {(isSysAdmin || project.my_role === 'manager') && !isArchived && (
                 <Link to={`/projects/${project.identifier}/settings`}>
-                  <Button variant="secondary">{t('settings') || '설정'}</Button>
+                  <Button variant="secondary">{t('settings')}</Button>
                 </Link>
               )}
               {(isSysAdmin || project.my_role === 'manager') && !isArchived && (
                 <Link to={`/projects/${project.identifier}/members`}>
-                  <Button variant="secondary" icon={Users}>{t('members') || '멤버'}</Button>
+                  <Button variant="secondary" icon={Users}>{t('members')}</Button>
                 </Link>
               )}
               <Link to={`/projects/${project.identifier}/wiki`}>
-                <Button variant="secondary">{t('wiki') || '위키'}</Button>
+                <Button variant="secondary">{t('wiki')}</Button>
               </Link>
               <Link to={`/projects/${project.identifier}/issues`}>
-                <Button variant="secondary">{t('issueList') || '이슈 목록'}</Button>
+                <Button variant="secondary">{t('issueList')}</Button>
               </Link>
               {!isArchived && (
                 <Link to={`/projects/${project.identifier}/issues/new`}>
-                  <Button icon={Plus}>{t('createNewIssue') || '새 이슈 생성'}</Button>
+                  <Button icon={Plus}>{t('createNewIssue')}</Button>
                 </Link>
               )}
             </div>
@@ -107,9 +107,9 @@ export default function ProjectDetail() {
           {/* Description */}
           <Card>
             <CardBody className="p-6">
-              <h2 className="text-lg font-bold mb-4 border-b border-border pb-2 text-gray-900">{t('projectOverview') || '프로젝트 개요'}</h2>
+              <h2 className="text-lg font-bold mb-4 border-b border-border pb-2 text-gray-900">{t('projectOverview')}</h2>
               <p className="text-secondary leading-relaxed whitespace-pre-wrap">
-                {project.description || t('noProjectDescription') || '등록된 프로젝트 설명이 없습니다.'}
+                {project.description || t('noProjectDescription')}
               </p>
             </CardBody>
           </Card>
@@ -123,21 +123,21 @@ export default function ProjectDetail() {
                       <div className="p-2.5 bg-danger-bg text-danger rounded-xl flex-shrink-0">
                         <Bug size={20}/>
                       </div>
-                      <h3 className="font-bold text-gray-900">{t('issueStatus') || '이슈 현황'}</h3>
+                      <h3 className="font-bold text-gray-900">{t('issueStatus')}</h3>
                     </div>
                     <div className="text-3xl font-extrabold text-danger mb-1">
-                      {project.open_issue_count} <span className="text-sm text-muted font-semibold">{t('inProgress') || '진행 중'}</span>
+                      {project.open_issue_count} <span className="text-sm text-muted font-semibold">{t('inProgress')}</span>
                     </div>
                   </div>
                   
                   <div className="flex items-center justify-between border-t border-border pt-4 mt-4">
-                    <span className="text-xs text-muted font-medium">{t('total') || '전체'} {project.issue_count}{t('issues') || '개 이슈'}</span>
+                    <span className="text-xs text-muted font-medium">{t('total')} {project.issue_count}{t('issues')}</span>
                     <div className="flex gap-3">
                       <Link to={`/projects/${id}/kanban`} className="text-sm font-bold text-primary hover:underline">
-                         {t('kanbanBoard') || '칸반 보드'} &rarr;
+                         {t('kanbanBoard')} &rarr;
                       </Link>
                       <Link to={`/projects/${id}/issues`} className="text-sm font-bold text-primary hover:underline">
-                         {t('viewList') || '목록 보기'} &rarr;
+                         {t('viewList')} &rarr;
                       </Link>
                     </div>
                   </div>
@@ -151,18 +151,18 @@ export default function ProjectDetail() {
                       <div className="p-2.5 bg-primary-bg text-primary rounded-xl flex-shrink-0">
                         <Users size={20}/>
                       </div>
-                      <h3 className="font-bold text-gray-900">{t('participatingMembers') || '참여 멤버'}</h3>
+                      <h3 className="font-bold text-gray-900">{t('participatingMembers')}</h3>
                     </div>
                     <div className="text-3xl font-extrabold text-gray-900">
-                      {project.member_count} <span className="text-sm text-muted font-semibold">{t('persons') || '명'}</span>
+                      {project.member_count} <span className="text-sm text-muted font-semibold">{t('persons')}</span>
                     </div>
                   </div>
                   
                     <div className="flex items-center justify-between border-t border-border pt-4 mt-4">
-                     <span className="text-xs text-muted font-medium">{t('memberList') || '멤버 리스트'}</span>
+                     <span className="text-xs text-muted font-medium">{t('memberList')}</span>
                      {(isSysAdmin || project.my_role === 'manager') && !isArchived && (
                        <Link to={`/projects/${id}/members`} className="text-sm font-bold text-primary hover:underline">
-                          {t('manageMembers') || '멤버 관리'} &rarr;
+                          {t('manageMembers')} &rarr;
                        </Link>
                      )}
                    </div>
@@ -174,13 +174,13 @@ export default function ProjectDetail() {
         <div className="flex flex-col gap-6">
            <Card>
               <CardBody className="p-6">
-                <h2 className="text-lg font-bold mb-4 border-b border-border pb-2 text-gray-900">{t('projectInfo') || '프로젝트 정보'}</h2>
+                <h2 className="text-lg font-bold mb-4 border-b border-border pb-2 text-gray-900">{t('projectInfo')}</h2>
                 <div className="flex flex-col gap-4">
                     <div>
-                      <div className="text-sm font-bold text-foreground mb-1">{t('status') || '상태'}</div>
+                      <div className="text-sm font-bold text-foreground mb-1">{t('status')}</div>
                       <div className="flex items-center gap-2">
                         <Badge variant={project.status === 'active' ? 'success' : 'default'}>
-                           {project.status === 'active' ? (t('active') || '활성 (Active)') : (t('archived') || '보관됨 (Archived)')}
+                           {project.status === 'active' ? t('active') : t('archived')}
                         </Badge>
                         {isArchived && (isSysAdmin || project.my_role === 'manager') && (
                           <button
@@ -196,13 +196,13 @@ export default function ProjectDetail() {
                             }}
                             className="px-2.5 py-1 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition-colors border-none cursor-pointer"
                           >
-                            {t('restoreProject') || '프로젝트 복원'}
+                            {t('restoreProject')}
                           </button>
                         )}
                       </div>
                    </div>
                     <div>
-                      <div className="text-sm font-bold text-foreground mb-1">{t('homepage') || '홈페이지'}</div>
+                      <div className="text-sm font-bold text-foreground mb-1">{t('homepage')}</div>
                       {project.homepage ? (
                         <a href={project.homepage} target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline break-all flex items-center gap-1">
                           <Globe size={14} className="text-muted"/> {project.homepage}
@@ -210,7 +210,7 @@ export default function ProjectDetail() {
                       ) : <span className="text-sm text-muted">-</span>}
                    </div>
                     <div>
-                      <div className="text-sm font-bold text-foreground mb-1">{t('createdAt') || '생성일'}</div>
+                      <div className="text-sm font-bold text-foreground mb-1">{t('createdAt')}</div>
                       <div className="text-sm text-secondary flex items-center gap-1.5">
                          <Calendar size={14} className="text-muted"/>
                          {formatDate(project.created_at, {

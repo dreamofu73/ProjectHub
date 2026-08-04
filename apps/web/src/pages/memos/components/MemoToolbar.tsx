@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Search, Trash2, Archive, RotateCcw, FolderInput, Folder, X, CornerUpLeft, Rows, Columns, Menu, MailOpen, ChevronDown } from 'lucide-react';
 import type { CustomFolder, FolderType, Memo } from 'shared/types';
+import { useLanguage } from 'shared/hooks/LanguageContext';
 
 interface MemoToolbarProps {
   searchCategory: 'all' | 'sender' | 'title' | 'content';
@@ -58,6 +59,7 @@ export function MemoToolbar({
   splitLayout,
   onSplitLayoutChange
 }: MemoToolbarProps) {
+  const { t } = useLanguage();
   const toolbarRef = useRef<HTMLDivElement>(null);
   
   // 드롭다운 열림 상태 관리 ('read' | 'move' | 'spam' | 'delete' | null)
@@ -94,8 +96,8 @@ export function MemoToolbar({
           onChange={(e) => setFilterType(e.target.value as 'all' | 'unread')}
           className="h-8 px-2 border border-[var(--border)] rounded bg-[var(--bg-surface)] text-xs focus:outline-none text-[var(--text-primary)] cursor-pointer font-medium"
         >
-          <option value="all" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">전체쪽지</option>
-          <option value="unread" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">안읽은 쪽지</option>
+          <option value="all" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('allMemos')}</option>
+          <option value="unread" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('unreadMemosTab')}</option>
         </select>
 
         {/* 검색 카테고리 셀렉트박스 */}
@@ -104,17 +106,17 @@ export function MemoToolbar({
           onChange={(e) => setSearchCategory(e.target.value as 'all' | 'sender' | 'title' | 'content')}
           className="h-8 px-2 border border-[var(--border)] rounded bg-[var(--bg-surface)] text-xs focus:outline-none text-[var(--text-primary)] cursor-pointer font-medium"
         >
-          <option value="all" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">전체</option>
-          <option value="sender" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{currentFolder === 'sent' ? '받는사람' : '보낸사람'}</option>
-          <option value="title" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">제목</option>
-          <option value="content" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">내용</option>
+          <option value="all" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('all')}</option>
+          <option value="sender" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{currentFolder === 'sent' ? t('recipient') : t('sender')}</option>
+          <option value="title" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('title')}</option>
+          <option value="content" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('content')}</option>
         </select>
 
         {/* 쪽지 검색 입력창 */}
         <div className="relative">
           <input
             type="text"
-            placeholder="쪽지검색"
+            placeholder={t('memoSearch')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-2 pr-7 py-1 h-8 w-40 border border-[var(--border)] rounded bg-[var(--bg-surface)] text-xs focus:outline-none text-[var(--text-primary)]"
@@ -142,7 +144,7 @@ export function MemoToolbar({
             className="flex items-center gap-1 px-2.5 py-1.5 border border-[var(--border)] hover:bg-[var(--bg-surface-2)] text-[var(--text-secondary)] disabled:opacity-45 disabled:hover:bg-transparent rounded text-xs font-semibold transition-all cursor-pointer bg-[var(--bg-surface)] h-8"
           >
             <CornerUpLeft size={11} />
-            답장
+            {t('reply')}
           </button>
         )}
 
@@ -163,10 +165,10 @@ export function MemoToolbar({
           >
             <MailOpen size={11} />
             {(() => {
-              if (selectedIds.size === 0) return '읽음';
+              if (selectedIds.size === 0) return t('read');
               const selectedMemos = memos.filter(m => selectedIds.has(m.id));
               const hasUnreadSelected = selectedMemos.some(m => m.is_read === 0);
-              return hasUnreadSelected ? '읽음' : '안읽음';
+              return hasUnreadSelected ? t('read') : t('unread');
             })()}
           </button>
         )}
@@ -180,7 +182,7 @@ export function MemoToolbar({
               className="flex items-center gap-1 px-2.5 py-1.5 border border-[var(--border)] hover:bg-[var(--bg-surface-2)] text-[var(--text-secondary)] disabled:opacity-45 disabled:hover:bg-transparent rounded text-xs font-semibold transition-all cursor-pointer bg-[var(--bg-surface)] h-8"
             >
               <FolderInput size={11} />
-              이동
+              {t('cpCategoryGo')}
               <ChevronDown size={10} className="opacity-60" />
             </button>
             {(activeDropdown === 'move' || isFolderDropdownOpen) && (
@@ -196,14 +198,14 @@ export function MemoToolbar({
                       className="w-full text-left px-3 py-2 text-xs hover:bg-[var(--bg-surface-2)] text-[var(--text-primary)] flex items-center gap-2 cursor-pointer border-none bg-transparent font-medium"
                     >
                       <Archive size={11} className="opacity-60" />
-                      보관함으로 이동
+                      {t('moveToArchive')}
                     </button>
                   </div>
                 )}
                 
                 {customFolders.length > 0 && (
                   <div className="py-1 max-h-40 overflow-y-auto custom-scrollbar">
-                    <div className="px-3 py-1 text-xs text-[var(--text-muted)] font-bold uppercase tracking-wider">개인 폴더로 이동</div>
+                    <div className="px-3 py-1 text-xs text-[var(--text-muted)] font-bold uppercase tracking-wider">{t('moveToPersonalFolder')}</div>
                     {customFolders.map(folder => (
                       <button
                         key={folder.id}
@@ -232,7 +234,7 @@ export function MemoToolbar({
                       className="w-full text-left px-3 py-2 text-xs hover:bg-red-50 dark:hover:bg-red-950/20 text-red-500 hover:text-red-700 flex items-center gap-2 cursor-pointer border-none bg-transparent font-semibold"
                     >
                       <X size={11} />
-                      폴더에서 제외
+                      {t('removeFromFolder')}
                     </button>
                   </div>
                 )}
@@ -249,7 +251,7 @@ export function MemoToolbar({
             className="flex items-center gap-1 px-2.5 py-1.5 border border-[var(--border)] hover:bg-[var(--bg-surface-2)] text-[var(--text-secondary)] disabled:opacity-45 disabled:hover:bg-transparent rounded text-xs font-semibold transition-all cursor-pointer bg-[var(--bg-surface)] h-8"
           >
             <RotateCcw size={11} />
-            복원
+            {t('restore')}
           </button>
         )}
 
@@ -260,7 +262,7 @@ export function MemoToolbar({
           className="flex items-center gap-1 px-2.5 py-1.5 border border-[var(--border)] hover:bg-red-50 dark:hover:bg-red-950/20 text-[var(--text-secondary)] hover:text-red-500 disabled:opacity-45 disabled:hover:bg-transparent disabled:hover:text-[var(--text-secondary)] rounded text-xs font-semibold transition-all cursor-pointer bg-[var(--bg-surface)] h-8"
         >
           <Trash2 size={11} />
-          삭제
+          {t('delete')}
         </button>
       </div>
 
@@ -280,21 +282,21 @@ export function MemoToolbar({
           <button
             onClick={() => onSplitLayoutChange('rows')}
             className={`p-1 rounded cursor-pointer border-none ${splitLayout === 'rows' ? 'bg-[var(--primary)]/10 text-[var(--primary)]' : 'hover:bg-[var(--bg-surface-2)] text-[var(--text-muted)]'} transition-colors`}
-            title="가로 분할"
+            title={t('splitHorizontal')}
           >
             <Rows size={12} />
           </button>
           <button
             onClick={() => onSplitLayoutChange('columns')}
             className={`p-1 rounded cursor-pointer border-none ${splitLayout === 'columns' ? 'bg-[var(--primary)]/10 text-[var(--primary)]' : 'hover:bg-[var(--bg-surface-2)] text-[var(--text-muted)]'} transition-colors`}
-            title="세로 분할"
+            title={t('splitVertical')}
           >
             <Columns size={12} />
           </button>
           <button
             onClick={() => onSplitLayoutChange('list')}
             className={`p-1 rounded cursor-pointer border-none ${splitLayout === 'list' ? 'bg-[var(--primary)]/10 text-[var(--primary)]' : 'hover:bg-[var(--bg-surface-2)] text-[var(--text-muted)]'} transition-colors`}
-            title="리스트만 보기"
+            title={t('listViewOnly2')}
           >
             <Menu size={12} />
           </button>

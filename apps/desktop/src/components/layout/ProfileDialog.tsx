@@ -149,7 +149,7 @@ export function ProfileDialog({
                     type="button"
                     onClick={() => setShowNewPassword(!showNewPassword)}
                     className="absolute right-2 top-1.5 p-0.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg border-none bg-transparent cursor-pointer text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors flex items-center justify-center"
-                    title={showNewPassword ? t('hidePassword') || '비밀번호 숨기기' : t('showPasswordLabel') || '비밀번호 보기'}
+                    title={showNewPassword ? t('hidePassword') : t('showPasswordLabel')}
                   >
                     {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
@@ -171,7 +171,7 @@ export function ProfileDialog({
                     type="button"
                     onClick={() => setShowNewPasswordConfirm(!showNewPasswordConfirm)}
                     className="absolute right-2 top-1.5 p-0.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg border-none bg-transparent cursor-pointer text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors flex items-center justify-center"
-                    title={showNewPasswordConfirm ? t('hidePassword') || '비밀번호 숨기기' : t('showPasswordLabel') || '비밀번호 보기'}
+                    title={showNewPasswordConfirm ? t('hidePassword') : t('showPasswordLabel')}
                   >
                     {showNewPasswordConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>

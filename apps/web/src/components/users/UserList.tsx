@@ -39,7 +39,7 @@ export function UserList({
     return (
       <div className="py-20 text-center text-[var(--text-muted)]">
         <div className="w-5 h-5 border-2 border-[var(--border-strong)] border-t-[var(--primary)] rounded-full animate-spin mx-auto mb-2" />
-        <p className="font-medium text-xs">로딩 중...</p>
+        <p className="font-medium text-xs">{t('logsLoading')}</p>
       </div>
     );
   }
@@ -47,7 +47,7 @@ export function UserList({
   if (users.length === 0) {
     return (
       <div className="py-24 text-center text-[var(--text-muted)] font-medium text-xs">
-        {t('noUsersFound') || '검색된 사용자가 없습니다.'}
+        {t('noUsersFound')}
       </div>
     );
   }
@@ -64,7 +64,7 @@ export function UserList({
                   e.stopPropagation();
                   toggleSelectAll();
                 }}
-                title={users.length > 0 && users.every(u => selectedIds.has(u.id)) ? '선택해제' : '전체선택'}
+                title={users.length > 0 && users.every(u => selectedIds.has(u.id)) ? t('deselect') : t('selectAll')}
               >
                 {users.length > 0 && users.every(u => selectedIds.has(u.id)) ? (
                   <CheckSquare size={14} className="text-[var(--primary)]" />
@@ -75,11 +75,11 @@ export function UserList({
                 )}
               </div>
             </th>
-            <th className="p-2 pl-2 text-xs font-semibold text-[var(--text-muted)]">이름</th>
-            <th className="p-2 text-xs font-semibold text-[var(--text-muted)]">아이디</th>
-            <th className="w-16 p-2 text-center text-xs font-semibold text-[var(--text-muted)]">권한</th>
-            <th className="w-16 p-2 text-center text-xs font-semibold text-[var(--text-muted)]">상태</th>
-            <th className="w-24 p-2 text-right pr-4 text-xs font-semibold text-[var(--text-muted)]">등록일</th>
+            <th className="p-2 pl-2 text-xs font-semibold text-[var(--text-muted)]">{t('name')}</th>
+            <th className="p-2 text-xs font-semibold text-[var(--text-muted)]">{t('loginId')}</th>
+            <th className="w-16 p-2 text-center text-xs font-semibold text-[var(--text-muted)]">{t('permission')}</th>
+            <th className="w-16 p-2 text-center text-xs font-semibold text-[var(--text-muted)]">{t('status')}</th>
+            <th className="w-24 p-2 text-right pr-4 text-xs font-semibold text-[var(--text-muted)]">{t('createdAt')}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-[var(--border)]">
@@ -120,7 +120,7 @@ export function UserList({
                 </td>
 
                 <td className="p-2">
-                  <div className="flex items-center justify-center" title={u.role === 'admin' ? t('admin') : u.role === 'overseer' ? t('overseer') : t('regularUser') || '일반'}>
+                  <div className="flex items-center justify-center" title={u.role === 'admin' ? t('admin') : u.role === 'overseer' ? t('overseer') : t('regularUser')}>
                     {u.role === 'admin' ? (
                       <Shield size={14} className="text-rose-500" />
                     ) : u.role === 'overseer' ? (
@@ -132,7 +132,7 @@ export function UserList({
                 </td>
 
                 <td className="p-2">
-                  <div className="flex items-center justify-center" title={u.is_active === 1 ? t('activeUser') || '활성' : t('inactiveUser') || '비활성'}>
+                  <div className="flex items-center justify-center" title={u.is_active === 1 ? t('activeUser') : t('inactiveUser')}>
                     {u.is_active === 1 ? (
                       <CheckCircle size={14} className="text-emerald-500" />
                     ) : (

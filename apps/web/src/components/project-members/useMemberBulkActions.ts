@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { api } from 'shared/lib/api';
 import type { Member } from 'shared/hooks/useProjectMembers';
+import { useLanguage } from 'shared/hooks/LanguageContext';
 
 export function useMemberBulkActions(projectId: string | undefined, fetchMembers: () => void) {
+  const { t } = useLanguage();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkRole, setBulkRole] = useState('');
   const [bulkUpdating, setBulkUpdating] = useState(false);
@@ -51,7 +53,7 @@ export function useMemberBulkActions(projectId: string | undefined, fetchMembers
 
   const handleBulkDelete = async () => {
     if (selectedIds.size === 0 || !projectId) return;
-    if (!window.confirm(`선택한 ${selectedIds.size}명의 멤버를 프로젝트에서 제외하시겠습니까?`)) return;
+    if (!window.confirm(t('confirmRemoveSelectedMembers').replace('{count}', String(selectedIds.size)))) return;
     setBulkUpdating(true);
     try {
       const res = await api(`/api/projects/${projectId}/members/batch`, {

@@ -6,12 +6,14 @@ import { uploadFilesWithProgress } from 'shared/lib/upload';
 
 import type { Issue, Comment, Member, Attachment } from 'shared/types';
 
+import { useLanguage } from 'shared/hooks/LanguageContext';
 interface IssueDetailData {
   issue: Issue;
   comments: Comment[];
 }
 
 export function useIssueDetail() {
+  const { t } = useLanguage();
   const { id: projectId, issueId } = useParams<{ id: string; issueId: string }>();
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -49,10 +51,10 @@ export function useIssueDetail() {
         setEditSubject(json.data.issue.subject);
         setEditDescription(json.data.issue.description || '');
       } else {
-        setError(json.error || '이슈를 가져오지 못했습니다.');
+        setError(json.error || t('issueFetchError'));
       }
     } catch {
-      setError('서버 연결 오류가 발생했습니다.');
+      setError(t('serverConnError'));
     } finally {
       setLoading(false);
     }
@@ -79,10 +81,10 @@ export function useIssueDetail() {
       if (res.ok) {
         await fetchData();
         setIsEditMode(false);
-        showToast('이슈가 성공적으로 수정되었습니다.', 'success');
+        showToast(t('issueUpdatedSuccess'), 'success');
       }
     } catch {
-      showToast('이슈 수정 중 오류가 발생했습니다.', 'error');
+      showToast(t('issueUpdateError'), 'error');
     } finally {
       setIsUpdatingIssue(false);
     }
@@ -101,13 +103,13 @@ export function useIssueDetail() {
       });
       if (res.ok) {
         await fetchData();
-        showToast('정보가 업데이트되었습니다.', 'success');
+        showToast(t('infoUpdated'), 'success');
       } else {
         const json = await res.json();
-        showToast(json.error || '업데이트 중 오류가 발생했습니다.', 'error');
+        showToast(json.error || t('updateError'), 'error');
       }
     } catch {
-      showToast('서버 연결 오류가 발생했습니다.', 'error');
+      showToast(t('serverConnError'), 'error');
     } finally {
       setIsUpdatingField(null);
     }
@@ -119,13 +121,13 @@ export function useIssueDetail() {
         method: 'DELETE'
       });
       if (res.ok) {
-        showToast('이슈가 삭제되었습니다.', 'info');
+        showToast(t('issueDeletedSuccess'), 'info');
         navigate(`/projects/${projectId}`);
       } else {
-        showToast('이슈 삭제 중 오류가 발생했습니다.', 'error');
+        showToast(t('issueDeleteError'), 'error');
       }
     } catch {
-      showToast('서버 연결 오류가 발생했습니다.', 'error');
+      showToast(t('serverConnError'), 'error');
     }
   };
 
@@ -157,7 +159,7 @@ export function useIssueDetail() {
           }
         } catch (err) {
           console.error('Comment attachment upload failed:', err);
-          showToast('파일 업로드에 실패했습니다.', 'error');
+          showToast(t('chatUploadFail'), 'error');
           setIsSubmitting(false);
           return;
         }
@@ -180,13 +182,13 @@ export function useIssueDetail() {
         setCommentFiles([]);
         setUploadProgress(0);
         fetchData();
-        showToast('댓글이 등록되었습니다.', 'success');
+        showToast(t('commentPosted'), 'success');
       } else {
-        showToast(json.error || '댓글 등록 중 오류가 발생했습니다.', 'error');
+        showToast(json.error || t('commentPostError'), 'error');
       }
     } catch (error) {
       console.error('Comment submission error:', error);
-      showToast('댓글 등록 중 오류가 발생했습니다.', 'error');
+      showToast(t('commentPostError'), 'error');
     } finally {
       setIsSubmitting(false);
     }

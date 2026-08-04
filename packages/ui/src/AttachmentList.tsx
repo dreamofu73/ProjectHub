@@ -3,6 +3,7 @@ import { Paperclip, FileText, Download, Eye, X, Image, File, ZoomIn, ZoomOut, Ro
 import { Button } from './Button';
 import { useToast } from './Toast';
 import { api, fetchBlobUrl } from 'shared/lib/api';
+import { useLanguage } from 'shared/hooks/LanguageContext';
 
 import type { Attachment } from 'shared/types';
 export type { Attachment };
@@ -51,7 +52,7 @@ function getFileIcon(category: FileCategory) {
 }
 
 // ─── 다운로드 핸들러 ─────────────────────────────────────────────────────────
-async function handleDownload(e: React.MouseEvent, file: Attachment, onError?: (message: string) => void) {
+async function handleDownload(e: React.MouseEvent, file: Attachment, onError?: () => void) {
   e.preventDefault();
   e.stopPropagation();
   try {
@@ -64,7 +65,7 @@ async function handleDownload(e: React.MouseEvent, file: Attachment, onError?: (
     document.body.removeChild(link);
     setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
   } catch {
-    onError?.('파일을 다운로드할 수 없습니다.');
+    onError?.();
   }
 }
 
@@ -76,6 +77,7 @@ interface PreviewModalProps {
 }
 
 function PreviewModal({ file, onClose, onDownload }: PreviewModalProps) {
+  const { t } = useLanguage();
   const category = getFileCategory(file.content_type || '', file.filename);
   const sourceUrl = `/api/attachments/${file.id}`;
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -138,10 +140,10 @@ function PreviewModal({ file, onClose, onDownload }: PreviewModalProps) {
   }, [category, sourceUrl]);
 
   const categoryLabel: Record<FileCategory, string> = {
-    image: '이미지',
+    image: t('image'),
     pdf: 'PDF',
-    text: '문서',
-    unsupported: '파일',
+    text: t('document'),
+    unsupported: t('file'),
   };
 
   return (
@@ -168,18 +170,18 @@ function PreviewModal({ file, onClose, onDownload }: PreviewModalProps) {
             <>
               <button
                 className="icon-btn-modal"
-                title="축소"
+                title={t('zoomOut')}
                 onClick={() => setImgScale(s => Math.max(0.25, s - 0.25))}
               ><ZoomOut size={16} /></button>
               <span className="text-xs text-gray-300 w-10 text-center">{Math.round(imgScale * 100)}%</span>
               <button
                 className="icon-btn-modal"
-                title="확대"
+                title={t('zoomIn')}
                 onClick={() => setImgScale(s => Math.min(5, s + 0.25))}
               ><ZoomIn size={16} /></button>
               <button
                 className="icon-btn-modal"
-                title="회전"
+                title={t('rotate')}
                 onClick={() => setImgRotation(r => (r + 90) % 360)}
               ><RotateCw size={16} /></button>
               <div className="w-px h-5 bg-white/20" />
@@ -187,12 +189,12 @@ function PreviewModal({ file, onClose, onDownload }: PreviewModalProps) {
           )}
           <button
             className="icon-btn-modal"
-            title="다운로드"
+            title={t('download')}
             onClick={onDownload}
           ><Download size={16} /></button>
           <button
             className="icon-btn-modal"
-            title="닫기"
+            title={t('close')}
             onClick={onClose}
           ><X size={18} /></button>
         </div>
@@ -206,7 +208,7 @@ function PreviewModal({ file, onClose, onDownload }: PreviewModalProps) {
         {/* 이미지 */}
         {category === 'image' && (
           previewError ? (
-            <div className="text-gray-300 text-sm">이미지를 불러올 수 없습니다.</div>
+            <div className="text-gray-300 text-sm">{t('imageLoadError')}</div>
           ) : previewUrl ? (
             <div className="overflow-auto max-w-full max-h-full">
               <img
@@ -228,7 +230,7 @@ function PreviewModal({ file, onClose, onDownload }: PreviewModalProps) {
         {/* PDF */}
         {category === 'pdf' && (
           previewError ? (
-            <div className="text-gray-300 text-sm">PDF를 불러올 수 없습니다.</div>
+            <div className="text-gray-300 text-sm">{t('pdfLoadError')}</div>
           ) : previewUrl ? (
             <iframe
               src={`${previewUrl}#toolbar=1&navpanes=0`}
@@ -246,7 +248,7 @@ function PreviewModal({ file, onClose, onDownload }: PreviewModalProps) {
             {textError ? (
               <div className="flex flex-col items-center justify-center py-16 text-gray-400 gap-3">
                 <File size={40} />
-                <p className="text-sm">파일을 불러올 수 없습니다.</p>
+                <p className="text-sm">{t('fileLoadError')}</p>
               </div>
             ) : textContent === null ? (
               <div className="flex items-center justify-center py-16">
@@ -267,13 +269,13 @@ function PreviewModal({ file, onClose, onDownload }: PreviewModalProps) {
               <File size={36} color="#94a3b8" />
             </div>
             <p className="text-gray-300 font-medium">{file.filename}</p>
-            <p className="text-gray-500 text-sm">이 파일 형식은 미리보기를 지원하지 않습니다.</p>
+            <p className="text-gray-500 text-sm">{t('previewNotSupported')}</p>
             <Button
               variant="primary"
               icon={Download}
               onClick={onDownload}
             >
-              다운로드하여 열기
+              {t('downloadAndOpen')}
             </Button>
           </div>
         )}
@@ -287,8 +289,9 @@ export function AttachmentList({ attachments, onDownloadAll, onDownloadSelected,
   const [previewFile, setPreviewFile] = useState<Attachment | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const { showToast } = useToast();
+  const { t } = useLanguage();
   // 네이티브 alert 대체 — 다운로드 실패를 앱 토스트로 알림
-  const notifyDownloadError = useCallback((message: string) => showToast(message, 'error'), [showToast]);
+  const notifyDownloadError = useCallback(() => showToast(t('fileDownloadError'), 'error'), [showToast, t]);
 
   if (!attachments || attachments.length === 0) return null;
 
@@ -313,17 +316,17 @@ export function AttachmentList({ attachments, onDownloadAll, onDownloadSelected,
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2 text-sm font-bold text-secondary">
             <Paperclip size={16} />
-            <span>첨부 파일 ({attachments.length})</span>
+            <span>{t('attachedFilesCount').replace('{count}', String(attachments.length))}</span>
           </div>
           <div className="flex items-center gap-2">
             {onDownloadSelected && selectedIds.size > 0 && (
               <Button variant="primary" size="sm" icon={Download} onClick={() => onDownloadSelected(Array.from(selectedIds))}>
-                선택 다운로드 ({selectedIds.size})
+                {t('downloadSelected')} ({selectedIds.size})
               </Button>
             )}
             {onDownloadAll && attachments.length > 1 && (
               <Button variant="secondary" size="sm" icon={Download} onClick={onDownloadAll}>
-                전체 다운로드
+                {t('downloadAll')}
               </Button>
             )}
           </div>
@@ -341,10 +344,10 @@ export function AttachmentList({ attachments, onDownloadAll, onDownloadSelected,
                   />
                 </th>
                 <th className="w-10 px-3 py-3 text-center"></th>
-                <th className="px-2 py-3 text-left">파일명</th>
-                <th className="w-24 px-3 py-3 text-right">크기</th>
-                <th className="w-20 px-2 py-3 text-center">미리보기</th>
-                <th className="w-20 px-2 py-3 text-center">다운로드</th>
+                <th className="px-2 py-3 text-left">{t('filename')}</th>
+                <th className="w-24 px-3 py-3 text-right">{t('size')}</th>
+                <th className="w-20 px-2 py-3 text-center">{t('preview')}</th>
+                <th className="w-20 px-2 py-3 text-center">{t('download')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -385,7 +388,7 @@ export function AttachmentList({ attachments, onDownloadAll, onDownloadSelected,
                     <td className="w-20 px-2 py-3 text-center">
                       <button
                         type="button"
-                        title="미리보기"
+                        title={t('preview')}
                         className="inline-flex w-7 h-7 items-center justify-center rounded-md text-gray-400 hover:text-primary hover:bg-primary-bg transition-colors"
                         onClick={(e) => { e.stopPropagation(); setPreviewFile(file); }}
                       >
@@ -396,7 +399,7 @@ export function AttachmentList({ attachments, onDownloadAll, onDownloadSelected,
                     <td className="w-20 px-2 py-3 text-center">
                       <button
                         type="button"
-                        title="다운로드"
+                        title={t('download')}
                         className="inline-flex w-7 h-7 items-center justify-center rounded-md text-gray-400 hover:text-primary hover:bg-primary-bg transition-colors"
                         onClick={(e) => handleDownload(e, file, notifyDownloadError)}
                       >

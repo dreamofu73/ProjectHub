@@ -5,7 +5,7 @@ import { useToast } from 'ui/Toast';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme, THEMES } from '../context/ThemeContext';
 import { api } from 'shared/lib/api';
-import type { CustomFolder, ChatRoom, Message } from 'shared/types';
+import type { CustomFolder, ChatRoom } from 'shared/types';
 
 import { Header } from './layout/Header';
 import { ProfileDialog } from './layout/ProfileDialog';
@@ -86,7 +86,7 @@ export default function Layout({ children }: LayoutProps) {
       });
       const json = await res.json();
       if (json.success) {
-        showToast('폴더가 생성되었습니다.', 'success');
+        showToast(t('folderCreated'), 'success');
         setNewFolderName('');
         setIsAddingFolder(false);
         fetchCustomFolders();
@@ -105,7 +105,7 @@ export default function Layout({ children }: LayoutProps) {
       });
       const json = await res.json();
       if (json.success) {
-        showToast('폴더 이름이 변경되었습니다.', 'success');
+        showToast(t('folderRenamed'), 'success');
         setEditingFolderId(null);
         fetchCustomFolders();
         window.dispatchEvent(new CustomEvent('refresh_memo_folders'));
@@ -115,12 +115,12 @@ export default function Layout({ children }: LayoutProps) {
 
   const handleDeleteFolder = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!window.confirm('이 폴더를 삭제하시겠습니까?')) return;
+    if (!window.confirm(t('deleteFolderConfirm'))) return;
     try {
       const res = await api(`/api/memos/folders/${id}`, { method: 'DELETE' });
       const json = await res.json();
       if (json.success) {
-        showToast('폴더가 삭제되었습니다.', 'success');
+        showToast(t('folderDeleted'), 'success');
         fetchCustomFolders();
         window.dispatchEvent(new CustomEvent('refresh_memo_folders'));
         if (currentFolder === `folder_${id}`) setCurrentFolder('received');
@@ -178,21 +178,7 @@ export default function Layout({ children }: LayoutProps) {
 
   // --- Global Unread Counts ---
   const [globalUnreadCount, setGlobalUnreadCount] = useState(0);
-  const globalLastSeenRef = useRef<string>('0');
   const [unreadMemosCount, setUnreadMemosCount] = useState(0);
-
-  const pollGlobalUnread = useCallback(async () => {
-    if (location.pathname === '/chat') { setGlobalUnreadCount(0); return; }
-    try {
-      const res = await api('/api/chat');
-      const json = await res.json();
-      if (json.success && json.data?.length > 0) {
-        const latestId = (json.data.length > 0 ? json.data.reduce((max: string, m: Message) => (BigInt(m.id) > BigInt(max) ? m.id : max), '0') : '0');
-        if (globalLastSeenRef.current === '0') globalLastSeenRef.current = latestId;
-        else if (BigInt(latestId) > BigInt(globalLastSeenRef.current)) setGlobalUnreadCount(json.data.filter((m: Message) => BigInt(m.id) > BigInt(globalLastSeenRef.current)).length);
-      }
-    } catch {}
-  }, [location.pathname]);
 
   const pollUnreadMemos = useCallback(async () => {
     if (location.pathname === '/memos') { setUnreadMemosCount(0); return; }
@@ -204,11 +190,10 @@ export default function Layout({ children }: LayoutProps) {
   }, [location.pathname]);
 
   useEffect(() => {
-    pollGlobalUnread(); pollUnreadMemos();
-    const chatInt = setInterval(pollGlobalUnread, 5000);
+    pollUnreadMemos();
     const memoInt = setInterval(pollUnreadMemos, 10000);
-    return () => { clearInterval(chatInt); clearInterval(memoInt); };
-  }, [pollGlobalUnread, pollUnreadMemos]);
+    return () => clearInterval(memoInt);
+  }, [pollUnreadMemos]);
 
   // --- Chat Rooms ---
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
@@ -244,13 +229,47 @@ export default function Layout({ children }: LayoutProps) {
     if (location.pathname.includes('/wiki')) fetchWikiList();
   }, [location.pathname, fetchWikiList]);
 
-  const fetchChatRooms = useCallback(async () => {
+  // 방별 안읽음 수(서버가 last_read_message_id 기준으로 계산)의 직전 스냅샷.
+  // 첫 폴링은 기준선만 기록하고, 이후 증가분만 메시지 도착 알림으로 알린다.
+  const prevUnreadByRoomRef = useRef<Record<string, number> | null>(null);
+  // t 는 렌더마다 새 함수가 생성되므로 ref 로 동기화해 콜백 의존성을 안정화한다.
+  const tRef = useRef(t);
+  useEffect(() => { tRef.current = t; });
+
+  // 헤더 채팅 배지 + 메시지 도착 알림.
+  // 전역 메시지 ID 기준선 방식(globalLastSeenRef)은 읽음 처리 후에도 기준선이 전진하지 않아
+  // 이미 읽은 메시지를 안읽음으로 표시하는 버그가 있었다. 여기서는 서버가 계산한 방별
+  // unread 의 합계를 사용하므로 읽음 처리 → DB 반영 → 재조회 시 배지가 정확히 내려간다.
+  const refreshChatUnread = useCallback(async () => {
     try {
       const res = await api('/api/chat/rooms');
       const json = await res.json();
-      if (json.success) setChatRooms(json.data || []);
+      if (!json.success) return;
+      const rooms = (json.data || []) as ChatRoom[];
+      setChatRooms(rooms);
+
+      const byRoom = rooms.reduce((acc, room) => {
+        acc[room.id] = room.unread_count || 0;
+        return acc;
+      }, {} as Record<string, number>);
+      const total = Object.values(byRoom).reduce((sum, n) => sum + n, 0);
+
+      // 채팅 페이지에서는 헤더 배지를 숨기고(방 목록 배지가 담당) 도착 알림도 띄우지 않는다.
+      const isChatPage = location.pathname.startsWith('/chat') || location.pathname.endsWith('/chat');
+      setGlobalUnreadCount(isChatPage ? 0 : total);
+
+      const prev = prevUnreadByRoomRef.current;
+      if (prev && !isChatPage) {
+        for (const room of rooms) {
+          const now = room.unread_count || 0;
+          if (now > 0 && now > (prev[room.id] || 0)) {
+            showToast(tRef.current('chatNewMessage').replace('{room}', room.name), 'info');
+          }
+        }
+      }
+      prevUnreadByRoomRef.current = byRoom;
     } catch {}
-  }, []);
+  }, [location.pathname, showToast]);
 
   const handleLogout = () => {
     localStorage.removeItem('user');
@@ -264,20 +283,18 @@ export default function Layout({ children }: LayoutProps) {
   const projectId = isProjectContext ? pathSegments[1] : null;
   const isSystemContext = location.pathname.startsWith('/users') || location.pathname.startsWith('/admin/groups') || location.pathname.startsWith('/admin/organization') || location.pathname.startsWith('/admin/scheduler') || location.pathname.startsWith('/admin/logs');
 
+  // 헤더 채팅 배지 + 메시지 도착 알림: 전역에서 방별 안읽음 수를 주기적으로 재조회한다.
   useEffect(() => {
-    const isChatPage = location.pathname.startsWith('/chat') || (isProjectContext && location.pathname.endsWith('/chat'));
-    if (!isChatPage) return;
-    fetchChatRooms();
-    // 채팅 페이지에서는 새 메시지 도착 시 사이드바 안읽음 배지가 갱신되도록 주기적으로 방 목록을 재조회한다.
-    const chatRoomPollId = setInterval(fetchChatRooms, 5000);
-    return () => clearInterval(chatRoomPollId);
-  }, [location.pathname, fetchChatRooms, isProjectContext]);
+    refreshChatUnread();
+    const chatUnreadInt = setInterval(refreshChatUnread, 5000);
+    return () => clearInterval(chatUnreadInt);
+  }, [refreshChatUnread]);
 
   useEffect(() => {
-    const handleRefresh = () => fetchChatRooms();
+    const handleRefresh = () => refreshChatUnread();
     window.addEventListener('refresh_chat_rooms', handleRefresh);
     return () => window.removeEventListener('refresh_chat_rooms', handleRefresh);
-  }, [fetchChatRooms]);
+  }, [refreshChatUnread]);
 
   const mainNav = isProjectContext ? [
     { name: t('dashboard'), path: `/projects/${projectId}/dashboard`, icon: LayoutDashboard },
@@ -359,7 +376,7 @@ export default function Layout({ children }: LayoutProps) {
         />
 
         <div className="flex flex-1 relative min-h-[calc(100vh-var(--header-height))]">
-          <main className="main-content flex flex-1 w-full bg-white dark:bg-transparent" aria-label="메인 콘텐츠" style={{ marginLeft: 0, paddingTop: 0 }}>
+          <main className="main-content flex flex-1 w-full bg-white dark:bg-transparent" aria-label={t('mainContent')} style={{ marginLeft: 0, paddingTop: 0 }}>
             {children}
           </main>
         </div>

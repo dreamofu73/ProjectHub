@@ -125,7 +125,7 @@ export default function OrganizationPage() {
         <div className="flex items-center gap-3">
           <h2 className="text-sm font-bold text-[var(--text-primary)] flex items-center gap-2">
             <Building2 size={16} className="text-[var(--primary)]" />
-            <span>{t('organizationInfo') || '조직정보 관리'}</span>
+            <span>{t('organizationInfo')}</span>
             {orgSettings && (
               <span className="text-xs font-medium text-[var(--text-muted)] ml-1">
                 {orgSettings.name}
@@ -140,7 +140,7 @@ export default function OrganizationPage() {
             className="h-8 px-3.5 bg-[var(--primary)] hover:opacity-90 text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer flex items-center gap-1.5 active:scale-[0.98] border-none"
           >
             <Settings size={13} />
-            {t('orgSettings') || '조직 설정'}
+            {t('orgSettings')}
           </button>
         </div>
       </div>
@@ -152,7 +152,7 @@ export default function OrganizationPage() {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-extrabold text-[var(--text-primary)] flex items-center gap-2">
                 <Settings size={16} className="text-[var(--primary)]" />
-                {t('orgSettings') || '조직 설정'}
+                {t('orgSettings')}
               </h3>
             </div>
 
@@ -165,7 +165,7 @@ export default function OrganizationPage() {
             <div className="flex flex-wrap items-end gap-4">
               <div className="flex-1 min-w-[200px]">
                 <Input
-                  label={t('orgName') || '조직명 (회사명)'}
+                  label={t('orgName')}
                   value={settingsForm.name}
                   onChange={(e) =>
                     setSettingsForm({ ...settingsForm, name: e.target.value })
@@ -176,7 +176,7 @@ export default function OrganizationPage() {
               </div>
               <div className="flex-1 min-w-[180px]">
                 <Input
-                  label={t('domain') || '대표 도메인'}
+                  label={t('domain')}
                   value={settingsForm.domain}
                   onChange={(e) =>
                     setSettingsForm({ ...settingsForm, domain: e.target.value })
@@ -190,7 +190,7 @@ export default function OrganizationPage() {
                   className="h-10 px-4 rounded-xl bg-[var(--primary)] hover:opacity-90 text-white text-xs font-bold transition-all shadow-sm cursor-pointer flex items-center gap-1.5 active:scale-[0.98] border-none"
                 >
                   <Save size={14} />
-                  {t('save') || '저장'}
+                  {t('save')}
                 </button>
                 <button
                   onClick={closeSettings}

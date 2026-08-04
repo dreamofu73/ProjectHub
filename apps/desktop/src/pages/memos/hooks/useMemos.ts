@@ -4,7 +4,9 @@ import { api } from 'shared/lib/api';
 import { useToast } from 'ui/Toast';
 import type { Memo, CustomFolder, FolderType } from 'shared/types';
 
+import { useLanguage } from 'shared/hooks/LanguageContext';
 export function useMemos(currentFolder: FolderType, currentUserId: string | null) {
+  const { t } = useLanguage();
   const { showToast } = useToast();
   const [memos, setMemos] = useState<Memo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,11 +73,11 @@ export function useMemos(currentFolder: FolderType, currentUserId: string | null
         setMemos(fetchedData);
         setTotal(totalCount);
       } else {
-        showToast(json.error || '쪽지를 불러오지 못했습니다.', 'error');
+        showToast(json.error || t('memoFetchError'), 'error');
       }
     } catch (err) {
       console.error('Failed to fetch memos:', err);
-      showToast('네트워크 오류가 발생했습니다.', 'error');
+      showToast(t('networkError'), 'error');
     } finally {
       setLoading(false);
     }

@@ -52,7 +52,7 @@ export function MemoComposeModal({
         <div className="flex items-center justify-between p-5 border-b border-[var(--border)] bg-[var(--bg-surface-2)]/50">
           <h3 className="text-base font-bold text-[var(--text-primary)] flex items-center gap-2">
             <Send size={16} className="text-[var(--primary)]" />
-            {isSelfWriteMode ? '내게 쪽지 쓰기' : '새 쪽지 작성'}
+            {isSelfWriteMode ? t('composeSelfMemo') : t('composeNewMemo')}
           </h3>
           <button
             onClick={onClose}
@@ -66,13 +66,13 @@ export function MemoComposeModal({
           <div className="p-6 space-y-5 flex-1 flex flex-col">
             <div className="space-y-1.5 relative">
               <label className="text-sm font-bold text-[var(--text-secondary)]">
-                받는 사람 <span className="text-red-500">*</span>
+                {t('receiver')} <span className="text-red-500">*</span>
               </label>
               
               {isSelfWriteMode ? (
                 <div className="flex items-center gap-2 p-2 bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/20 rounded-xl text-sm font-semibold select-none">
                   <Award size={14} />
-                  <span>{currentUser?.lastname}{currentUser?.firstname} (나 자신에게 쓰기)</span>
+                  <span>{currentUser?.lastname}{currentUser?.firstname} {t('toMyself')}</span>
                 </div>
               ) : (
                 <>
@@ -100,7 +100,7 @@ export function MemoComposeModal({
                   <div className="relative">
                     <input
                       type="text"
-                      placeholder="이름 또는 아이디 검색하여 추가..."
+                      placeholder={t('searchUserPlaceholder')}
                       value={recipientSearch}
                       onChange={(e) => setRecipientSearch(e.target.value)}
                       className="w-full px-3.5 py-2.5 h-10 border border-[var(--border)] rounded-xl bg-[var(--bg-surface)] text-sm focus:outline-none focus:ring-1 focus:ring-[var(--primary)]/50 focus:border-[var(--primary)] transition-all placeholder:text-[var(--text-muted)] text-[var(--text-primary)]"
@@ -111,7 +111,7 @@ export function MemoComposeModal({
                   {recipientSearch.trim() !== '' && (
                     <div className="absolute left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl shadow-xl z-30 divide-y divide-[var(--border)] animate-in fade-in slide-in-from-top-1 duration-150">
                       {filteredUsers.length === 0 ? (
-                        <div className="p-3 text-center text-sm text-[var(--text-muted)] font-medium">검색 결과가 없거나 이미 추가되었습니다.</div>
+                        <div className="p-3 text-center text-sm text-[var(--text-muted)] font-medium">{t('noSearchResultsOrAdded')}</div>
                       ) : (
                         filteredUsers.map((u) => (
                           <button
@@ -136,11 +136,11 @@ export function MemoComposeModal({
 
             <div className="space-y-1.5">
               <label className="text-sm font-bold text-[var(--text-secondary)]">
-                제목 <span className="text-red-500">*</span>
+                {t('title')} <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
-                placeholder="쪽지 제목을 입력하세요"
+                placeholder={t('memoTitlePlaceholder')}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
@@ -150,7 +150,7 @@ export function MemoComposeModal({
 
             <div className="space-y-1.5 flex-1 flex flex-col">
               <label className="text-sm font-bold text-[var(--text-secondary)]">
-                내용 <span className="text-red-500">*</span>
+                {t('content')} <span className="text-red-500">*</span>
               </label>
               <div className="flex-1 flex flex-col min-h-[300px]">
                 <HTMLEditor
@@ -165,7 +165,7 @@ export function MemoComposeModal({
             <div className="space-y-2">
               <label className="text-sm font-bold text-[var(--text-secondary)] flex items-center gap-1">
                 <Paperclip size={13} className="text-[var(--text-muted)]" />
-                파일 첨부
+                {t('attachmentsLabel')}
               </label>
               
               <div className="relative border-2 border-dashed border-[var(--border)] rounded-xl hover:border-[var(--primary)] transition-all bg-[var(--bg-surface-2)]/50 p-4 text-center cursor-pointer group">
@@ -182,10 +182,10 @@ export function MemoComposeModal({
                 <div className="flex flex-col items-center justify-center gap-1.5 pointer-events-none select-none">
                   <Paperclip size={20} className="text-[var(--text-muted)] transition-colors" />
                   <span className="text-sm font-semibold text-[var(--text-secondary)]">
-                    파일을 드래그하여 놓거나 클릭하여 선택
+                    {t('dragFilesHint')}
                   </span>
                   <span className="text-xs text-[var(--text-muted)]">
-                    최대 파일 크기: 100MiB
+                    {t('maxFileSizeHint')}
                   </span>
                 </div>
               </div>
@@ -224,7 +224,7 @@ export function MemoComposeModal({
               onClick={onClose}
               className="bg-[var(--bg-surface-2)] hover:opacity-90 text-[var(--text-secondary)] font-semibold px-4 py-2 rounded-xl text-sm border-none cursor-pointer"
             >
-              {"취소"}
+              {t('cancel')}
             </Button>
             <Button
               type="submit"
@@ -234,12 +234,12 @@ export function MemoComposeModal({
               {sending ? (
                 <>
                   <RefreshCw size={14} className="animate-spin" />
-                  전송 중...
+                  {t('sending')}
                 </>
               ) : (
                 <>
                   <Send size={14} />
-                  전송하기
+                  {t('sendMemo')}
                 </>
               )}
             </Button>

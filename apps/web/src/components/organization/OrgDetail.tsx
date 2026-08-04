@@ -30,8 +30,8 @@ export function OrgDetail({
           <Building2 size={24} className="text-[var(--text-muted)] opacity-60" />
         </div>
         <div className="text-center">
-          <p className="text-xs font-bold text-[var(--text-secondary)]">{t('noDeptSelected') || '선택된 부서가 없습니다.'}</p>
-          <p className="text-xs text-[var(--text-muted)] mt-1">{t('selectDeptHint') || '목록에서 확인하려는 부서를 선택하세요.'}</p>
+          <p className="text-xs font-bold text-[var(--text-secondary)]">{t('noDeptSelected')}</p>
+          <p className="text-xs text-[var(--text-muted)] mt-1">{t('selectDeptHint')}</p>
         </div>
       </div>
     );
@@ -56,14 +56,14 @@ export function OrgDetail({
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] hover:bg-[var(--bg-surface-2)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-xs font-bold transition-colors cursor-pointer"
               >
                 <Edit2 size={12} />
-                {t('edit') || '수정'}
+                {t('edit')}
               </button>
               <button
                 onClick={() => onDelete(department.id)}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 text-xs font-bold transition-colors cursor-pointer"
               >
                 <Trash2 size={12} />
-                {t('delete') || '삭제'}
+                {t('delete')}
               </button>
             </div>
           </div>
@@ -71,13 +71,13 @@ export function OrgDetail({
             <h2 className="text-xl font-extrabold text-[var(--text-primary)] flex items-center gap-2">
               {department.name}
               <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs font-bold">
-                <Building2 size={10} /> {t('department') || '부서'}
+                <Building2 size={10} /> {t('department')}
               </span>
             </h2>
             <p className="text-sm text-[var(--text-muted)] font-medium mt-0.5">
               {department.member_count > 0
-                ? `${t('memberCount') || '구성원'} ${department.member_count}${t('people') || '명'}`
-                : t('noMembers') || '구성원 없음'}
+                ? `${t('memberCount')} ${department.member_count}${t('people')}`
+                : t('noMembers')}
             </p>
           </div>
         </div>
@@ -94,7 +94,7 @@ export function OrgDetail({
           }`}
         >
           <Info size={14} />
-          기본 정보
+          {t('basicInfo')}
         </button>
         <button
           onClick={() => setActiveTab('members')}
@@ -105,7 +105,7 @@ export function OrgDetail({
           }`}
         >
           <Users size={14} />
-          멤버
+          {t('members')}
           {members.length > 0 && (
             <span className="text-xs font-bold bg-[var(--bg-surface-2)] px-1.5 py-0.5 rounded-full leading-none ml-0.5">
               {members.length}
@@ -121,7 +121,7 @@ export function OrgDetail({
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-[var(--bg-surface-2)]/40 p-3.5 rounded-xl border border-[var(--border)] flex flex-col gap-1">
               <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">
-                <FolderTree size={12} /> {t('parentDept') || '상위 부서'}
+                <FolderTree size={12} /> {t('parentDept')}
               </div>
               <span className="text-xs font-semibold text-[var(--text-primary)]">
                 {department.parent_name || '-'}
@@ -129,15 +129,15 @@ export function OrgDetail({
             </div>
             <div className="bg-[var(--bg-surface-2)]/40 p-3.5 rounded-xl border border-[var(--border)] flex flex-col gap-1">
               <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">
-                <Building2 size={12} /> {t('members') || '구성원'}
+                <Building2 size={12} /> {t('members')}
               </div>
               <span className="text-xs font-bold text-[var(--text-primary)]">
-                {department.member_count}{t('people') || '명'}
+                {department.member_count}{t('people')}
               </span>
             </div>
             <div className="bg-[var(--bg-surface-2)]/40 p-3.5 rounded-xl border border-[var(--border)] flex flex-col gap-1 col-span-2">
               <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">
-                <FileText size={12} /> {t('description') || '설명'}
+                <FileText size={12} /> {t('description')}
               </div>
               <span className="text-xs font-semibold text-[var(--text-primary)]">
                 {department.description || '-'}
@@ -145,7 +145,7 @@ export function OrgDetail({
             </div>
             <div className="bg-[var(--bg-surface-2)]/40 p-3.5 rounded-xl border border-[var(--border)] flex flex-col gap-1 col-span-2">
               <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">
-                <Calendar size={12} /> {t('createdAt') || '등록일'}
+                <Calendar size={12} /> {t('createdAt')}
               </div>
               <span className="text-xs font-semibold text-[var(--text-primary)]">
                 {formatDate(department.created_at)}
@@ -157,20 +157,20 @@ export function OrgDetail({
           membersLoading ? (
             <div className="flex items-center justify-center py-8 text-[var(--text-muted)] text-xs gap-2">
               <div className="w-4 h-4 border-2 border-[var(--border-strong)] border-t-[var(--primary)] rounded-full animate-spin" />
-              {t('loading') || '로딩 중...'}
+              {t('loading')}
             </div>
           ) : members.length === 0 ? (
             <div className="text-center py-8 text-xs text-[var(--text-muted)] font-medium">
-              {t('noDeptMembers') || '이 부서에 소속된 구성원이 없습니다.'}
+              {t('noDeptMembers')}
             </div>
           ) : (
             <div className="flex flex-col divide-y divide-[var(--border)] rounded-xl border border-[var(--border)] overflow-hidden">
               {/* 헤더 */}
               <div className="flex items-center gap-3 px-4 py-2 bg-[var(--bg-surface-2)]/40 text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">
-                <div className="flex-1 min-w-0">{t('name') || '이름'}</div>
-                <div className="w-44 hidden sm:block">{t('email') || '이메일'}</div>
-                <div className="w-20 text-center">{t('role') || '권한'}</div>
-                <div className="w-16 text-center">{t('status') || '상태'}</div>
+                <div className="flex-1 min-w-0">{t('name')}</div>
+                <div className="w-44 hidden sm:block">{t('email')}</div>
+                <div className="w-20 text-center">{t('role')}</div>
+                <div className="w-16 text-center">{t('status')}</div>
               </div>
               {/* 맴버 행 */}
               {members.map((member) => (
@@ -207,22 +207,22 @@ export function OrgDetail({
                     }`}>
                       <Shield size={9} />
                       {member.role === 'admin'
-                        ? (t('admin') || '관리자')
+                        ? t('admin')
                         : member.role === 'manager'
-                        ? (t('manager') || '매니저')
-                        : (t('member') || '맴버')}
+                        ? t('manager')
+                        : t('member')}
                     </span>
                   </div>
                   <div className="w-16 text-center">
                     {member.is_active ? (
                       <span className="inline-flex items-center gap-1 text-green-600 dark:text-green-400 text-xs font-bold">
                         <UserCheck size={11} />
-                        {t('active') || '활성'}
+                        {t('active')}
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 text-red-500 text-xs font-bold">
                         <UserX size={11} />
-                        {t('inactive') || '비활성'}
+                        {t('inactive')}
                       </span>
                     )}
                   </div>

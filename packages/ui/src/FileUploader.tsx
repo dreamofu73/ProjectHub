@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Upload, X, FileText } from 'lucide-react';
 import { useToast } from './Toast';
+import { useLanguage } from 'shared/hooks/LanguageContext';
 
 export interface FileUploaderProps {
   files: File[];
@@ -14,6 +15,7 @@ export function FileUploader({ files, onChange, maxFiles = 10, maxSizeMB = 50, c
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
   const { showToast } = useToast();
+  const { t } = useLanguage();
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -44,7 +46,7 @@ export function FileUploader({ files, onChange, maxFiles = 10, maxSizeMB = 50, c
   const handleFiles = (newFiles: File[]) => {
     const validFiles = newFiles.filter(file => file.size <= maxSizeMB * 1024 * 1024);
     if (validFiles.length < newFiles.length) {
-      showToast(`일부 파일이 최대 크기(${maxSizeMB}MB)를 초과하여 제외되었습니다.`, 'error');
+      showToast(t('fileSizeExceededExcluded').replace('{size}', String(maxSizeMB)), 'error');
     }
     const totalFiles = [...files, ...validFiles].slice(0, maxFiles);
     onChange(totalFiles);
@@ -77,8 +79,10 @@ export function FileUploader({ files, onChange, maxFiles = 10, maxSizeMB = 50, c
           <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
             <Upload size={20} />
           </div>
-          <div className="text-sm font-medium">클릭하거나 파일을 이곳으로 드래그하세요</div>
-          <div className="text-xs text-muted">최대 {maxFiles}개, 각 {maxSizeMB}MB 이하</div>
+          <div className="text-sm font-medium">{t('clickOrDragFiles')}</div>
+          <div className="text-xs text-muted">
+            {t('fileUploadLimitHint').replace('{count}', String(maxFiles)).replace('{size}', String(maxSizeMB))}
+          </div>
         </div>
       </div>
 

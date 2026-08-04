@@ -44,10 +44,10 @@ export default function Dashboard() {
         if (json.success) {
           setData(json.data);
         } else {
-          setError(json.error || '대시보드 데이터를 가져오는데 실패했습니다.');
+          setError(json.error || t('dashFetchError'));
         }
       } catch {
-        setError('서버 연결 중 오류가 발생했습니다.');
+        setError(t('serverError'));
       } finally {
         setLoading(false);
       }
@@ -62,21 +62,21 @@ export default function Dashboard() {
           <div className="h-8 w-44 bg-slate-200 dark:bg-slate-800 rounded-md" />
           <div className="h-5 w-72 bg-slate-100 dark:bg-slate-800/60 rounded-md" />
         </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 min-w-0">
           {[1, 2, 3, 4].map(n => (
             <div key={n} className="h-28 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800" />
           ))}
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 min-w-0">
           <div className="lg:col-span-2 h-[450px] bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800" />
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 min-w-0">
             <div className="h-[120px] bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800" />
             <div className="h-[314px] bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800" />
           </div>
         </div>
         <div className="flex flex-col gap-2.5 mt-2">
           <div className="h-5 w-32 bg-slate-200 dark:bg-slate-800 rounded-md" />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 min-w-0">
             {[1, 2, 3, 4].map(n => (
               <div key={n} className="h-28 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800" />
             ))}
@@ -90,8 +90,8 @@ export default function Dashboard() {
     return (
       <Card className="border-destructive/30 max-w-md mx-auto mt-12">
         <CardContent className="text-center py-10">
-          <p className="text-destructive font-semibold">{error || '데이터를 로드할 수 없습니다.'}</p>
-          <Button variant="secondary" className="mt-4" onClick={() => window.location.reload()}>다시 시도</Button>
+          <p className="text-destructive font-semibold">{error || t('loadDataFailed')}</p>
+          <Button variant="secondary" className="mt-4" onClick={() => window.location.reload()}>{t('retry')}</Button>
         </CardContent>
       </Card>
     );
@@ -106,22 +106,23 @@ export default function Dashboard() {
     const subject = act.subject_title;
     const actionType = act.action_type || 'created';
 
-    const actionLabels: Record<string, Record<typeof language, string>> = {
-      created:   { ko: '생성했습니다.', en: 'created.',  ja: '作成しました。', zh: '创建了。' },
-      updated:   { ko: '수정했습니다.', en: 'updated.',  ja: '編集しました。', zh: '编辑了。' },
-      deleted:   { ko: '삭제했습니다.', en: 'deleted.',  ja: '削除しました。', zh: '删除了。' },
-      commented: { ko: '댓글을 작성했습니다.', en: 'commented on.', ja: 'コメントしました。', zh: '发表了评论。' },
-      posted:    { ko: '게시글을 작성했습니다.', en: 'posted.', ja: '投稿しました。', zh: '发布了帖子。' },
-      invited:   { ko: '초대했습니다.', en: 'invited.', ja: '招待しました。', zh: '邀请了。' },
+    // t() already resolves per language — no per-language map needed here.
+    const actionKeys: Record<string, string> = {
+      created: 'createdAction',
+      updated: 'updatedAction',
+      deleted: 'deletedAction',
+      commented: 'commentedAction',
+      posted: 'postedAction',
+      invited: 'invitedAction',
     };
-    const action = actionLabels[actionType]?.[language] || actionType;
+    const action = actionKeys[actionType] ? t(actionKeys[actionType]) : actionType;
 
     const renderText = () => {
-      if (language === 'en') return (
+      if (language === 'en' || language === 'es') return (
         <><span className="font-semibold text-foreground">{user}</span> {action} <span className="font-semibold">{subject}</span>{project && <> in <Link to={`/projects/${act.project_identifier}/dashboard`} className="font-medium text-primary hover:underline">{project}</Link></>}</>
       );
       return (
-        <><span className="font-semibold text-foreground">{user}</span>님이 {project && <><Link to={`/projects/${act.project_identifier}/dashboard`} className="font-medium text-primary hover:underline">{project}</Link></>}<span className="font-semibold">{subject}</span>을(를) {action}</>
+        <><span className="font-semibold text-foreground">{user}</span>{t('activitySubjectParticle')} {project && <><Link to={`/projects/${act.project_identifier}/dashboard`} className="font-medium text-primary hover:underline">{project}</Link></>}<span className="font-semibold">{subject}</span>{t('activityObjectParticle')} {action}</>
       );
     };
 
@@ -187,7 +188,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-5 min-w-0 overflow-hidden">
       {/* Page Header */}
       <div className="stagger-1 flex flex-col gap-1">
         <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">{t('dashboard')}</h1>
@@ -197,7 +198,7 @@ export default function Dashboard() {
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 stagger-2">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 min-w-0 stagger-2">
         {statCards.map((s) => (
           <Link key={s.label} to={s.to} className="no-underline group">
             <Card className="border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-none hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 rounded-xl">
@@ -219,9 +220,9 @@ export default function Dashboard() {
       </div>
 
       {/* Main Content (Grid & Rows) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 stagger-3">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 min-w-0 stagger-3">
         {/* Issue Status Card */}
-        <Card className="border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-none rounded-xl overflow-hidden shrink-0">
+        <Card className="border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-none rounded-xl overflow-hidden min-w-0">
           <CardHeader className="px-4 py-3.5 border-b border-slate-100 dark:border-slate-800">
             <CardTitle className="text-sm font-bold text-slate-900 dark:text-white">
               {t('issueStatus')}
@@ -311,7 +312,7 @@ export default function Dashboard() {
               <ArrowRight size={13} />
             </Link>
           </CardHeader>
-          <CardContent className="p-0 overflow-auto">
+          <CardContent className="p-0 overflow-x-auto custom-scrollbar">
             {(!data.my_issues || data.my_issues.length === 0) ? (
               <div className="py-14 text-center text-sm text-muted-foreground">
                 {t('noAssignedIssues')}
@@ -363,7 +364,7 @@ export default function Dashboard() {
                 {t('noActiveProjects')}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 min-w-0">
                 {data.projects_summary.map((project) => (
                   <div
                     key={project.id}

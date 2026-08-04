@@ -9,12 +9,12 @@ export const STATUS_CONFIG: Record<string, { color: string; bg: string; dot: str
   rejected:    { color: '#ef4444', bg: 'rgba(239,68,68,0.08)',  dot: '#ef4444' },
 };
 
-export const PRIORITY_CONFIG: Record<string, { color: string; label: string }> = {
-  low:       { color: '#94a3b8', label: '낮음' },
-  normal:    { color: '#3b82f6', label: '보통' },
-  high:      { color: '#f59e0b', label: '높음' },
-  urgent:    { color: '#ef4444', label: '긴급' },
-  immediate: { color: '#7c3aed', label: '즉시' },
+export const PRIORITY_CONFIG: Record<string, { color: string; labelKey: string }> = {
+  low:       { color: '#94a3b8', labelKey: 'low' },
+  normal:    { color: '#3b82f6', labelKey: 'normal' },
+  high:      { color: '#f59e0b', labelKey: 'high' },
+  urgent:    { color: '#ef4444', labelKey: 'urgent' },
+  immediate: { color: '#7c3aed', labelKey: 'immediate' },
 };
 
 export const TRACKER_CONFIG: Record<string, { emoji: string; color: string }> = {
@@ -77,3 +77,12 @@ export const PRIORITY_LABEL_KEYS: Record<string, string> = {
   urgent: 'urgent',
   immediate: 'immediate',
 };
+
+/** PRIORITY_CONFIG with i18n labels resolved. Call from a component that has t(). */
+export function buildPriorityConfig(
+  t: (key: string) => string
+): Record<string, { color: string; label: string }> {
+  return Object.fromEntries(
+    Object.entries(PRIORITY_CONFIG).map(([k, v]) => [k, { ...v, label: t(v.labelKey) }])
+  );
+}

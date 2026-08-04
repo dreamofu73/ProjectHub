@@ -138,7 +138,7 @@ export function IssuesToolbar({
             onChange={e => updateFilter('project', e.target.value)}
             className="h-8.5 px-3 border border-[var(--border)] rounded-xl bg-[var(--bg-surface)] text-xs focus:outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-indigo-500/15 text-[var(--text-primary)] cursor-pointer font-semibold shadow-2xs hover:border-[var(--border-strong)] transition-all"
           >
-            <option value="all" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('project') || '프로젝트'}</option>
+            <option value="all" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('project')}</option>
             {projects.map(p => (
               <option key={p.identifier} value={p.identifier} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{p.name}</option>
             ))}
@@ -151,12 +151,12 @@ export function IssuesToolbar({
           onChange={e => updateFilter('tracker', e.target.value)}
           className="h-8.5 px-3 border border-[var(--border)] rounded-xl bg-[var(--bg-surface)] text-xs focus:outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-indigo-500/15 text-[var(--text-primary)] cursor-pointer font-semibold shadow-2xs hover:border-[var(--border-strong)] transition-all"
         >
-          <option value="all" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('allTrackers') || '유형'}</option>
-          <option value="bug" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">🐛 {t('bug') || '결함'}</option>
-          <option value="feature" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">✨ {t('feature') || '기능'}</option>
-          <option value="task" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">✅ {t('task') || '작업'}</option>
-          <option value="support" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">💬 {t('support') || '지원'}</option>
-          <option value="enhancement" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">⚡ {t('enhancement') || '개선'}</option>
+          <option value="all" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('allTrackers')}</option>
+          <option value="bug" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">🐛 {t('bug')}</option>
+          <option value="feature" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">✨ {t('feature')}</option>
+          <option value="task" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">✅ {t('task')}</option>
+          <option value="support" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">💬 {t('support')}</option>
+          <option value="enhancement" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">⚡ {t('enhancement')}</option>
         </select>
 
         {/* 3. 상태 필터 */}
@@ -165,13 +165,13 @@ export function IssuesToolbar({
           onChange={e => updateFilter('status', e.target.value)}
           className="h-8.5 px-3 border border-[var(--border)] rounded-xl bg-[var(--bg-surface)] text-xs focus:outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-indigo-500/15 text-[var(--text-primary)] cursor-pointer font-semibold shadow-2xs hover:border-[var(--border-strong)] transition-all"
         >
-          <option value="all" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('allStatuses') || '상태'}</option>
-          <option value="new" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('new') || '신규'}</option>
-          <option value="in_progress" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('in_progress') || '진행중'}</option>
-          <option value="resolved" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('resolved') || '해결됨'}</option>
-          <option value="feedback" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('feedback') || '피드백'}</option>
-          <option value="closed" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('closed') || '완료'}</option>
-          <option value="rejected" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('rejected') || '거절됨'}</option>
+          <option value="all" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('allStatuses')}</option>
+          <option value="new" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('new')}</option>
+          <option value="in_progress" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('in_progress')}</option>
+          <option value="resolved" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('resolved')}</option>
+          <option value="feedback" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('feedback')}</option>
+          <option value="closed" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('closed')}</option>
+          <option value="rejected" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('rejected')}</option>
         </select>
 
         {/* 4. 우선순위 필터 */}
@@ -180,12 +180,12 @@ export function IssuesToolbar({
           onChange={e => updateFilter('priority', e.target.value)}
           className="h-8.5 px-3 border border-[var(--border)] rounded-xl bg-[var(--bg-surface)] text-xs focus:outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-indigo-500/15 text-[var(--text-primary)] cursor-pointer font-semibold shadow-2xs hover:border-[var(--border-strong)] transition-all"
         >
-          <option value="all" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('allPriorities') || '우선순위'}</option>
-          <option value="low" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('low') || '낮음'}</option>
-          <option value="normal" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('normal') || '보통'}</option>
-          <option value="high" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('high') || '높음'}</option>
-          <option value="urgent" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('urgent') || '긴급'}</option>
-          <option value="immediate" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('immediate') || '즉시'}</option>
+          <option value="all" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('allPriorities')}</option>
+          <option value="low" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('low')}</option>
+          <option value="normal" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('normal')}</option>
+          <option value="high" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('high')}</option>
+          <option value="urgent" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('urgent')}</option>
+          <option value="immediate" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('immediate')}</option>
         </select>
 
         {/* 5. 담당자 필터 (전체 / 내 이슈) */}
@@ -195,10 +195,10 @@ export function IssuesToolbar({
           className="h-8.5 px-3 border border-[var(--border)] rounded-xl bg-[var(--bg-surface)] text-xs focus:outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-indigo-500/15 text-[var(--text-primary)] cursor-pointer font-semibold shadow-2xs hover:border-[var(--border-strong)] transition-all"
         >
           <option value="all" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
-            {t('assignee') || '담당자'}
+            {t('assignee')}
           </option>
           <option value="me" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
-            {t('myIssues') || '내 이슈'}
+            {t('myIssues')}
           </option>
         </select>
 
@@ -211,16 +211,16 @@ export function IssuesToolbar({
           className="h-8.5 px-3 border border-[var(--border)] rounded-xl bg-[var(--bg-surface)] text-xs focus:outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-indigo-500/15 text-[var(--text-primary)] cursor-pointer font-semibold shadow-2xs hover:border-[var(--border-strong)] transition-all"
         >
           <option value="all" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
-            {t('all') || '전체'}
+            {t('all')}
           </option>
           <option value="title" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
-            {t('title') || '제목'}
+            {t('title')}
           </option>
           <option value="content" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
-            {t('content') || '내용'}
+            {t('content')}
           </option>
           <option value="author" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
-            {t('author') || '작성자'}
+            {t('author')}
           </option>
         </select>
 
@@ -228,7 +228,7 @@ export function IssuesToolbar({
         <div className="relative">
           <input
             type="text"
-            placeholder={t('searchIssuesPlaceholder') || '이슈 제목, 내용 검색...'}
+            placeholder={t('searchIssuesPlaceholder')}
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             className="pl-3 pr-8 h-8.5 w-48 border border-[var(--border)] rounded-xl bg-[var(--bg-surface)] text-xs focus:outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-indigo-500/15 text-[var(--text-primary)] shadow-2xs transition-all placeholder:text-[var(--text-muted)] font-medium"
@@ -246,10 +246,10 @@ export function IssuesToolbar({
           type="button"
           onClick={handleResetFilters}
           className="h-8.5 px-3 flex items-center gap-1.5 border border-[var(--border)] rounded-xl bg-[var(--bg-surface)] text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-2)] transition-all cursor-pointer font-bold active:scale-[0.96] shadow-2xs"
-          title={t('resetFilters') || '필터 초기화'}
+          title={t('resetFilters')}
         >
           <X size={13} className="text-red-500" />
-          {t('reset') || '초기화'}
+          {t('reset')}
         </button>
 
         {/* 10. 컬럼 설정 버튼 */}
@@ -258,7 +258,7 @@ export function IssuesToolbar({
             type="button"
             onClick={() => setIsColumnSettingsOpen(!isColumnSettingsOpen)}
             className="h-8.5 px-3 flex items-center gap-1.5 border border-[var(--border)] rounded-xl bg-[var(--bg-surface)] text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-2)] transition-all cursor-pointer font-bold active:scale-[0.96] shadow-2xs"
-            title={t('columnSettings') || '컬럼 설정'}
+            title={t('columnSettings')}
           >
             <Settings size={13} />
           </button>
@@ -266,7 +266,7 @@ export function IssuesToolbar({
           {isColumnSettingsOpen && (
             <div className="absolute right-0 sm:left-0 mt-1.5 w-56 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl shadow-xl z-50 py-2.5 animate-in fade-in slide-in-from-top-1 duration-150">
               <div className="px-3 pb-2 mb-1 border-b border-[var(--border)] flex items-center justify-between">
-                <span className="text-xs font-extrabold text-[var(--text-primary)]">{t('columnSettings') || '컬럼 설정'}</span>
+                <span className="text-xs font-extrabold text-[var(--text-primary)]">{t('columnSettings')}</span>
                 <span className="text-[0.65rem] font-bold text-[var(--primary)] bg-indigo-50 dark:bg-indigo-950/40 px-1.5 py-0.5 rounded-full">
                   {t('columnsSelected').replace('{count}', String(columnKeys.length))}
                 </span>
@@ -302,7 +302,7 @@ export function IssuesToolbar({
         <div className="flex items-center gap-2 flex-wrap min-w-0 pt-2.5 mt-2.5 border-t border-[var(--border)]">
           {/* 선택 개수 */}
           <span className="text-xs font-bold text-[var(--primary)] shrink-0 min-w-[3rem]">
-            {selectedIssues.length} {t('issues') || '개'}
+            {selectedIssues.length} {t('issues')}
           </span>
 
           {/* 일감으로 일괄 등록 */}
@@ -322,7 +322,7 @@ export function IssuesToolbar({
               onClick={() => toggleDropdown('status')}
               className="flex items-center gap-1 px-2.5 py-1.5 border border-[var(--border)] hover:bg-[var(--bg-surface-2)] text-[var(--text-secondary)] rounded text-xs font-semibold transition-all cursor-pointer bg-[var(--bg-surface)] h-8"
             >
-              {t('changeStatusPlaceholder') || '상태 변경'}
+              {t('changeStatusPlaceholder')}
               <ChevronDown size={10} className="opacity-60" />
             </button>
             {activeDropdown === 'status' && (
@@ -350,7 +350,7 @@ export function IssuesToolbar({
               className="flex items-center gap-1 px-2.5 py-1.5 border border-[var(--border)] hover:bg-[var(--bg-surface-2)] text-[var(--text-secondary)] rounded text-xs font-semibold transition-all cursor-pointer bg-[var(--bg-surface)] h-8"
             >
               <User size={11} />
-              {t('assignUserPlaceholder') || '담당자'}
+              {t('assignUserPlaceholder')}
               <ChevronDown size={10} className="opacity-60" />
             </button>
             {activeDropdown === 'assignee' && (
@@ -363,7 +363,7 @@ export function IssuesToolbar({
                     }}
                     className="w-full text-left px-3 py-2 text-xs hover:bg-[var(--bg-surface-2)] text-[var(--text-primary)] flex items-center gap-2 cursor-pointer border-none bg-transparent font-medium"
                   >
-                    {t('unassigned') || '미배정'}
+                    {t('unassigned')}
                   </button>
                 </div>
                 {getCommonMembers().length > 0 && (
@@ -393,7 +393,7 @@ export function IssuesToolbar({
               className="flex items-center gap-1 px-2.5 py-1.5 border border-[var(--border)] hover:bg-[var(--bg-surface-2)] text-[var(--text-secondary)] rounded text-xs font-semibold transition-all cursor-pointer bg-[var(--bg-surface)] h-8"
             >
               <Calendar size={11} />
-              {t('dueDateLabel') || '기한'}
+              {t('dueDateLabel')}
               <ChevronDown size={10} className="opacity-60" />
             </button>
             {activeDropdown === 'due_date' && (
@@ -424,7 +424,7 @@ export function IssuesToolbar({
           >
             <X size={11} />
             <span>
-              {t('deselectAll') || '선택해제'}
+              {t('deselectAll')}
             </span>
           </button>
         </div>

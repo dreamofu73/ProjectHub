@@ -250,7 +250,7 @@ export function EditMembersModal({
               value={groupName}
               onChange={e => setGroupName(e.target.value)}
               className="flex-1 min-w-0 text-base font-bold bg-transparent border-none outline-none text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
-              placeholder={t('groupNamePlaceholder') || '그룹 이름을 입력하세요'}
+              placeholder={t('groupNamePlaceholder')}
               autoFocus
             />
           </div>
@@ -269,7 +269,7 @@ export function EditMembersModal({
             <div className="px-4 py-3 border-b border-[var(--border)] shrink-0">
               <span className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider flex items-center gap-1.5">
                 <FolderTree size={13} />
-                {t('orgSelect') || '조직도'}
+                {t('orgSelect')}
               </span>
             </div>
             <div className="flex-1 overflow-y-auto custom-scrollbar py-1">
@@ -283,7 +283,7 @@ export function EditMembersModal({
                 }`}
               >
                 <Users size={14} className="shrink-0" />
-                <span className="text-xs truncate flex-1">{t('all') || '전체'}</span>
+                <span className="text-xs truncate flex-1">{t('all')}</span>
                 <span className="text-xs font-bold text-[var(--text-muted)] bg-[var(--bg-surface-2)] px-1.5 py-0.5 rounded-full">
                   {allUsers.filter(u => !memberUserIds.has(u.id)).length}
                 </span>
@@ -349,7 +349,7 @@ export function EditMembersModal({
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-[var(--text-primary)] flex items-center gap-1.5">
                     <Users size={13} className="text-[var(--primary)]" />
-                    {t('users') || '사용자'}
+                    {t('users')}
                   </span>
                   <div className="flex-1" />
                   <div className="relative">
@@ -358,7 +358,7 @@ export function EditMembersModal({
                       type="text"
                       value={searchText}
                       onChange={e => setSearchText(e.target.value)}
-                      placeholder={t('search') || '검색...'}
+                      placeholder={t('search')}
                       className="w-36 pl-7 pr-2 py-1 rounded-lg bg-[var(--bg-app)] border border-[var(--border)] text-xs text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--primary)] transition-colors"
                     />
                   </div>
@@ -369,7 +369,7 @@ export function EditMembersModal({
               <div className="flex-1 overflow-y-auto custom-scrollbar">
                 {pagedAvailable.length === 0 ? (
                   <div className="flex items-center justify-center h-full text-xs text-[var(--text-muted)]">
-                    {t('noSearchResults') || '검색 결과가 없습니다.'}
+                    {t('noSearchResults')}
                   </div>
                 ) : (
                   <table className="w-full text-left border-collapse">
@@ -387,9 +387,9 @@ export function EditMembersModal({
                             )}
                           </div>
                         </th>
-                        <th className="px-2 py-1.5">{t('name') || '이름'}</th>
-                        <th className="px-2 py-1.5">{t('loginId') || '아이디'}</th>
-                        <th className="px-2 py-1.5 w-12 text-center">{t('status') || '상태'}</th>
+                        <th className="px-2 py-1.5">{t('name')}</th>
+                        <th className="px-2 py-1.5">{t('loginId')}</th>
+                        <th className="px-2 py-1.5 w-12 text-center">{t('status')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[var(--border)]">
@@ -423,7 +423,7 @@ export function EditMembersModal({
                           </td>
                           <td className="px-2 py-1.5 text-center">
                             <span className={`text-xs font-bold px-1 py-0.5 rounded ${u.is_active ? 'text-green-600 bg-green-50 dark:bg-green-900/20 dark:text-green-400' : 'text-red-500 bg-red-50 dark:bg-red-900/20 dark:text-red-400'}`}>
-                              {u.is_active ? (t('active') || '활성') : (t('inactive') || '비활성')}
+                              {u.is_active ? t('active') : t('inactive')}
                             </span>
                           </td>
                         </tr>
@@ -447,7 +447,7 @@ export function EditMembersModal({
                 className="flex items-center gap-1 px-3 py-1 rounded-lg bg-[var(--primary)] text-white text-xs font-bold hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer border-none"
               >
                 <Plus size={12} />
-                {t('add') || '추가'}
+                {t('add')}
                 {selectedAvailable.size > 0 && ` (${selectedAvailable.size})`}
               </button>
               <button
@@ -456,7 +456,7 @@ export function EditMembersModal({
                 className="flex items-center gap-1 px-3 py-1 rounded-lg bg-slate-500 text-white text-xs font-bold hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer border-none"
               >
                 <Trash2 size={12} />
-                {t('delete') || '삭제'}
+                {t('delete')}
                 {selectedMember.size > 0 && ` (${selectedMember.size})`}
               </button>
             </div>
@@ -466,9 +466,9 @@ export function EditMembersModal({
               <div className="px-4 py-2 bg-[var(--bg-surface-2)]/30 border-b border-[var(--border)] shrink-0">
                 <span className="text-xs font-bold text-[var(--text-primary)] flex items-center gap-1.5">
                   <Users size={13} className="text-[var(--primary)]" />
-                  {t('groupMembers') || '그룹 멤버'}
+                  {t('groupMembers')}
                   <span className="text-xs font-bold text-[var(--text-muted)] bg-[var(--bg-surface-2)] px-1.5 py-0.5 rounded-full leading-none">
-                    {memberUserIds.size}{t('people') || '명'}
+                    {memberUserIds.size}{t('people')}
                   </span>
                 </span>
               </div>
@@ -477,7 +477,7 @@ export function EditMembersModal({
               <div className="flex-1 overflow-y-auto custom-scrollbar">
                 {pagedMembers.length === 0 ? (
                   <div className="flex items-center justify-center h-full text-xs text-[var(--text-muted)]">
-                    {t('noMembers') || '구성원이 없습니다.'}
+                    {t('noMembers')}
                   </div>
                 ) : (
                   <table className="w-full text-left border-collapse">
@@ -495,9 +495,9 @@ export function EditMembersModal({
                             )}
                           </div>
                         </th>
-                        <th className="px-2 py-1.5">{t('name') || '이름'}</th>
-                        <th className="px-2 py-1.5">{t('loginId') || '아이디'}</th>
-                        <th className="px-2 py-1.5 w-12 text-center">{t('status') || '상태'}</th>
+                        <th className="px-2 py-1.5">{t('name')}</th>
+                        <th className="px-2 py-1.5">{t('loginId')}</th>
+                        <th className="px-2 py-1.5 w-12 text-center">{t('status')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[var(--border)]">
@@ -531,7 +531,7 @@ export function EditMembersModal({
                           </td>
                           <td className="px-2 py-1.5 text-center">
                             <span className={`text-xs font-bold px-1 py-0.5 rounded ${u.is_active ? 'text-green-600 bg-green-50 dark:bg-green-900/20 dark:text-green-400' : 'text-red-500 bg-red-50 dark:bg-red-900/20 dark:text-red-400'}`}>
-                              {u.is_active ? (t('active') || '활성') : (t('inactive') || '비활성')}
+                              {u.is_active ? t('active') : t('inactive')}
                             </span>
                           </td>
                         </tr>
@@ -552,7 +552,7 @@ export function EditMembersModal({
         {/* ── Footer ── */}
         <div className="flex items-center justify-end gap-2 px-6 py-3 border-t border-[var(--border)] shrink-0 bg-[var(--bg-surface-2)]/20">
           <Button variant="secondary" size="sm" onClick={onClose}>
-            {t('cancel') || '취소'}
+            {t('cancel')}
           </Button>
           <Button
             variant="primary"
@@ -561,7 +561,7 @@ export function EditMembersModal({
             onClick={handleSave}
             disabled={saving || !groupName.trim()}
           >
-            {saving ? (t('processing') || '저장 중...') : (t('save') || '저장')}
+            {saving ? t('processing') : t('save')}
           </Button>
         </div>
       </div>

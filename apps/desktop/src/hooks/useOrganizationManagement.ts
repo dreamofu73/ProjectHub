@@ -67,7 +67,7 @@ export function useOrganizationManagement() {
 
   const handleCreate = async () => {
     if (!currentDept.name?.trim()) {
-      setError(t('fillRequiredFields') || '필수 항목을 모두 입력하세요.');
+      setError(t('fillRequiredFields'));
       return;
     }
     try {
@@ -81,17 +81,17 @@ export function useOrganizationManagement() {
         setCurrentDept({});
         fetchDepartments();
       } else {
-        setError((res as any).error || t('createFailed') || '부서 생성 실패');
+        setError((res as any).error || t('createFailed'));
       }
     } catch (err) {
-      setError(t('serverCommunicationError') || '서버 통신 오류');
+      setError(t('serverCommunicationError'));
     }
   };
 
   const handleUpdate = async () => {
     if (!currentDept.id) return;
     if (!currentDept.name?.trim()) {
-      setError(t('fillRequiredFields') || '필수 항목을 모두 입력하세요.');
+      setError(t('fillRequiredFields'));
       return;
     }
     try {
@@ -105,15 +105,15 @@ export function useOrganizationManagement() {
         setCurrentDept({});
         fetchDepartments();
       } else {
-        setError((res as any).error || t('updateFailed') || '부서 수정 실패');
+        setError((res as any).error || t('updateFailed'));
       }
     } catch (err) {
-      setError(t('serverCommunicationError') || '서버 통신 오류');
+      setError(t('serverCommunicationError'));
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm(t('confirmDeleteDepartment') || '이 부서를 삭제하시겠습니까?')) return;
+    if (!window.confirm(t('confirmDeleteDepartment'))) return;
     try {
       const res = await organizationApi.deleteDepartment(id);
       if (res.success) {
@@ -131,10 +131,10 @@ export function useOrganizationManagement() {
         setOrgSettings(res.data);
         setShowSettings(false);
       } else {
-        setError((res as any).error || t('updateFailed') || '설정 수정 실패');
+        setError((res as any).error || t('updateFailed'));
       }
     } catch (err) {
-      setError(t('serverCommunicationError') || '서버 통신 오류');
+      setError(t('serverCommunicationError'));
     }
   };
 

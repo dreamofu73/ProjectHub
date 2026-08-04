@@ -131,7 +131,7 @@ export function useIssues() {
 
   const handleBulkConvertToTask = async (projectId: string) => {
     if (selectedIssues.length === 0) return;
-    if (!window.confirm(`선택한 ${selectedIssues.length}개의 이슈를 일감(Task)으로 일괄 등록하시겠습니까?`)) return;
+    if (!window.confirm(t('confirmConvertToTask').replace('{count}', String(selectedIssues.length)))) return;
     
     try {
       const issuesToConvert = issues.filter(i => selectedIssues.includes(i.id));
@@ -163,12 +163,12 @@ export function useIssues() {
         }
       }
       
-      alert(`${successCount}개의 이슈가 일감으로 등록되었습니다.`);
+      alert(t('convertToTaskSuccess').replace('{count}', String(successCount)));
       setSelectedIssues([]);
       fetchIssues();
     } catch (err) {
       console.error('Failed to convert issues to tasks:', err);
-      alert('일부 이슈를 일감으로 변환하는 중 오류가 발생했습니다.');
+      alert(t('convertToTaskError'));
     }
   };
 

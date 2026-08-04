@@ -6,6 +6,7 @@ import {
 import { api } from 'shared/lib/api';
 import { useToast } from 'ui/Toast';
 import { ConfirmDialog } from 'ui/ConfirmDialog';
+import { useLanguage } from 'shared/hooks/LanguageContext';
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -42,20 +43,20 @@ export interface CommentLabels {
   edited: string;
 }
 
-const DEFAULT_LABELS: CommentLabels = {
-  empty: '아직 댓글이 없습니다. 첫 댓글을 남겨보세요!',
-  placeholder: '댓글을 입력하세요... (Ctrl+Enter로 전송)',
-  edit: '수정',
-  delete: '삭제',
-  save: '저장',
-  cancel: '취소',
-  submit: '등록',
-  attachFile: '파일 첨부',
-  ctrlEnter: 'Ctrl+Enter로 전송',
-  confirmDelete: '댓글을 삭제하시겠습니까?\n첨부파일도 함께 삭제됩니다.',
-  loading: '로딩 중...',
-  edited: '(수정됨)',
-};
+const buildDefaultLabels = (t: (key: string) => string): CommentLabels => ({
+  empty: t('noCommentsYet'),
+  placeholder: t('commentPlaceholder'),
+  edit: t('edit'),
+  delete: t('delete'),
+  save: t('save'),
+  cancel: t('cancel'),
+  submit: t('submit'),
+  attachFile: t('attachFile'),
+  ctrlEnter: t('ctrlEnterHint'),
+  confirmDelete: t('confirmDeleteComment'),
+  loading: t('logsLoading'),
+  edited: t('chatEdited'),
+});
 
 interface CommentSectionProps {
   fetchCommentsUrl: string;
@@ -92,7 +93,8 @@ export function CommentSection({
   compact = false,
   labels: labelsProp,
 }: CommentSectionProps) {
-  const labels = { ...DEFAULT_LABELS, ...labelsProp };
+  const { t } = useLanguage();
+  const labels = { ...buildDefaultLabels(t), ...labelsProp };
   const { showToast } = useToast();
 
   const userStr = localStorage.getItem('user');
@@ -169,7 +171,7 @@ export function CommentSection({
       if (!json.success) {
         // api() 가 오류 본문을 { success, error } 로 정규화하므로 원인이 그대로 담긴다.
         console.error('Failed to submit comment:', json.error);
-        showToast(json.error || '댓글 등록에 실패했습니다.', 'error');
+        showToast(json.error || t('commentCreateFailed'), 'error');
         return;
       }
 
@@ -189,7 +191,7 @@ export function CommentSection({
       fetchComments();
     } catch (err) {
       console.error('Failed to submit comment:', err);
-      showToast('댓글 등록에 실패했습니다.', 'error');
+      showToast(t('commentCreateFailed'), 'error');
     } finally {
       setSubmitting(false);
     }
@@ -219,7 +221,7 @@ export function CommentSection({
       const json = await res.json();
       if (!json.success) {
         console.error('Failed to edit comment:', json.error);
-        showToast(json.error || '댓글 수정에 실패했습니다.', 'error');
+        showToast(json.error || t('commentUpdateFailed'), 'error');
         return;
       }
 
@@ -237,7 +239,7 @@ export function CommentSection({
       fetchComments();
     } catch (err) {
       console.error('Failed to edit comment:', err);
-      showToast('댓글 수정에 실패했습니다.', 'error');
+      showToast(t('commentUpdateFailed'), 'error');
     } finally {
       setEditSubmitting(false);
     }
@@ -249,10 +251,10 @@ export function CommentSection({
       const res = await api(getDeleteCommentUrl(commentId), { method: 'DELETE' });
       const json = await res.json();
       if (json.success) fetchComments();
-      else showToast(json.error || '댓글 삭제에 실패했습니다.', 'error');
+      else showToast(json.error || t('commentDeleteFailed'), 'error');
     } catch (err) {
       console.error('Failed to delete comment:', err);
-      showToast('댓글 삭제에 실패했습니다.', 'error');
+      showToast(t('commentDeleteFailed'), 'error');
     }
   };
 
@@ -425,7 +427,7 @@ export function CommentSection({
         >
           <MessageSquare size={12} className="text-[var(--primary)]" />
           <span className="text-xs font-bold text-[var(--text-secondary)]">
-            댓글
+            {t('comments')}
             <span className="ml-1.5 px-1.5 py-0.5 text-xs bg-[var(--primary)]/10 text-[var(--primary)] rounded-full font-bold">
               {comments.length}
             </span>
@@ -588,7 +590,7 @@ export function CommentSection({
       <div className="flex items-center gap-2">
         <MessageSquare size={16} className="text-[var(--primary)]" />
         <h3 className="text-sm font-bold text-[var(--text-primary)]">
-          댓글
+          {t('comments')}
           <span className="ml-2 px-2 py-0.5 text-xs bg-[var(--primary)]/10 text-[var(--primary)] rounded-full font-bold">
             {comments.length}
           </span>

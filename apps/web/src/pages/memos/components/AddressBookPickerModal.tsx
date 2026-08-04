@@ -131,7 +131,7 @@ export function AddressBookPicker({
       <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border)] bg-[var(--bg-surface-2)]/50 shrink-0">
         <span className="text-xs font-bold text-[var(--text-primary)] flex items-center gap-1.5">
           <Users size={13} className="text-[var(--primary)]" />
-          {t('addressBook') || '수신그룹'}
+          {t('addressBook')}
         </span>
         <button
           type="button"
@@ -148,7 +148,7 @@ export function AddressBookPicker({
         <div className="w-[170px] shrink-0 border-r border-[var(--border)] flex flex-col overflow-hidden bg-[var(--bg-surface-2)]/20">
           <div className="px-3 py-2 border-b border-[var(--border)] shrink-0">
             <span className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">
-              {t('myGroups') || '내 그룹'}
+              {t('myGroups')}
             </span>
           </div>
           <div className="flex-1 overflow-y-auto custom-scrollbar">
@@ -160,7 +160,7 @@ export function AddressBookPicker({
               <div className="flex flex-col items-center justify-center py-8 text-[var(--text-muted)] gap-1.5 px-3">
                 <Users size={16} className="opacity-60" />
                 <span className="text-xs font-medium text-center">
-                  {t('noGroups') || '등록된 그룹이 없습니다.'}
+                  {t('noGroups')}
                 </span>
               </div>
             ) : (
@@ -199,7 +199,7 @@ export function AddressBookPicker({
                 type="text"
                 value={searchText}
                 onChange={e => setSearchText(e.target.value)}
-                placeholder={t('searchMembers') || '구성원 검색...'}
+                placeholder={t('searchMembers')}
                 className="w-full pl-7 pr-2.5 py-1.5 rounded-lg bg-[var(--bg-surface-2)] border border-[var(--border)] text-xs text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--primary)] transition-colors"
               />
             </div>
@@ -210,7 +210,7 @@ export function AddressBookPicker({
                 disabled={filteredMembers.filter(m => !existingRecipientIds.has(m.user_id)).length === 0}
                 className="text-xs text-[var(--primary)] hover:text-[var(--primary)]/80 font-bold disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer border-none bg-transparent transition-colors"
               >
-                {t('selectAll') || '모두 선택'}
+                {t('selectAll')}
               </button>
               <span className="text-xs text-[var(--text-muted)]">·</span>
               <button
@@ -219,11 +219,11 @@ export function AddressBookPicker({
                 disabled={selectedUserIds.size === 0}
                 className="text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] font-bold disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer border-none bg-transparent transition-colors"
               >
-                {t('deselectAll') || '선택 해제'}
+                {t('deselectAll')}
               </button>
               {selectedUserIds.size > 0 && (
                 <span className="text-xs text-[var(--primary)] font-bold ml-auto">
-                  {(t('selectedCount') || '{count}명 선택됨').replace('{count}', String(selectedUserIds.size))}
+                  {t('selectedCount').replace('{count}', String(selectedUserIds.size))}
                 </span>
               )}
             </div>
@@ -239,14 +239,14 @@ export function AddressBookPicker({
               <div className="flex flex-col items-center justify-center py-10 text-[var(--text-muted)] gap-2">
                 <Users size={16} className="opacity-60" />
                 <span className="text-xs font-medium">
-                  {t('selectGroup') || '그룹을 선택하세요.'}
+                  {t('selectGroup')}
                 </span>
               </div>
             ) : filteredMembers.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-10 text-[var(--text-muted)] gap-2">
                 <UserIcon size={16} className="opacity-60" />
                 <span className="text-xs font-medium">
-                  {t('noMembers') || '구성원이 없습니다.'}
+                  {t('noMembers')}
                 </span>
               </div>
             ) : (
@@ -269,7 +269,7 @@ export function AddressBookPicker({
                       <div className="shrink-0">
                         {isExisting ? (
                           <span className="text-xs font-bold text-[var(--text-muted)] bg-[var(--bg-surface-2)] px-1.5 py-0.5 rounded">
-                            {t('alreadyAdded') || '추가됨'}
+                            {t('alreadyAdded')}
                           </span>
                         ) : isSelected ? (
                           <CheckSquare size={14} className="text-[var(--primary)]" />
@@ -324,7 +324,7 @@ export function AddressBookPicker({
                 </div>
               ) : (
                 <span className="text-xs text-[var(--text-muted)] font-medium">
-                  {t('selectMembersToAdd') || '받는 사람을 선택하세요.'}
+                  {t('selectMembersToAdd')}
                 </span>
               )}
             </div>
@@ -337,7 +337,7 @@ export function AddressBookPicker({
               disabled={selectedUserIds.size === 0}
               className="!text-xs !px-2.5 !py-1 !h-7 shrink-0"
             >
-              {(t('addSelectedRecipients') || '추가')}
+              {t('addSelectedRecipients')}
               {selectedUserIds.size > 0 ? ` (${selectedUserIds.size})` : ''}
             </Button>
           </div>

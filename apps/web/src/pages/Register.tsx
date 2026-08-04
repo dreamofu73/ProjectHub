@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Layers3, UserPlus, User, Lock, Mail, IdCard, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { UserPlus, User, Lock, Mail, IdCard, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { Button } from 'ui/shadcn/button';
 import { Input } from 'ui/shadcn/input';
 import { Label } from 'ui/shadcn/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from 'ui/shadcn/card';
 import { Separator } from 'ui/shadcn/separator';
 import { useLanguage } from '../context/LanguageContext';
+import { ProjectHubLogo } from 'ui/ProjectHubLogo';
 import AuthControls from '@/components/AuthControls';
 
 const CSS = `
@@ -55,9 +56,7 @@ const CSS = `
 }
 .reg-icon-ring {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 50px; height: 50px; border-radius: 13px;
-  background: var(--primary);
-  box-shadow: 0 8px 24px var(--primary-bg);
+  transition: all 0.3s ease;
 }
 .reg-input-wrap { position: relative; }
 .reg-input-icon {
@@ -144,11 +143,11 @@ export default function RegisterPage() {
             <CardHeader className="text-center pb-3 pt-7">
               <div className="flex justify-center mb-3">
                 <div className="reg-icon-ring">
-                  <Layers3 size={22} color="white" strokeWidth={2} />
+                  <ProjectHubLogo size={42} className="text-[var(--primary)]" />
                 </div>
               </div>
               <CardTitle className="text-xl font-extrabold tracking-tight">
-                <h1 className="inline-block text-xl font-extrabold tracking-tight">ProjectHub</h1> {t('register')}
+                <h1 className="inline-block text-xl font-extrabold tracking-tight text-[var(--primary)]">ProjectHub</h1> {t('register')}
               </CardTitle>
               <CardDescription className="text-sm mt-1">
                 {t('registerDesc')}

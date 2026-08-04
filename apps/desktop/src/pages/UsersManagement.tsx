@@ -71,7 +71,7 @@ export default function UsersManagementPage() {
   const handleBatchDelete = async () => {
     if (selectedIds.size === 0) return;
     if (!window.confirm(t('confirmBulkDelete').replace('{count}', String(selectedIds.size)))) return;
-    
+
     let successCount = 0;
     for (const id of selectedIds) {
       if (id === '1') continue; // Skip admin
@@ -85,7 +85,7 @@ export default function UsersManagementPage() {
         console.error(e);
       }
     }
-    
+
     if (successCount > 0) {
       setSelectedIds(new Set());
       fetchUsers();
@@ -94,18 +94,21 @@ export default function UsersManagementPage() {
 
   const handleBatchSetStatus = async (isActive: number) => {
     if (selectedIds.size === 0) return;
-    const actionName = isActive === 1 ? '활성화' : '비활성화';
-    if (!window.confirm(`선택한 ${selectedIds.size}명의 사용자를 ${actionName} 하시겠습니까?`)) return;
-    
+    const actionName = isActive === 1 ? t('activate') : t('deactivate');
+    const confirmMsg = (t('confirmUserStatusChange'))
+      .replace('{count}', String(selectedIds.size))
+      .replace('{action}', actionName);
+    if (!window.confirm(confirmMsg)) return;
+
     let successCount = 0;
     for (const id of selectedIds) {
       if (id === '1') continue; // Skip admin
       try {
         const res = await api(`/api/users/${id}`, {
           method: 'PUT',
-          headers: { 
+          headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('token')}` 
+            Authorization: `Bearer ${localStorage.getItem('token')}`
           },
           body: JSON.stringify({ is_active: isActive })
         });
@@ -114,7 +117,7 @@ export default function UsersManagementPage() {
         console.error(e);
       }
     }
-    
+
     if (successCount > 0) {
       setSelectedIds(new Set());
       fetchUsers();
@@ -127,16 +130,16 @@ export default function UsersManagementPage() {
   const handleBatchChangeRole = async (role: string) => {
     if (selectedIds.size === 0) return;
     if (!window.confirm(t('confirmBulkRoleChange').replace('{count}', String(selectedIds.size)))) return;
-    
+
     let successCount = 0;
     for (const id of selectedIds) {
       if (id === '1') continue; // Skip admin
       try {
         const res = await api(`/api/users/${id}`, {
           method: 'PUT',
-          headers: { 
+          headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('token')}` 
+            Authorization: `Bearer ${localStorage.getItem('token')}`
           },
           body: JSON.stringify({ role })
         });
@@ -145,7 +148,7 @@ export default function UsersManagementPage() {
         console.error(e);
       }
     }
-    
+
     if (successCount > 0) {
       setSelectedIds(new Set());
       fetchUsers();
@@ -154,11 +157,14 @@ export default function UsersManagementPage() {
 
   const handleBatchDepartment = async (departmentId: string | null) => {
     if (selectedIds.size === 0) return;
-    const deptName = departmentId 
+    const deptName = departmentId
       ? departments.find(d => d.id === departmentId)?.name || `ID:${departmentId}`
-      : '부서 없음';
-    if (!window.confirm(`선택한 ${selectedIds.size}명의 사용자 부서를 "${deptName}"(으)로 변경하시겠습니까?`)) return;
-    
+      : t('noDept');
+    const confirmMsg = t('confirmUserDeptChange')
+      .replace('{count}', String(selectedIds.size))
+      .replace('{dept}', deptName);
+    if (!window.confirm(confirmMsg)) return;
+
     const updated = await handleBatchChangeDepartment([...selectedIds], departmentId);
     if (updated > 0) {
       setSelectedIds(new Set());
@@ -242,13 +248,13 @@ export default function UsersManagementPage() {
 
   return (
     <div className="w-full h-full animate-in fade-in slide-in-from-bottom-4 duration-300 flex flex-col overflow-hidden bg-[var(--bg-surface)] text-[var(--text-primary)]">
-      
+
       {/* 상단 헤더 */}
       <div className="flex items-center justify-between px-6 py-4 bg-[var(--bg-surface)] border-b border-[var(--border)] shrink-0">
         <div className="flex items-center gap-3">
           <h2 className="text-sm font-bold text-[var(--text-primary)] flex items-center gap-2">
             <Users size={16} className="text-[var(--primary)]" />
-            <span>{t('users') || '사용자 관리'}</span>
+            <span>{t('users')}</span>
           </h2>
         </div>
         <div className="flex gap-2">
@@ -258,7 +264,7 @@ export default function UsersManagementPage() {
             className="h-8.5 px-3.5 bg-[var(--primary)] hover:opacity-90 text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer flex items-center gap-1.5 active:scale-[0.98] border-none"
           >
             <UserPlus size={13} />
-            {t('addUser') || '사용자 추가'}
+            {t('addUser')}
           </button>
         </div>
       </div>
@@ -271,9 +277,9 @@ export default function UsersManagementPage() {
           roleFilter={roleFilter}
           setRoleFilter={setRoleFilter}
           statusFilter={statusFilter}
-                setStatusFilter={setStatusFilter}
-                selectedIds={selectedIds}
-                handleBatchDelete={handleBatchDelete}
+          setStatusFilter={setStatusFilter}
+          selectedIds={selectedIds}
+          handleBatchDelete={handleBatchDelete}
           handleBatchSetStatus={handleBatchSetStatus}
           hasInactiveSelected={hasInactiveSelected}
           handleBatchChangeRole={handleBatchChangeRole}
@@ -284,7 +290,7 @@ export default function UsersManagementPage() {
 
         {/* 목록 + 상세 분할 영역 */}
         <div id="users-split-container" className="flex-1 overflow-hidden flex min-h-0 flex-row">
-          
+
           {/* 목록 영역 */}
           <div className="flex flex-col overflow-hidden border-[var(--border)] min-w-[280px] min-h-[150px]" style={{ width: `${leftWidth}%` }}>
             <UserList
@@ -297,7 +303,7 @@ export default function UsersManagementPage() {
               toggleSelectAll={toggleSelectAll}
               t={t}
             />
-            
+
             {/* 페이지네이션 */}
             {!loading && totalCount > 0 && (
               <div className="border-t border-[var(--border)] relative shrink-0">

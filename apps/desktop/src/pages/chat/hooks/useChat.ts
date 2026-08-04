@@ -67,15 +67,20 @@ export function useChat(activeRoom: { id: string; name: string } | null, current
     const currentLatest = lastSeenIds.current[activeRoom.id] || '0';
 
     if (BigInt(latestId) > BigInt(currentLatest)) {
-      lastSeenIds.current[activeRoom.id] = latestId;
-      localStorage.setItem(`chat_last_seen_${currentUser?.id || 'default'}`, JSON.stringify(lastSeenIds.current));
-
       api(`/api/chat/rooms/${activeRoom.id}/read`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ last_read_message_id: latestId })
       })
-        .then(() => window.dispatchEvent(new CustomEvent('refresh_chat_rooms')))
+        .then(() => {
+          // POST 성공 후에만 lastSeen 을 전진한다. 실패 시 유지되어 다음 기회에 재시도된다.
+          const current = lastSeenIds.current[activeRoom.id] || '0';
+          if (BigInt(latestId) > BigInt(current)) {
+            lastSeenIds.current[activeRoom.id] = latestId;
+            localStorage.setItem(`chat_last_seen_${currentUser?.id || 'default'}`, JSON.stringify(lastSeenIds.current));
+            window.dispatchEvent(new CustomEvent('refresh_chat_rooms'));
+          }
+        })
         .catch(console.error);
     }
   }, [messages, activeRoom, currentUser?.id]);

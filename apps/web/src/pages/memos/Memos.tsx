@@ -86,13 +86,13 @@ export default function MemosPage() {
 
   const handleBlockSender = useCallback((senderLogin: string) => {
     if (!senderLogin) return;
-    if (window.confirm(`${senderLogin} 님을 차단하시겠습니까?\n차단하시면 해당 사용자가 보낸 쪽지가 목록에서 보이지 않습니다.`)) {
+    if (window.confirm(t('confirmBlockSender').replace('{name}', senderLogin))) {
       setBlockedSenders(prev => {
         const next = prev.includes(senderLogin) ? prev : [...prev, senderLogin];
         localStorage.setItem('blocked_senders', JSON.stringify(next));
         return next;
       });
-      showToast(`${senderLogin} 님이 차단되었습니다.`, 'success');
+      showToast(t('senderBlocked').replace('{name}', senderLogin), 'success');
       setSelectedMemo(null);
     }
   }, [showToast]);
@@ -221,7 +221,7 @@ export default function MemosPage() {
       });
       const json = await res.json();
       if (json.success) {
-        showToast('선택한 쪽지를 안읽음 처리했습니다.', 'success');
+        showToast(t('memoReadMarked'), 'success');
         setSelectedIds(new Set());
         fetchMemos();
         window.dispatchEvent(new CustomEvent('memo_read_update'));
@@ -244,7 +244,7 @@ export default function MemosPage() {
       });
       const json = await res.json();
       if (json.success) {
-        showToast('선택한 쪽지를 읽음 처리했습니다.', 'success');
+        showToast(t('memoUnreadMarked'), 'success');
         setSelectedIds(new Set());
         fetchMemos();
         window.dispatchEvent(new CustomEvent('memo_read_update'));
@@ -348,18 +348,18 @@ export default function MemosPage() {
 
   const baseFolders: { key: FolderType; label: string; icon: LucideIcon }[] = [
     { key: 'received', label: t('receivedMemos'), icon: Inbox },
-    { key: 'self', label: '내게쓴쪽지함', icon: Award },
+    { key: 'self', label: t('selfMemos'), icon: Award },
     { key: 'sent', label: t('sentMemos'), icon: Send },
-    { key: 'reserved', label: '예약 쪽지함', icon: Clock },
-    { key: 'archived', label: '쪽지 보관함', icon: Archive },
-    { key: 'trash', label: '휴지통', icon: Trash2 },
+    { key: 'reserved', label: t('reservedMemos2'), icon: Clock },
+    { key: 'archived', label: t('archivedMemos2'), icon: Archive },
+    { key: 'trash', label: t('trash'), icon: Trash2 },
   ];
 
   const getFolderName = (folder: FolderType) => {
     if (folder.startsWith('folder_')) {
       const id = folder.replace('folder_', '');
       const f = customFolders.find(cf => cf.id === id);
-      return f ? f.name : '폴더';
+      return f ? f.name : t('folder');
     }
     const found = baseFolders.find(f => f.key === folder);
     return found ? found.label : '';
@@ -398,7 +398,7 @@ export default function MemosPage() {
           <div className="flex items-center gap-3">
             <h2 className="text-sm font-bold text-[var(--text-primary)] flex items-center gap-2">
               <Inbox size={16} className="text-[var(--primary)]" />
-              <span>쪽지함</span>
+              <span>{t('memos')}</span>
             </h2>
             {/* 폴더 선택기 */}
             <div className="relative">
@@ -413,7 +413,7 @@ export default function MemosPage() {
                 }}
                 className="h-8.5 px-3.5 border border-[var(--border)] rounded-xl bg-[var(--bg-surface-2)] text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-[var(--primary)]/50 text-[var(--text-secondary)] cursor-pointer"
               >
-                <optgroup label="기본 쪽지함" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
+                <optgroup label={t('defaultMemoBox')} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
                   {baseFolders.map(f => (
                     <option key={f.key} value={f.key} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
                       {f.label} {f.key === 'received' && unreadCount > 0 ? ` (${unreadCount})` : ''}
@@ -421,7 +421,7 @@ export default function MemosPage() {
                   ))}
                 </optgroup>
                 {customFolders.length > 0 && (
-                  <optgroup label="개인 폴더" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
+                  <optgroup label={t('personalFolder')} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
                     {customFolders.map(f => (
                       <option key={f.id} value={`folder_${f.id}`} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{f.name}</option>
                     ))}
@@ -442,7 +442,7 @@ export default function MemosPage() {
               className="h-8.5 px-3.5 bg-[var(--primary)] hover:opacity-90 text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer flex items-center gap-1.5 active:scale-[0.98] border-none"
             >
               <Send size={13} />
-              쪽지 쓰기
+              {t('writeMemo')}
             </button>
             <button
               type="button"
@@ -453,7 +453,7 @@ export default function MemosPage() {
               className="h-8.5 px-3.5 border border-[var(--border)] hover:bg-[var(--bg-surface-2)] text-[var(--text-secondary)] rounded-xl text-xs font-bold transition-all cursor-pointer bg-[var(--bg-surface)] flex items-center gap-1.5 active:scale-[0.98]"
             >
               <Award size={13} />
-              내게 쓰기
+              {t('writeToMe')}
             </button>
           </div>
         </div>
@@ -600,8 +600,8 @@ export default function MemosPage() {
                         <Inbox size={24} className="text-[var(--text-muted)] opacity-60" />
                       </div>
                       <div className="text-center">
-                        <p className="text-xs font-bold text-[var(--text-secondary)]">선택된 쪽지가 없습니다.</p>
-                        <p className="text-xs text-[var(--text-muted)] mt-1">목록에서 확인하려는 쪽지를 선택하세요.</p>
+                        <p className="text-xs font-bold text-[var(--text-secondary)]">{t('noMemoSelected')}</p>
+                        <p className="text-xs text-[var(--text-muted)] mt-1">{t('selectMemoHint')}</p>
                       </div>
                     </div>
                   )}

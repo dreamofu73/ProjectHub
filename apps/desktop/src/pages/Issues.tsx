@@ -10,7 +10,7 @@ import { NewIssuePanel } from '../components/issues/NewIssuePanel';
 import { useIssues } from './useIssues';
 import {
   STATUS_CONFIG,
-  PRIORITY_CONFIG,
+  buildPriorityConfig,
   TRACKER_CONFIG,
   getAvatarColor,
   getInitials,
@@ -130,7 +130,7 @@ export default function IssuesPage() {
 
   const renderProps = {
     formatDate, t, isOverdue, isDueSoon, getAvatarColor, getInitials,
-    STATUS_CONFIG, TRACKER_CONFIG, PRIORITY_CONFIG,
+    STATUS_CONFIG, TRACKER_CONFIG, PRIORITY_CONFIG: buildPriorityConfig(t),
     trackerLabels, priorityLabels, statusLabels,
     onOpenDetail: handleOpenDetail,
     selectedIssueId,
@@ -143,10 +143,17 @@ export default function IssuesPage() {
 
       {/* ── 헤더 ── */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)] bg-[var(--bg-surface)] shrink-0">
-        <h2 className="text-sm font-bold text-[var(--text-primary)] flex items-center gap-2">
-          <Bug size={16} className="text-[var(--primary)]" />
-          <span>{title}</span>
-        </h2>
+        <div className="flex items-center gap-2.5">
+          <Bug size={20} className="text-[var(--primary)] shrink-0" />
+          <div className="flex items-center gap-2">
+            <h2 className="text-base font-extrabold text-[var(--text-primary)] tracking-tight">
+              {title}
+            </h2>
+            <span className="text-xs font-bold text-[var(--primary)] tabular-nums">
+              {t('issueListCount').replace('{count}', String(total))}
+            </span>
+          </div>
+        </div>
         {project && !isArchived && (
           <button
             type="button"

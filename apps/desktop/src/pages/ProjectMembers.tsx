@@ -13,17 +13,18 @@ import { MemberDetailPanel } from '../components/project-members/MemberDetailPan
 import { useLanguage } from '../context/LanguageContext';
 
 const ROLE_OPTIONS = [
-  { value: 'manager', label: '관리자 (Manager)' },
-  { value: 'lead', label: '중간관리자 (Lead)' },
-  { value: 'developer', label: '개발자 (Developer)' },
-  { value: 'reporter', label: '보고자 (Reporter)' },
-  { value: 'viewer', label: '뷰어 (Viewer)' },
-  { value: 'overseer', label: '프로젝트 감시자' },
+  { value: 'manager', labelKey: 'managerLabel' },
+  { value: 'lead', labelKey: 'leadLabel' },
+  { value: 'developer', labelKey: 'developerLabel' },
+  { value: 'reporter', labelKey: 'reporterLabel' },
+  { value: 'viewer', labelKey: 'viewerLabel' },
+  { value: 'overseer', labelKey: 'overseer' },
 ];
 
 export default function ProjectMembersPage() {
   const { id } = useParams<{ id: string }>();
   const { t, formatDate } = useLanguage();
+  const roleOptions = ROLE_OPTIONS.map(o => ({ value: o.value, label: t(o.labelKey) }));
 
   const { members, allUsers, fetchMembers } = useProjectMembers(id);
   const [projectStatus, setProjectStatus] = useState('');
@@ -69,7 +70,7 @@ export default function ProjectMembersPage() {
   } = useAddMemberModal(id, members, allUsers, fetchMembers);
 
   const handleRemoveMember = async (userId: string, name: string) => {
-    if (!window.confirm(`'${name}' 멤버를 프로젝트에서 제외하시겠습니까?`)) return;
+    if (!window.confirm(t('confirmRemoveProjectMember').replace('{name}', name))) return;
     try {
       const res = await api(`/api/projects/${id}/members/${userId}`, { method: 'DELETE' });
       if (res.ok) {
@@ -94,8 +95,8 @@ export default function ProjectMembersPage() {
     <div className="flex flex-col w-full h-full animate-in fade-in slide-in-from-bottom-4 duration-300 bg-[var(--bg-surface)] text-[var(--text-primary)] overflow-hidden">
       {/* 헤더 */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)] shrink-0">
-        <h2 className="text-sm font-bold text-[var(--text-primary)]">멤버 관리</h2>
-        {!isArchived && <Button icon={UserPlus} onClick={() => setShowAddModal(true)}>멤버 추가</Button>}
+        <h2 className="text-sm font-bold text-[var(--text-primary)]">{t('manageMembers')}</h2>
+        {!isArchived && <Button icon={UserPlus} onClick={() => setShowAddModal(true)}>{t('chatGroupAddMembers')}</Button>}
       </div>
 
       {/* 툴바 */}
@@ -127,9 +128,9 @@ export default function ProjectMembersPage() {
                     onChange={() => toggleSelectAll(pagedMembers)}
                   />
                 </th>
-                <th className="py-1.5 px-4 text-xs font-bold text-muted uppercase tracking-wider text-left">멤버</th>
-                <th className="py-1.5 px-4 text-xs font-bold text-muted uppercase tracking-wider text-left hidden sm:table-cell">이메일</th>
-                <th className="py-1.5 px-4 text-xs font-bold text-muted uppercase tracking-wider text-left">권한</th>
+                <th className="py-1.5 px-4 text-xs font-bold text-muted uppercase tracking-wider text-left">{t('member')}</th>
+                <th className="py-1.5 px-4 text-xs font-bold text-muted uppercase tracking-wider text-left hidden sm:table-cell">{t('email')}</th>
+                <th className="py-1.5 px-4 text-xs font-bold text-muted uppercase tracking-wider text-left">{t('permission')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--border)]">
@@ -212,7 +213,7 @@ export default function ProjectMembersPage() {
         filteredAvailable={filteredAvailable}
         addRole={addRole}
         setAddRole={(role) => setAddRole(role as 'manager' | 'developer' | 'reporter' | 'viewer' | 'lead' | 'overseer')}
-        ROLE_OPTIONS={ROLE_OPTIONS}
+        ROLE_OPTIONS={roleOptions}
         handleAddMembers={handleAddMembers}
         adding={adding}
         addError={addError}

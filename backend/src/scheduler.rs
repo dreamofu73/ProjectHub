@@ -342,9 +342,25 @@ pub fn start(pool: AnyPool) -> SchedulerHandle {
 // Task implementations
 // ---------------------------------------------------------------------------
 
-/// 예약 발송: reserved_at 이전인 미발송 쪽지를 발송 처리
+/// 예약 발송: reserved_at 이전인 미발송 쪽지를 발송 처리하고 수신자에게 알림 생성
 async fn process_reserved_send(state: &Arc<Mutex<SchedulerState>>, now: &str) {
     let pool = state.lock().await.pool.clone();
+
+    // 예약 발송 대상 조회
+    let select_stmt = SeaQuery::select()
+        .columns(["id", "receiver_id", "title"])
+        .from("memos")
+        .and_where(Expr::col("is_sent").eq(0i64))
+        .and_where(Expr::col("reserved_at").lte(now))
+        .to_owned();
+    let rows = match crate::db::fetch_all(&pool, &select_stmt).await {
+        Ok(rows) => rows,
+        Err(e) => {
+            tracing::error!("[스케줄러] 예약 발송 대상 조회 에러: {e}");
+            return;
+        }
+    };
+
     let stmt = SeaQuery::update()
         .table("memos")
         .value("is_sent", 1i64)
@@ -355,8 +371,43 @@ async fn process_reserved_send(state: &Arc<Mutex<SchedulerState>>, now: &str) {
     let res = crate::db::execute(&pool, &stmt).await;
 
     match res {
-        Ok(result) => {
-            let count = result.rows_affected() as i64;
+        Ok(_) => {
+            let count = rows.len() as i64;
+
+            // 발송 처리된 쪽지 수신자에게 알림 생성 (개별 실패는 무시)
+            for row in &rows {
+                let memo_id: String = row.get("id");
+                let receiver_id: i64 = row.get("receiver_id");
+                let memo_title: String = row.get("title");
+
+                let notif_id = uuid::Uuid::new_v4().to_string();
+                let notif_title = "새 쪽지가 도착했습니다".to_string();
+                let notif_msg = format!("'{memo_title}' 쪽지가 도착했습니다.");
+                let notif_link = format!("/memos/{memo_id}");
+
+                let notif_stmt = SeaQuery::insert()
+                    .into_table("notifications")
+                    .columns([
+                        "id", "user_id", "type", "title", "message", "link", "is_read", "created_at",
+                    ])
+                    .values_panic([
+                        notif_id.into(),
+                        receiver_id.into(),
+                        "memo_received".into(),
+                        notif_title.into(),
+                        notif_msg.into(),
+                        notif_link.into(),
+                        0i64.into(),
+                        now.into(),
+                    ])
+                    .to_owned();
+                let notif_res = crate::db::execute(&pool, &notif_stmt).await;
+
+                if notif_res.is_err() {
+                    tracing::warn!("[스케줄러] 예약 발송 알림 생성 실패 (memo: {memo_id}): {:?}", notif_res.err());
+                }
+            }
+
             let mut s = state.lock().await;
             let t = &mut s.tasks[TASK_RESERVED_SEND];
             t.last_run = Some(now.to_string());

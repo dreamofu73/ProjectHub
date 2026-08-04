@@ -130,7 +130,7 @@ export function Sidebar() {
   const wikiTree = useMemo(() => buildWikiTree((wikiList as WikiPage[]) || []), [wikiList]);
 
   return (
-    <aside className="sidebar relative overflow-visible h-[calc(100vh-var(--header-height))] sticky top-0 z-40 border-r border-[var(--border)] bg-slate-50/30 dark:bg-slate-900/30" aria-label={t('sidebar') || '사이드바 네비게이션'}>
+    <aside className="sidebar relative overflow-visible h-[calc(100vh-var(--header-height))] sticky top-0 z-40 border-r border-[var(--border)] bg-slate-50/30 dark:bg-slate-900/30" aria-label={t('sidebar')}>
       <div className={`flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar flex flex-col ${isSidebarCollapsed ? 'p-2' : 'p-4'} pb-14 justify-between h-full`}>
         <div>
           {/* 프로젝트 메뉴 사이드바 (초기화면 / 멤버 / 설정) */}
@@ -543,50 +543,50 @@ export function Sidebar() {
               {!isSidebarCollapsed && <div className="sidebar-section-label">{t('boardList')}</div>}
               <ul className="sidebar-nav" aria-label={t('boardList')}>
                 <li className="sidebar-nav-item">
-                  <Tooltip content={t('all') || '전체'} disabled={!isSidebarCollapsed} position="right">
+                  <Tooltip content={t('all')} disabled={!isSidebarCollapsed} position="right">
                     <Link
                       to={`${projectBoardBase}/board`}
                       className={`sidebar-nav-link ${isBoardCategoryActive(null) ? 'active' : ''} ${isSidebarCollapsed ? 'justify-center px-1' : ''}`}
                       aria-current={isBoardCategoryActive(null) ? 'page' : undefined}
                     >
                       <FileText size={16} className={`shrink-0 ${isBoardCategoryActive(null) ? 'opacity-100' : 'opacity-60'}`} />
-                      {!isSidebarCollapsed && <span>{t('all') || '전체'}</span>}
+                      {!isSidebarCollapsed && <span>{t('all')}</span>}
                     </Link>
                   </Tooltip>
                 </li>
                 <li className="sidebar-nav-item">
-                  <Tooltip content={t('notices') || '공지사항'} disabled={!isSidebarCollapsed} position="right">
+                  <Tooltip content={t('notices')} disabled={!isSidebarCollapsed} position="right">
                     <Link
                       to={`${projectBoardBase}/board?category=notice`}
                       className={`sidebar-nav-link ${isBoardCategoryActive('notice') ? 'active' : ''} ${isSidebarCollapsed ? 'justify-center px-1' : ''}`}
                       aria-current={isBoardCategoryActive('notice') ? 'page' : undefined}
                     >
                       <Bell size={16} className={`shrink-0 ${isBoardCategoryActive('notice') ? 'opacity-100' : 'opacity-60'}`} />
-                      {!isSidebarCollapsed && <span>{t('notices') || '공지사항'}</span>}
+                      {!isSidebarCollapsed && <span>{t('notices')}</span>}
                     </Link>
                   </Tooltip>
                 </li>
                 <li className="sidebar-nav-item">
-                  <Tooltip content={t('resources') || '자료실'} disabled={!isSidebarCollapsed} position="right">
+                  <Tooltip content={t('resources')} disabled={!isSidebarCollapsed} position="right">
                     <Link
                       to={`${projectBoardBase}/board?category=resource`}
                       className={`sidebar-nav-link ${isBoardCategoryActive('resource') ? 'active' : ''} ${isSidebarCollapsed ? 'justify-center px-1' : ''}`}
                       aria-current={isBoardCategoryActive('resource') ? 'page' : undefined}
                     >
                       <Archive size={16} className={`shrink-0 ${isBoardCategoryActive('resource') ? 'opacity-100' : 'opacity-60'}`} />
-                      {!isSidebarCollapsed && <span>{t('resources') || '자료실'}</span>}
+                      {!isSidebarCollapsed && <span>{t('resources')}</span>}
                     </Link>
                   </Tooltip>
                 </li>
                 <li className="sidebar-nav-item">
-                  <Tooltip content={t('general') || '일반'} disabled={!isSidebarCollapsed} position="right">
+                  <Tooltip content={t('general')} disabled={!isSidebarCollapsed} position="right">
                     <Link
                       to={`${projectBoardBase}/board?category=general`}
                       className={`sidebar-nav-link ${isBoardCategoryActive('general') ? 'active' : ''} ${isSidebarCollapsed ? 'justify-center px-1' : ''}`}
                       aria-current={isBoardCategoryActive('general') ? 'page' : undefined}
                     >
                       <FileText size={16} className={`shrink-0 ${isBoardCategoryActive('general') ? 'opacity-100' : 'opacity-60'}`} />
-                      {!isSidebarCollapsed && <span>{t('general') || '일반'}</span>}
+                      {!isSidebarCollapsed && <span>{t('general')}</span>}
                     </Link>
                   </Tooltip>
                 </li>
@@ -604,7 +604,7 @@ export function Sidebar() {
                   <button
                     onClick={() => window.dispatchEvent(new CustomEvent('open_create_chat_room'))}
                     className="w-6 h-6 rounded-lg flex items-center justify-center text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-[var(--bg-surface-2)] transition-colors border-none bg-transparent cursor-pointer"
-                    title={t('chatNewRoomBtn') || '새 채널 생성'}
+                    title={t('chatNewRoomBtn')}
                   >
                     <Plus size={14} />
                   </button>
@@ -649,13 +649,13 @@ export function Sidebar() {
                 {chatRooms.length === 0 && !isSidebarCollapsed && (
                   <div className="flex flex-col items-center text-center py-8 px-3 gap-2">
                     <MessageSquare size={24} className="text-[var(--text-muted)]" />
-                    <p className="text-xs text-[var(--text-muted)]">{t('chatNoProjectChannels') || '참여 중인 채널이 없습니다.'}</p>
+                    <p className="text-xs text-[var(--text-muted)]">{t('chatNoProjectChannels')}</p>
                     <button
                       onClick={() => window.dispatchEvent(new CustomEvent('open_create_chat_room'))}
                       className="text-xs text-[var(--primary)] hover:underline bg-transparent border-none cursor-pointer font-semibold"
-                      aria-label={t('addNewChannel') || '새 채널 추가'}
+                      aria-label={t('addNewChannel')}
                     >
-                      + {t('addNewChannel') || '채널 추가'}
+                      + {t('addNewChannel')}
                     </button>
                   </div>
                 )}

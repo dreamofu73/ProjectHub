@@ -1,6 +1,7 @@
 import { Users, Trash2 } from 'lucide-react';
 import { Card, CardBody } from 'ui/Card';
 import { Button } from 'ui/Button';
+import { useLanguage } from 'shared/hooks/LanguageContext';
 
 interface BulkActionBarProps {
   selectedIds: Set<string>;
@@ -23,6 +24,7 @@ export function BulkActionBar({
   bulkUpdating,
   clearSelection,
 }: BulkActionBarProps) {
+  const { t } = useLanguage();
   if (selectedIds.size === 0) return null;
 
   return (
@@ -31,7 +33,7 @@ export function BulkActionBar({
         <div className="flex items-center gap-4 flex-wrap">
           <span className="text-sm font-semibold text-foreground whitespace-nowrap" aria-live="polite" aria-atomic="true">
             <Users size={14} className="inline mr-1.5 text-primary" />
-            {selectedIds.size}명 선택됨
+            {t('selectedCountSuffix').replace('{count}', String(selectedIds.size))}
           </span>
 
           <div className="h-5 w-px bg-border" />
@@ -41,9 +43,9 @@ export function BulkActionBar({
               className="text-xs font-medium rounded-lg px-3 py-1.5 border border-border bg-[var(--bg-surface-2)] cursor-pointer text-foreground"
               value={bulkRole}
               onChange={(e) => setBulkRole(e.target.value)}
-              aria-label="선택한 멤버의 권한 변경"
+              aria-label={t('changeMemberPermission')}
             >
-              <option value="">권한 변경...</option>
+              <option value="">{t('changeRoleTo')}</option>
               {ROLE_OPTIONS.map(opt => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
               ))}
@@ -54,7 +56,7 @@ export function BulkActionBar({
               disabled={!bulkRole || bulkUpdating}
               onClick={handleBulkRoleChange}
             >
-              {bulkUpdating ? '처리 중...' : '적용'}
+              {bulkUpdating ? t('processing') : t('editorApply')}
             </Button>
           </div>
 
@@ -66,7 +68,7 @@ export function BulkActionBar({
             className="px-3 py-1.5 text-xs font-semibold text-danger hover:bg-danger-bg rounded-lg transition-all border border-danger/30 bg-transparent cursor-pointer disabled:opacity-50"
           >
             <Trash2 size={13} className="inline mr-1" />
-            선택 제외
+            {t('excludeSelected')}
           </button>
 
           <div className="flex-1" />
@@ -75,7 +77,7 @@ export function BulkActionBar({
             onClick={clearSelection}
             className="text-xs text-muted hover:text-foreground transition-colors bg-transparent border-none cursor-pointer"
           >
-            선택 해제
+            {t('deselect')}
           </button>
         </div>
       </CardBody>

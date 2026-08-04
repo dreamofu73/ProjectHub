@@ -55,7 +55,7 @@ export default function PostForm() {
 
   useEffect(() => {
     if (isGlobal && currentUser.role !== 'admin') {
-      showToast(t('permissionDenied') || '권한이 없습니다.', 'error');
+      showToast(t('permissionDenied'), 'error');
       doNavigateBack();
     }
   }, [isGlobal, currentUser.role]);
@@ -87,12 +87,12 @@ export default function PostForm() {
         setIsPinned(!!json.data.is_pinned);
         setPopupEndDate(json.data.popup_end_date || "");
       } else {
-        showToast(t('postLoadFail') || '게시글을 불러오지 못했습니다.', 'error');
+        showToast(t('postLoadFail'), 'error');
         doNavigateBack();
       }
     } catch (err) {
       console.error('Failed to fetch post:', err);
-      showToast(t('errOccurred') || '오류가 발생했습니다.', 'error');
+      showToast(t('errOccurred'), 'error');
     } finally {
       setLoading(false);
     }
@@ -116,10 +116,10 @@ export default function PostForm() {
       const res = await api(`/api/attachments/${id}`, { method: 'DELETE' });
       const json = await res.json();
       if (json.success) {
-        showToast(t('attachmentDeleted') || '첨부파일이 삭제되었습니다.', 'success');
+        showToast(t('attachmentDeleted'), 'success');
         setExistingAttachments(prev => prev.filter(a => a.id !== id));
       } else {
-        showToast(json.error || t('deleteFail') || '삭제 실패', 'error');
+        showToast(json.error || t('deleteFail'), 'error');
       }
     } catch (err) {
       console.error('Delete attachment failed:', err);
@@ -140,19 +140,19 @@ export default function PostForm() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
-      setError(t('enterTitle') || '제목을 입력하세요.');
+      setError(t('enterTitle'));
       titleRef.current?.focus();
       return;
     }
 
     if (!isGlobal && (category === 'notice' || category === 'resource') && currentUser.role !== 'admin') {
-      setError(t('permissionDenied') || '권한이 없습니다.');
+      setError(t('permissionDenied'));
       return;
     }
 
     const noticeSelected = (isGlobal && boardType === 'notice') || (!isGlobal && category === 'notice');
     if (noticeSelected && popupStartDate && popupEndDate && popupEndDate < popupStartDate) {
-      setError(t('popupDateInvalid') || '팝업 종료일은 시작일보다 빠를 수 없습니다.');
+      setError(t('popupDateInvalid'));
       return;
     }
 
@@ -197,22 +197,22 @@ export default function PostForm() {
             );
           } catch (err) {
             console.error("Post attachment upload failed:", err);
-            showToast(t('attachmentUploadFail') || '본문은 저장되었으나 첨부파일 업로드에 실패했습니다.', 'error');
+            showToast(t('attachmentUploadFail'), 'error');
           }
         }
 
         setDirty(false);
-        showToast(isEdit ? (t('postUpdated') || '게시글이 수정되었습니다.') : (t('postCreated') || '게시글이 작성되었습니다.'), 'success');
+        showToast(isEdit ? t('postUpdated') : t('postCreated'), 'success');
         if (isGlobal) {
           navigate(`/boards/${boardType}`);
         } else {
           navigate(`/projects/${id}/board`);
         }
       } else {
-        setError(json.error || t('postSaveFail') || '게시글 저장 중 에러가 발생했습니다.');
+        setError(json.error || t('postSaveFail'));
       }
     } catch (err) {
-      setError(t('serverError') || '서버 통신 오류가 발생했습니다.');
+      setError(t('serverError'));
     } finally {
       setSaving(false);
     }
@@ -220,7 +220,7 @@ export default function PostForm() {
 
   if (loading) return <div className="text-center py-20"><div className="spinner text-primary" /></div>;
 
-  const pageTitle = isEdit ? (t('editPost') || '게시글 수정') : (t('newPost') || '새 게시글 작성');
+  const pageTitle = isEdit ? t('editPost') : t('newPost');
   const isNotice = (isGlobal && boardType === 'notice') || (!isGlobal && category === 'notice');
 
   return (
@@ -256,12 +256,12 @@ export default function PostForm() {
         {/* ── 제목 ── */}
         <div className="flex items-center gap-3">
           <label className="text-xs font-bold text-[var(--text-secondary)] shrink-0">
-            {t('title') || '제목'} <span className="text-red-500">*</span>
+            {t('title')} <span className="text-red-500">*</span>
           </label>
           <input
             ref={titleRef}
             type="text"
-            placeholder={t('enterTitlePlaceholder') || '게시글 제목을 입력하세요'}
+            placeholder={t('enterTitlePlaceholder')}
             value={title}
             onChange={(e) => { setTitle(e.target.value); setDirty(true); }}
             required
@@ -275,7 +275,7 @@ export default function PostForm() {
           {!isGlobal && (
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-[var(--text-secondary)]">
-                {t('category') || '카테고리'}
+                {t('category')}
               </label>
               <select
                 value={category}
@@ -283,11 +283,11 @@ export default function PostForm() {
                 disabled={saving}
                 className="w-full px-3.5 py-2 h-9.5 border border-[var(--border)] rounded-xl bg-[var(--bg-surface)] text-xs focus:outline-none focus:ring-1 focus:ring-[var(--primary)]/50 focus:border-[var(--primary)] transition-all text-[var(--text-primary)] cursor-pointer font-medium disabled:opacity-60"
               >
-                <option value="general" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('general') || '일반'}</option>
+                <option value="general" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('general')}</option>
                 {currentUser.role === 'admin' && (
                   <>
-                    <option value="notice" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('notices') || '공지사항'}</option>
-                    <option value="resource" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('resources') || '자료실'}</option>
+                    <option value="notice" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('notices')}</option>
+                    <option value="resource" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('resources')}</option>
                   </>
                 )}
               </select>
@@ -297,7 +297,7 @@ export default function PostForm() {
           {isNotice && (
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-[var(--text-secondary)]">
-                {t('popupPeriod') || '팝업 기간'}
+                {t('popupPeriod')}
               </label>
               <div className="flex items-center gap-2">
                 <input
@@ -348,7 +348,7 @@ export default function PostForm() {
           <div className="space-y-2">
             <label className="text-xs font-bold text-[var(--text-secondary)] flex items-center gap-1">
               <Paperclip size={12} className="text-[var(--text-muted)]" />
-              {t('existingAttachments') || '기존 첨부 파일'}
+              {t('existingAttachments')}
             </label>
             <div className="flex flex-col gap-1.5 max-h-32 overflow-y-auto custom-scrollbar">
               {existingAttachments.map((a) => (
@@ -374,7 +374,7 @@ export default function PostForm() {
         <div className="space-y-2">
           <label className="text-xs font-bold text-[var(--text-secondary)] flex items-center gap-1">
             <Paperclip size={12} className="text-[var(--text-muted)]" />
-            {isEdit ? (t('attachNewFile') || '새 파일 첨부') : (t('attachFile') || '파일 첨부')}
+            {isEdit ? t('attachNewFile') : t('attachFile')}
           </label>
           <div className="relative border-2 border-dashed border-[var(--border)] rounded-2xl hover:border-[var(--primary)] transition-all bg-[var(--bg-surface-2)]/50 p-4 text-center cursor-pointer">
             <input
@@ -395,8 +395,8 @@ export default function PostForm() {
             />
             <div className="flex flex-col items-center justify-center gap-1.5 pointer-events-none select-none">
               <Paperclip size={18} className="text-[var(--text-muted)]" />
-              <span className="text-xs font-bold text-[var(--text-secondary)]">파일을 드래그하여 놓거나 클릭하여 선택</span>
-              <span className="text-xs text-[var(--text-muted)]">최대 파일 크기: 100MiB</span>
+              <span className="text-xs font-bold text-[var(--text-secondary)]">{t('dragDropFiles')}</span>
+              <span className="text-xs text-[var(--text-muted)]">{t('maxFileSizeHint')}</span>
             </div>
           </div>
           {files.length > 0 && (
@@ -441,7 +441,7 @@ export default function PostForm() {
             disabled={saving}
             className="bg-[var(--bg-surface-2)] hover:opacity-90 text-[var(--text-secondary)] font-bold px-4 py-2 rounded-xl text-xs border-none cursor-pointer h-9 disabled:opacity-50"
           >
-            {t('cancel') || '취소'}
+            {t('cancel')}
           </button>
           <button
             type="submit"
@@ -449,9 +449,9 @@ export default function PostForm() {
             className="bg-[var(--primary)] hover:opacity-90 text-white font-bold px-5 py-2 rounded-xl text-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50 h-9 border-none"
           >
             {saving ? (
-              <><svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>저장 중...</>
+              <><svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>{t('saving')}</>
             ) : (
-              <><Save size={13} />{isEdit ? (t('editComplete') || '수정 완료') : (t('saveBtn') || '저장하기')}</>
+              <><Save size={13} />{isEdit ? t('editComplete') : t('saveBtn')}</>
             )}
           </button>
         </div>
@@ -459,10 +459,10 @@ export default function PostForm() {
 
       <ConfirmDialog
         isOpen={leaveConfirmOpen}
-        title={t('unsavedTitle') || '저장되지 않은 변경사항'}
-        message={t('unsavedLeaveConfirm') || '작성 중인 내용이 저장되지 않았습니다. 정말 나가시겠습니까?'}
-        confirmLabel={t('leaveWithoutSaving') || '나가기'}
-        cancelLabel={t('cancel') || '취소'}
+        title={t('unsavedTitle')}
+        message={t('unsavedLeaveConfirm')}
+        confirmLabel={t('leaveWithoutSaving')}
+        cancelLabel={t('cancel')}
         danger
         onConfirm={() => { setLeaveConfirmOpen(false); setDirty(false); doNavigateBack(); }}
         onCancel={() => setLeaveConfirmOpen(false)}

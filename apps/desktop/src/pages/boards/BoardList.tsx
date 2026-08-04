@@ -87,7 +87,7 @@ export default function GlobalBoardList() {
 
   const isNotice = boardType === 'notice';
   const isResource = boardType === 'resource';
-  const pageTitle = isNotice ? t('notices') || '공지사항' : t('resources') || '자료실';
+  const pageTitle = isNotice ? t('notices') : t('resources');
 
   // 자료실 전용 카드(썸네일) 뷰
   const [resourceViewMode, setResourceViewMode] = useState<'table' | 'grid'>(() =>
@@ -230,16 +230,16 @@ export default function GlobalBoardList() {
     try {
       const res = await api(`/api/posts/${postDetail.id}`, { method: 'DELETE' });
       if (res.ok) {
-        showToast('게시글이 삭제되었습니다.', 'success');
+        showToast(t('postDeleted'), 'success');
         setSelectedPost(null);
         setPostDetail(null);
         setPostAttachments([]);
         fetchPosts();
       } else {
-        showToast('삭제 실패', 'error');
+        showToast(t('deleteFail'), 'error');
       }
     } catch {
-      showToast('삭제 중 오류가 발생했습니다.', 'error');
+      showToast(t('deleteError'), 'error');
     }
   };
 
@@ -257,7 +257,7 @@ export default function GlobalBoardList() {
       document.body.removeChild(link);
       setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
     } catch {
-      showToast('파일을 다운로드할 수 없습니다.', 'error');
+      showToast(t('fileDownloadError'), 'error');
     } finally {
       setDownloadingAll(false);
     }
@@ -276,7 +276,7 @@ export default function GlobalBoardList() {
       document.body.removeChild(link);
       setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
     } catch {
-      showToast('파일을 다운로드할 수 없습니다.', 'error');
+      showToast(t('fileDownloadError'), 'error');
     } finally {
       setDownloadingAll(false);
     }
@@ -327,7 +327,7 @@ export default function GlobalBoardList() {
     if (selectedIds.size === 0) return;
     try {
       await Promise.all(Array.from(selectedIds).map(id => api(`/api/posts/${id}`, { method: 'DELETE' })));
-      showToast(`${selectedIds.size}개의 게시글을 삭제했습니다.`, 'success');
+      showToast(t('postsDeletedCount').replace('{count}', String(selectedIds.size)), 'success');
       if (selectedPost && selectedIds.has(selectedPost.id)) {
         setSelectedPost(null);
         setPostDetail(null);
@@ -336,7 +336,7 @@ export default function GlobalBoardList() {
       fetchPosts();
     } catch (err) {
       console.error('Failed to batch delete posts:', err);
-      showToast('삭제 중 오류가 발생했습니다.', 'error');
+      showToast(t('deleteError'), 'error');
     }
     setActiveDropdown(null);
   };
@@ -466,7 +466,7 @@ export default function GlobalBoardList() {
       return (
         <div className="flex-1 flex flex-col items-center justify-center text-[var(--text-muted)] gap-3 bg-[var(--bg-surface-2)]/20">
           <RefreshCw size={22} className="animate-spin text-[var(--primary)]" />
-          <p className="text-xs font-medium">{t('loading') || '불러오는 중...'}</p>
+          <p className="text-xs font-medium">{t('loading')}</p>
         </div>
       );
     }
@@ -482,7 +482,7 @@ export default function GlobalBoardList() {
                     ? 'bg-red-50 text-red-500 border-red-200 dark:bg-red-950/20 dark:border-red-800'
                     : 'bg-green-50 text-green-600 border-green-200 dark:bg-green-950/20 dark:border-green-800'
                 }`}>
-                  {postDetail.category === 'notice' ? (t('notices') || '공지사항') : (t('resources') || '자료실')}
+                  {postDetail.category === 'notice' ? t('notices') : t('resources')}
                 </span>
                 <span className="text-xs text-[var(--text-muted)] font-mono">#{postDetail.id}</span>
               </div>
@@ -510,7 +510,7 @@ export default function GlobalBoardList() {
               <button
                 onClick={() => { setSelectedPost(null); setPostDetail(null); setPostAttachments([]); }}
                 className="p-1.5 border border-[var(--border)] hover:bg-[var(--bg-surface-2)] rounded text-[var(--text-muted)] transition-all cursor-pointer bg-[var(--bg-surface)]"
-                title={t('close') || '닫기'}
+                title={t('close')}
               >
                 <X size={12} />
               </button>
@@ -565,8 +565,8 @@ export default function GlobalBoardList() {
           <FileText size={24} className="text-[var(--text-muted)] opacity-60" />
         </div>
         <div className="text-center">
-          <p className="text-xs font-bold text-[var(--text-secondary)]">{t('noPostSelected') || '선택된 게시글이 없습니다.'}</p>
-          <p className="text-xs text-[var(--text-muted)] mt-1">{t('selectPostFromList') || '목록에서 게시글을 선택하세요.'}</p>
+          <p className="text-xs font-bold text-[var(--text-secondary)]">{t('noPostSelected')}</p>
+          <p className="text-xs text-[var(--text-muted)] mt-1">{t('selectPostFromList')}</p>
         </div>
       </div>
     );
@@ -591,7 +591,7 @@ export default function GlobalBoardList() {
             className="h-[34px] px-3.5 bg-[var(--primary)] hover:opacity-90 text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer flex items-center gap-1.5 active:scale-[0.98] border-none"
           >
             <Plus size={13} />
-            {t('newPost') || '새 글 작성'}
+            {t('newPost')}
           </button>
         )}
       </div>
@@ -607,9 +607,9 @@ export default function GlobalBoardList() {
             aria-label={t('search')}
             className="h-8 px-2 border border-[var(--border)] rounded bg-[var(--bg-surface)] text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/60 focus-visible:border-[var(--primary)] text-[var(--text-primary)] cursor-pointer font-medium"
           >
-            <option value="title">{t('title') || '제목'}</option>
-            <option value="title_content">{`${t('title') || '제목'}+${t('content') || '내용'}`}</option>
-            <option value="author">{t('author') || '작성자'}</option>
+            <option value="title">{t('title')}</option>
+            <option value="title_content">{`${t('title')}+${t('content')}`}</option>
+            <option value="author">{t('author')}</option>
           </select>
 
           <div className="relative">
@@ -636,7 +636,7 @@ export default function GlobalBoardList() {
                   className="flex items-center gap-1 px-2.5 py-1.5 border border-[var(--border)] hover:bg-[var(--bg-surface-2)] text-[var(--text-secondary)] disabled:opacity-45 disabled:hover:bg-transparent rounded text-xs font-semibold transition-all cursor-pointer bg-[var(--bg-surface)] h-8"
                 >
                   <Trash2 size={11} />
-                  삭제
+                  {t('delete')}
                 </button>
                 {activeDropdown === 'delete' && (
                   <div className="absolute left-0 mt-1 w-40 bg-[var(--bg-surface)] border border-[var(--border)] rounded shadow-lg z-30 py-1 animate-in fade-in slide-in-from-top-1 duration-150">
@@ -645,7 +645,7 @@ export default function GlobalBoardList() {
                       className="w-full text-left px-3 py-2 text-xs hover:bg-red-50 dark:hover:bg-red-950/20 text-red-500 flex items-center gap-2 cursor-pointer border-none bg-transparent font-medium"
                     >
                       <Trash2 size={11} className="opacity-70" />
-                      선택 항목 삭제
+                      {t('deleteSelectedItems')}
                     </button>
                   </div>
                 )}
@@ -657,9 +657,9 @@ export default function GlobalBoardList() {
         {/* 우측: 카운트 + 분할 뷰 토글 */}
         <div className="flex items-center gap-2 shrink-0">
           <span className="text-xs font-semibold text-[var(--text-secondary)] whitespace-nowrap">
-            전체 <b className="text-[var(--text-primary)]">{totalCount}</b>건
+            {t('all')} <b className="text-[var(--text-primary)]">{totalCount}</b>{t('countUnit')}
             {selectedIds.size > 0 && (
-              <span className="ml-2 text-[var(--primary)] font-bold">{selectedIds.size}개 선택</span>
+              <span className="ml-2 text-[var(--primary)] font-bold">{t('bulkSelectCount').replace('{count}', String(selectedIds.size))}</span>
             )}
           </span>
           {/* 자료실 전용: 목록 / 카드(썸네일) 뷰 토글 */}
@@ -690,21 +690,21 @@ export default function GlobalBoardList() {
             <button
               onClick={() => setSplitLayout('rows')}
               className={`p-1 rounded cursor-pointer border-none ${splitLayout === 'rows' ? 'bg-[var(--primary)]/10 text-[var(--primary)]' : 'hover:bg-[var(--bg-surface-2)] text-[var(--text-muted)]'} transition-colors`}
-              title="가로 분할"
+              title={t('splitHorizontal')}
             >
               <Rows size={12} />
             </button>
             <button
               onClick={() => setSplitLayout('columns')}
               className={`p-1 rounded cursor-pointer border-none ${splitLayout === 'columns' ? 'bg-[var(--primary)]/10 text-[var(--primary)]' : 'hover:bg-[var(--bg-surface-2)] text-[var(--text-muted)]'} transition-colors`}
-              title="세로 분할"
+              title={t('splitVertical')}
             >
               <Columns size={12} />
             </button>
             <button
               onClick={() => setSplitLayout('list')}
               className={`p-1 rounded cursor-pointer border-none ${splitLayout === 'list' ? 'bg-[var(--primary)]/10 text-[var(--primary)]' : 'hover:bg-[var(--bg-surface-2)] text-[var(--text-muted)]'} transition-colors`}
-              title="목록만 보기"
+              title={t('listViewOnly')}
             >
               <Menu size={12} />
             </button>
@@ -757,12 +757,12 @@ export default function GlobalBoardList() {
                   )}
                   <th scope="col" aria-sort={getAriaSort('id')} className="w-14 p-2 text-center select-none hover:bg-[var(--bg-surface-2)] transition-colors">
                     <button type="button" onClick={() => handleSort('id')} className={`${SORT_BUTTON_CLASS} justify-center`}>
-                      번호 {renderSortIcon('id')}
+                      {t('postNumber')} {renderSortIcon('id')}
                     </button>
                   </th>
                   <th scope="col" aria-sort={getAriaSort('title')} className="p-2 pl-3 select-none hover:bg-[var(--bg-surface-2)] transition-colors">
                     <button type="button" onClick={() => handleSort('title')} className={SORT_BUTTON_CLASS}>
-                      {t('title') || '제목'} {renderSortIcon('title')}
+                      {t('title')} {renderSortIcon('title')}
                     </button>
                   </th>
                   {splitLayout === 'list' && (
@@ -777,7 +777,7 @@ export default function GlobalBoardList() {
                       )}
                       <th scope="col" aria-sort={getAriaSort('author_name')} className="w-28 p-2 text-center select-none hover:bg-[var(--bg-surface-2)] transition-colors">
                         <button type="button" onClick={() => handleSort('author_name')} className={`${SORT_BUTTON_CLASS} justify-center`}>
-                          {t('author') || '작성자'} {renderSortIcon('author_name')}
+                          {t('author')} {renderSortIcon('author_name')}
                         </button>
                       </th>
                       <th scope="col" aria-sort={getAriaSort('view_count')} className="w-16 p-2 text-center select-none hover:bg-[var(--bg-surface-2)] transition-colors">
@@ -787,7 +787,7 @@ export default function GlobalBoardList() {
                       </th>
                       <th scope="col" aria-sort={getAriaSort('created_at')} className="w-36 p-2 pr-4 select-none hover:bg-[var(--bg-surface-2)] transition-colors">
                         <button type="button" onClick={() => handleSort('created_at')} className={`${SORT_BUTTON_CLASS} justify-end`}>
-                          {t('created_at') || '작성일'} {renderSortIcon('created_at')}
+                          {t('created_at')} {renderSortIcon('created_at')}
                         </button>
                       </th>
                     </>
@@ -795,7 +795,7 @@ export default function GlobalBoardList() {
                   {splitLayout !== 'list' && (
                     <th scope="col" aria-sort={getAriaSort('created_at')} className="w-24 p-2 pr-3 select-none hover:bg-[var(--bg-surface-2)] transition-colors">
                       <button type="button" onClick={() => handleSort('created_at')} className={`${SORT_BUTTON_CLASS} justify-end`}>
-                        날짜 {renderSortIcon('created_at')}
+                        {t('date')} {renderSortIcon('created_at')}
                       </button>
                     </th>
                   )}

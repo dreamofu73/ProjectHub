@@ -8,6 +8,7 @@ import { PageHeader } from 'ui/PageHeader';
 import { useToast } from 'ui/Toast';
 import { api } from 'shared/lib/api';
 
+import { useLanguage } from 'shared/hooks/LanguageContext';
 interface Project {
   id: string;
   identifier: string;
@@ -20,6 +21,7 @@ interface Attachment {
 }
 
 export default function NewIssue() {
+  const { t } = useLanguage();
   const { id: projectId } = useParams<{ id: string }>(); // project identifier
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -67,9 +69,9 @@ export default function NewIssue() {
         
         if (!res.ok) {
           if (res.status === 413) {
-            showToast('파일 용량이 너무 큽니다 (최대 100MB).', 'error');
+            showToast(t('fileTooLarge'), 'error');
           } else {
-            showToast(`파일 업로드에 실패했습니다 (오류 코드: ${res.status}).`, 'error');
+            showToast(t('fileUploadFailedCode').replace('{code}', String(res.status)), 'error');
           }
           continue;
         }
@@ -79,10 +81,10 @@ export default function NewIssue() {
           setAttachments(prev => [...prev, json.data]);
         }
       }
-      showToast('파일이 업로드되었습니다.', 'success');
+      showToast(t('fileUploaded'), 'success');
     } catch (err) {
       console.error('File upload failed:', err);
-      showToast('파일 업로드 중 오류가 발생했습니다.', 'error');
+      showToast(t('chatUploadError'), 'error');
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -117,13 +119,13 @@ export default function NewIssue() {
 
       const json = await res.json();
       if (res.ok) {
-        showToast('이슈가 성공적으로 생성되었습니다.', 'success');
+        showToast(t('issueCreatedSuccess'), 'success');
         navigate(`/projects/${projectId}/issues`);
       } else {
-        showToast(json.error || '이슈 생성 중 오류가 발생했습니다.', 'error');
+        showToast(json.error || t('issueCreateError'), 'error');
       }
     } catch {
-      showToast('서버 통신 오류가 발생했습니다.', 'error');
+      showToast(t('serverCommError'), 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -141,9 +143,9 @@ export default function NewIssue() {
     return (
       <Card className="border-danger max-w-xl mx-auto mt-8">
         <CardBody className="text-center py-8">
-          <p className="text-danger font-semibold mb-4">프로젝트를 찾을 수 없습니다.</p>
+          <p className="text-danger font-semibold mb-4">{t('projectNotFound')}</p>
           <Link to="/projects">
-            <Button variant="secondary">프로젝트 목록으로 이동</Button>
+            <Button variant="secondary">{t('goToProjectsList')}</Button>
           </Link>
         </CardBody>
       </Card>
@@ -157,8 +159,8 @@ export default function NewIssue() {
            <ArrowLeft size={16}/>
         </Link>
         <PageHeader 
-          title="새 이슈 만들기" 
-          description={`${project.name} 프로젝트에 새 이슈를 등록합니다.`}
+          title={t('createNewIssue')} 
+          description={t('newIssueForProjectDesc').replace('{name}', project.name)}
           className="mb-0 flex-1"
         />
       </div>
@@ -174,8 +176,8 @@ export default function NewIssue() {
             )}
             
             <Input
-              label="제목"
-              placeholder="이슈 제목을 입력하세요"
+              label={t('title')}
+              placeholder={t('enterIssueTitle')}
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               required
@@ -185,54 +187,54 @@ export default function NewIssue() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Select
-                label="유형"
+                label={t('tracker')}
                 value={tracker}
                 onChange={(e) => setTracker(e.target.value)}
                 disabled={isSubmitting}
                 fullWidth
                 options={[
-                  { value: 'bug', label: '결함 (Bug)' },
-                  { value: 'feature', label: '새 기능 (Feature)' },
-                  { value: 'task', label: '작업 (Task)' },
-                  { value: 'support', label: '지원 (Support)' },
-                  { value: 'enhancement', label: '개선 (Enhancement)' }
+                  { value: 'bug', label: t('bugLabel') },
+                  { value: 'feature', label: t('featureLabel') },
+                  { value: 'task', label: t('taskLabel') },
+                  { value: 'support', label: t('supportLabel') },
+                  { value: 'enhancement', label: t('enhancementLabel') }
                 ]}
               />
 
               <Select
-                label="상태"
+                label={t('status')}
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
                 disabled={isSubmitting}
                 fullWidth
                 options={[
-                  { value: 'new', label: '신규 (New)' },
-                  { value: 'in_progress', label: '진행중 (In Progress)' },
-                  { value: 'resolved', label: '해결됨 (Resolved)' },
-                  { value: 'feedback', label: '피드백 (Feedback)' }
+                  { value: 'new', label: t('newTracker') },
+                  { value: 'in_progress', label: t('inProgressTracker') },
+                  { value: 'resolved', label: t('resolvedTracker') },
+                  { value: 'feedback', label: t('feedbackTracker') }
                 ]}
               />
 
               <Select
-                label="우선순위"
+                label={t('priority')}
                 value={priority}
                 onChange={(e) => setPriority(e.target.value)}
                 disabled={isSubmitting}
                 fullWidth
                 options={[
-                  { value: 'low', label: '낮음 (Low)' },
-                  { value: 'normal', label: '보통 (Normal)' },
-                  { value: 'high', label: '높음 (High)' },
-                  { value: 'urgent', label: '긴급 (Urgent)' }
+                  { value: 'low', label: t('lowLabel') },
+                  { value: 'normal', label: t('normalLabel') },
+                  { value: 'high', label: t('highLabel') },
+                  { value: 'urgent', label: t('urgentLabel') }
                 ]}
               />
             </div>
 
             <div>
-              <label className="form-label">설명</label>
+              <label className="form-label">{t('description')}</label>
               <textarea
                 className="form-control min-h-[180px] resize-y"
-                placeholder="이슈에 대한 상세 내용을 작성하세요..."
+                placeholder={t('issueDescPlaceholder')}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 disabled={isSubmitting}
@@ -241,7 +243,7 @@ export default function NewIssue() {
 
             <div className="pt-2">
               <label className="form-label mb-2 flex items-center justify-between">
-                <span>파일 첨부</span>
+                <span>{t('attachFile')}</span>
                 <input
                   type="file"
                   multiple
@@ -257,7 +259,7 @@ export default function NewIssue() {
                   onClick={() => fileInputRef.current?.click()}
                   isLoading={isUploading}
                 >
-                  파일 선택
+                  {t('logsSelectFile')}
                 </Button>
               </label>
               
@@ -279,7 +281,7 @@ export default function NewIssue() {
                 ))}
                 {attachments.length === 0 && !isUploading && (
                   <div className="text-xs text-muted text-center py-4 border-2 border-dashed border-gray-100 rounded-xl">
-                    첨부된 파일이 없습니다.
+                    {t('noAttachedFiles')}
                   </div>
                 )}
               </div>
@@ -292,7 +294,7 @@ export default function NewIssue() {
                  onClick={() => navigate(-1)}
                  disabled={isSubmitting}
                >
-                 취소
+                 {t('cancel')}
                </Button>
                <Button
                  type="submit"
@@ -300,7 +302,7 @@ export default function NewIssue() {
                  disabled={isSubmitting || !subject}
                  icon={Save}
                >
-                 생성하기
+                 {t('createAction')}
                </Button>
             </div>
           </form>

@@ -7,7 +7,9 @@ import { Input, Select } from 'ui/Input';
 import { PageHeader } from 'ui/PageHeader';
 import { api } from 'shared/lib/api';
 
+import { useLanguage } from 'shared/hooks/LanguageContext';
 export default function NewProject() {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   
   // Form states
@@ -43,10 +45,10 @@ export default function NewProject() {
       if (res.ok && json.success) {
         navigate(`/projects/${identifier.trim().toLowerCase()}`);
       } else {
-        setError(json.error || '프로젝트 생성 중 오류가 발생했습니다.');
+        setError(json.error || t('projectCreateError'));
       }
     } catch {
-      setError('서버 통신 오류가 발생했습니다.');
+      setError(t('serverCommError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -68,8 +70,8 @@ export default function NewProject() {
           <ArrowLeft size={16} />
         </Link>
         <PageHeader 
-          title="새 프로젝트 생성" 
-          description="새로운 협업 및 이슈 관리 공간을 만듭니다."
+          title={t('createNewProject')} 
+          description={t('projectDesc2')}
           className="mb-0"
         />
       </div>
@@ -86,8 +88,8 @@ export default function NewProject() {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Input
-                label="프로젝트 이름"
-                placeholder="예: 마케팅 웹사이트 제작"
+                label={t('projectName2')}
+                placeholder={t('projectNameExample')}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
@@ -97,22 +99,22 @@ export default function NewProject() {
 
               <div>
                 <Input
-                  label="프로젝트 식별자 (URL 경로에 사용)"
-                  placeholder="예: marketing-website (소문자, 숫자, - 만 가능)"
+                  label={t('projectIdentifier')}
+                  placeholder={t('projectIdentifierExample')}
                   value={identifier}
                   onChange={handleIdentifierChange}
                   required
                   disabled={isSubmitting}
                   fullWidth
                 />
-                <span className="text-xs text-muted mt-1.5 block">생성 후 변경할 수 없으며, 고유해야 합니다.</span>
+                <span className="text-xs text-muted mt-1.5 block">{t('identifierImmutableHint')}</span>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Input
-                label="홈페이지"
-                placeholder="예: https://example.com"
+                label={t('homepage')}
+                placeholder={t('urlExamplePlaceholder')}
                 value={homepage}
                 onChange={(e) => setHomepage(e.target.value)}
                 disabled={isSubmitting}
@@ -120,23 +122,23 @@ export default function NewProject() {
               />
 
               <Select
-                label="공개 여부"
+                label={t('visibility')}
                 value={isPublic}
                 onChange={(e) => setIsPublic(e.target.value)}
                 disabled={isSubmitting}
                 fullWidth
                 options={[
-                  { value: 'true', label: '공개 (모든 사용자 접근 가능)' },
-                  { value: 'false', label: '비공개 (프로젝트 멤버만 접근 가능)' }
+                  { value: 'true', label: t('projectPublic') },
+                  { value: 'false', label: t('projectPrivate') }
                 ]}
               />
             </div>
 
             <div>
-              <label className="form-label">프로젝트 설명</label>
+              <label className="form-label">{t('projectDescription')}</label>
               <textarea
                 className="form-control min-h-[120px] resize-y"
-                placeholder="프로젝트에 대한 간단한 설명을 입력하세요..."
+                placeholder={t('projectDescPlaceholder')}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 disabled={isSubmitting}
@@ -150,7 +152,7 @@ export default function NewProject() {
                   variant="secondary"
                   disabled={isSubmitting}
                 >
-                  취소
+                  {t('cancel')}
                 </Button>
               </Link>
               <Button
@@ -159,7 +161,7 @@ export default function NewProject() {
                 icon={Save}
                 disabled={isSubmitting || !name || !identifier}
               >
-                생성하기
+                {t('createAction')}
               </Button>
             </div>
           </form>

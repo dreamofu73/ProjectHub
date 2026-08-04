@@ -59,10 +59,10 @@ export function UserToolbar({
           onChange={(e) => setRoleFilter(e.target.value)}
           className="h-8 px-2 border border-[var(--border)] rounded bg-[var(--bg-surface)] text-xs focus:outline-none text-[var(--text-primary)] cursor-pointer font-medium"
         >
-          <option value="all">{t('allRoles') || '전체 권한'}</option>
-          <option value="admin">{t('admin') || '관리자'}</option>
-          <option value="overseer">{t('overseer') || '감시자'}</option>
-          <option value="user">{t('regularUser') || '일반 사용자'}</option>
+          <option value="all">{t('allRoles')}</option>
+          <option value="admin">{t('admin')}</option>
+          <option value="overseer">{t('overseer')}</option>
+          <option value="user">{t('regularUser')}</option>
         </select>
 
         <select
@@ -70,15 +70,15 @@ export function UserToolbar({
           onChange={(e) => setStatusFilter(e.target.value)}
           className="h-8 px-2 border border-[var(--border)] rounded bg-[var(--bg-surface)] text-xs focus:outline-none text-[var(--text-primary)] cursor-pointer font-medium"
         >
-          <option value="all">{t('allStatuses') || '상태'}</option>
-          <option value="active">{t('activeUser') || '활성'}</option>
-          <option value="inactive">{t('inactiveUser') || '비활성'}</option>
+          <option value="all">{t('allStatuses')}</option>
+          <option value="active">{t('activeUser')}</option>
+          <option value="inactive">{t('inactiveUser')}</option>
         </select>
 
         <div className="relative">
           <input
             type="text"
-            placeholder={t('searchUsersPlaceholder') || '사용자 검색...'}
+            placeholder={t('searchUsersPlaceholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-2 pr-7 py-1 h-8 w-48 border border-[var(--border)] rounded bg-[var(--bg-surface)] text-xs focus:outline-none text-[var(--text-primary)]"
@@ -101,7 +101,7 @@ export function UserToolbar({
             className="flex items-center gap-1 px-2.5 py-1.5 border border-[var(--border)] hover:bg-[var(--bg-surface-2)] text-[var(--text-secondary)] disabled:opacity-45 disabled:hover:bg-transparent rounded text-xs font-semibold transition-all cursor-pointer bg-[var(--bg-surface)] h-8"
           >
             <Shield size={11} />
-            권한 변경
+            {t('changeRole')}
             <ChevronDown size={10} className="opacity-60" />
           </button>
           {activeDropdown === 'role' && (
@@ -110,19 +110,19 @@ export function UserToolbar({
                 onClick={() => { handleBatchChangeRole('admin'); setActiveDropdown(null); }}
                 className="w-full text-left px-3 py-2 text-xs hover:bg-[var(--bg-surface-2)] text-[var(--text-primary)] flex items-center gap-2 cursor-pointer border-none bg-transparent font-medium"
               >
-                {t('admin') || '관리자'}
+                {t('admin')}
               </button>
               <button
                 onClick={() => { handleBatchChangeRole('overseer'); setActiveDropdown(null); }}
                 className="w-full text-left px-3 py-2 text-xs hover:bg-[var(--bg-surface-2)] text-[var(--text-primary)] flex items-center gap-2 cursor-pointer border-none bg-transparent font-medium"
               >
-                {t('overseer') || '감시자'}
+                {t('overseer')}
               </button>
               <button
                 onClick={() => { handleBatchChangeRole('user'); setActiveDropdown(null); }}
                 className="w-full text-left px-3 py-2 text-xs hover:bg-[var(--bg-surface-2)] text-[var(--text-primary)] flex items-center gap-2 cursor-pointer border-none bg-transparent font-medium"
               >
-                {t('regularUser') || '일반 사용자'}
+                {t('regularUser')}
               </button>
             </div>
           )}
@@ -134,7 +134,7 @@ export function UserToolbar({
           className="flex items-center gap-1 px-2.5 py-1.5 border border-[var(--border)] hover:bg-[var(--bg-surface-2)] text-[var(--text-secondary)] disabled:opacity-45 disabled:hover:bg-transparent rounded text-xs font-semibold transition-all cursor-pointer bg-[var(--bg-surface)] h-8"
         >
           <Building2 size={11} />
-          부서 변경
+          {t('changeDept')}
           <ChevronDown size={10} className="opacity-60" />
         </button>
 
@@ -151,7 +151,7 @@ export function UserToolbar({
           className="flex items-center gap-1 px-2.5 py-1.5 border border-[var(--border)] hover:bg-[var(--bg-surface-2)] text-[var(--text-secondary)] disabled:opacity-45 disabled:hover:bg-transparent rounded text-xs font-semibold transition-all cursor-pointer bg-[var(--bg-surface)] h-8"
         >
           <Power size={11} />
-          {selectedIds.size === 0 ? '상태 변경' : (hasInactiveSelected ? '활성화' : '비활성화')}
+          {selectedIds.size === 0 ? t('statusChange') : (hasInactiveSelected ? t('activate') : t('deactivate'))}
         </button>
 
         <button
@@ -160,7 +160,7 @@ export function UserToolbar({
           className="flex items-center gap-1 px-2.5 py-1.5 border border-[var(--border)] hover:bg-red-50 dark:hover:bg-red-950/20 text-[var(--text-secondary)] hover:text-red-500 disabled:opacity-45 disabled:hover:bg-transparent disabled:hover:text-[var(--text-secondary)] rounded text-xs font-semibold transition-all cursor-pointer bg-[var(--bg-surface)] h-8"
         >
           <Trash2 size={11} />
-          {t('bulkDelete') || '삭제'}
+          {t('bulkDelete')}
         </button>
       </div>
     </div>

@@ -36,7 +36,7 @@ export function BulkTaskEditPanel({ project, taskIds, onSave, onClose }: BulkTas
 
   const taskStatuses = safeJsonParse<string[]>(project.task_statuses, ['New', 'In Progress', 'Done']);
 
-  // 빈 문자열 = "변경하지 않음"
+  // 빈 문자열 = t('bulkUnchanged')
   const [assignee, setAssignee] = useState('');
   const [progress, setProgress] = useState('');
   const [plannedStartDate, setPlannedStartDate] = useState('');

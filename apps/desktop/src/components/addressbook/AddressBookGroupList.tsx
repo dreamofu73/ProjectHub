@@ -20,7 +20,7 @@ export function AddressBookGroupList({
     return (
       <div className="flex-1 flex flex-col items-center justify-center text-[var(--text-muted)] gap-3">
         <Loader2 size={20} className="animate-spin text-[var(--primary)]" />
-        <p className="text-xs font-medium">{t('loading') || '로딩 중...'}</p>
+        <p className="text-xs font-medium">{t('loading')}</p>
       </div>
     );
   }
@@ -31,7 +31,7 @@ export function AddressBookGroupList({
         <div className="w-12 h-12 rounded-full bg-[var(--bg-surface-2)] flex items-center justify-center border border-[var(--border)]">
           <Users size={20} className="text-[var(--text-muted)] opacity-60" />
         </div>
-        <p className="text-xs font-medium text-center">{t('noGroups') || '등록된 그룹이 없습니다.'}</p>
+        <p className="text-xs font-medium text-center">{t('noGroups')}</p>
       </div>
     );
   }

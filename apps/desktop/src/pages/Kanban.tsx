@@ -97,11 +97,11 @@ export default function KanbanPage() {
     }
     if (rawCols.length === 0) {
       rawCols = [
-        { id: 'new', label: t('statusNew') || '신규', color: 'bg-indigo-500', defaultWip: 10 },
-        { id: 'in_progress', label: t('statusInProgress') || '진행 중', color: 'bg-blue-500', defaultWip: 5 },
-        { id: 'feedback', label: t('statusFeedback') || '피드백', color: 'bg-amber-500', defaultWip: 5 },
-        { id: 'resolved', label: t('statusResolved') || '해결됨', color: 'bg-emerald-500', defaultWip: 10 },
-        { id: 'closed', label: t('statusClosed') || '완료', color: 'bg-slate-500', defaultWip: 20 },
+        { id: 'new', label: t('statusNew'), color: 'bg-indigo-500', defaultWip: 10 },
+        { id: 'in_progress', label: t('statusInProgress'), color: 'bg-blue-500', defaultWip: 5 },
+        { id: 'feedback', label: t('statusFeedback'), color: 'bg-amber-500', defaultWip: 5 },
+        { id: 'resolved', label: t('statusResolved'), color: 'bg-emerald-500', defaultWip: 10 },
+        { id: 'closed', label: t('statusClosed'), color: 'bg-slate-500', defaultWip: 20 },
       ];
     }
 
@@ -149,20 +149,18 @@ export default function KanbanPage() {
 
       {/* ── 헤더 영역 ── */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)] bg-[var(--bg-surface)] shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-[var(--primary)] border border-indigo-100 dark:border-indigo-900/40 shadow-2xs">
-            <Columns3 size={16} />
-          </div>
+        <div className="flex items-center gap-2.5">
+          <Columns3 size={20} className="text-[var(--primary)] shrink-0" />
           <div className="flex items-center gap-2">
             <h2 className="text-base font-extrabold text-[var(--text-primary)] tracking-tight">
-              {t('issueKanbanBoard') || '이슈 칸반 보드'}
+              {t('issueKanbanBoard')}
             </h2>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 dark:bg-indigo-950/40 text-[var(--primary)] border border-indigo-100 dark:border-indigo-900/40 tabular-nums">
-              {(t('totalCountWithNum') || '전체 {count}개').replace('{count}', String(filteredIssues.length))}
+            <span className="text-xs font-bold text-[var(--primary)] tabular-nums">
+              {t('totalCountWithNum').replace('{count}', String(filteredIssues.length))}
             </span>
             {isUpdating && (
               <span className="flex items-center gap-1 text-xs font-bold text-indigo-500 animate-pulse ml-2">
-                <RefreshCw size={12} className="animate-spin" /> {t('saving') || '저장 중...'}
+                <RefreshCw size={12} className="animate-spin" /> {t('saving')}
               </span>
             )}
           </div>
@@ -175,7 +173,7 @@ export default function KanbanPage() {
             className="h-9 px-4 bg-[var(--primary)] hover:bg-[var(--primary-hover,indigo-700)] text-white rounded-xl text-xs font-bold transition-all shadow-sm hover:shadow-md cursor-pointer flex items-center gap-1.5 active:scale-[0.96] border-none"
           >
             <Plus size={14} />
-            {t('newIssue') || '새 이슈 추가'}
+            {t('newIssue')}
           </button>
         )}
       </div>
@@ -187,10 +185,10 @@ export default function KanbanPage() {
           {/* 소프트 필터 탭 */}
           <div className="flex items-center gap-1.5 bg-[var(--bg-surface)] p-1 rounded-xl border border-[var(--border)] shadow-2xs">
             {[
-              { key: 'all', label: t('kanbanAll') || '전체' },
-              { key: 'bug', label: t('bug') || '버그' },
-              { key: 'feature', label: t('feature') || '새기능' },
-              { key: 'task', label: t('task') || '업무' },
+              { key: 'all', label: t('kanbanAll') },
+              { key: 'bug', label: t('bug') },
+              { key: 'feature', label: t('feature') },
+              { key: 'task', label: t('task') },
             ].map(tab => (
               <button
                 key={tab.key}
@@ -211,7 +209,7 @@ export default function KanbanPage() {
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
             <input
               type="text"
-              placeholder={t('searchIssuePlaceholder') || '이슈 제목으로 검색...'}
+              placeholder={t('searchIssuePlaceholder')}
               className="w-full h-8.5 pl-9 pr-3 text-xs bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-indigo-500/15 focus:border-[var(--primary)] transition-all shadow-2xs"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
@@ -240,7 +238,7 @@ export default function KanbanPage() {
             onStatusChange={handleStatusChange}
             onNewItemClick={colId => handleOpenNewIssue(colId)}
             readOnly={isArchived}
-            emptyMessage={t('noIssuesFound') || '등록된 이슈가 없습니다'}
+            emptyMessage={t('noIssuesFound')}
           />
         </div>
       </div>

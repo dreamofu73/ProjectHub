@@ -5,9 +5,9 @@ import ThemeSelector from './ThemeSelector';
 
 const LANGS: { code: Language; label: string; flag: string }[] = [
   { code: 'ko', label: 'KR', flag: '🇰🇷' },
-  { code: 'en', label: 'EN', flag: '🇺🇸' },
   { code: 'ja', label: 'JA', flag: '🇯🇵' },
-  { code: 'zh', label: 'ZH', flag: '🇨🇳' },
+  { code: 'en', label: 'EN', flag: '🇺🇸' },
+  { code: 'es', label: 'ES', flag: '🇪🇸' },
 ];
 
 interface FloatingControlsProps {
@@ -15,6 +15,7 @@ interface FloatingControlsProps {
 }
 
 export default function FloatingControls({ isCollapsed = false }: FloatingControlsProps) {
+  const { t } = useLanguage();
   const { lightDark, cycleLightDark, currentConfig } = useTheme();
   const { language, setLanguage } = useLanguage();
 
@@ -49,7 +50,7 @@ export default function FloatingControls({ isCollapsed = false }: FloatingContro
           <button
             onClick={cycleLightDark}
             className="cursor-pointer border-none p-1.5 rounded transition-all hover:bg-[var(--sidebar-link-hover-bg)] bg-transparent text-[var(--sidebar-link-color)]"
-            title={lightDark === 'light' ? '라이트' : lightDark === 'dark' ? '다크' : '시스템'}
+            title={lightDark === 'light' ? t('themeLight') : lightDark === 'dark' ? t('themeDark') : t('themeSystem')}
           >
             <LightDarkIcon size={12} />
           </button>
@@ -96,7 +97,7 @@ export default function FloatingControls({ isCollapsed = false }: FloatingContro
         <button
           onClick={cycleLightDark}
           className="cursor-pointer border-none p-1 rounded transition-all hover:bg-[var(--sidebar-link-hover-bg)] ml-auto bg-transparent text-[var(--sidebar-link-color)]"
-          title={lightDark === 'light' ? '라이트' : lightDark === 'dark' ? '다크' : '시스템'}
+          title={lightDark === 'light' ? t('themeLight') : lightDark === 'dark' ? t('themeDark') : t('themeSystem')}
         >
           <LightDarkIcon size={12} />
         </button>

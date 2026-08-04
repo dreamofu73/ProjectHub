@@ -29,8 +29,8 @@ export function AddressBookGroupDetail({
           <Users size={24} className="text-[var(--text-muted)] opacity-60" />
         </div>
         <div className="text-center">
-          <p className="text-xs font-bold text-[var(--text-secondary)]">{t('selectGroup') || '그룹을 선택하세요.'}</p>
-          <p className="text-xs text-[var(--text-muted)] mt-1">{t('selectGroupHint') || '목록에서 확인하려는 그룹을 선택하세요.'}</p>
+          <p className="text-xs font-bold text-[var(--text-secondary)]">{t('selectGroup')}</p>
+          <p className="text-xs text-[var(--text-muted)] mt-1">{t('selectGroupHint')}</p>
         </div>
       </div>
     );
@@ -39,7 +39,7 @@ export function AddressBookGroupDetail({
   const allMemberIds = members.map((m) => m.user_id);
 
   const handleRemoveMember = (userId: string) => {
-    if (window.confirm(t('confirmRemoveMember') || '이 구성원을 그룹에서 제거하시겠습니까?')) {
+    if (window.confirm(t('confirmRemoveMember'))) {
       onRemoveMember(userId);
     }
   };
@@ -67,7 +67,7 @@ export function AddressBookGroupDetail({
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 dark:border-red-900/30 dark:bg-red-900/10 dark:text-red-400 dark:hover:bg-red-900/20 text-xs font-bold transition-colors cursor-pointer"
               >
                 <Trash2 size={12} />
-                {t('deleteGroup') || '그룹삭제'}
+                {t('deleteGroup')}
               </button>
               <div className="w-px h-4 bg-[var(--border)] mx-1" />
               <button
@@ -75,7 +75,7 @@ export function AddressBookGroupDetail({
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--primary)] bg-[var(--primary)] text-white hover:opacity-90 text-xs font-bold transition-colors cursor-pointer"
               >
                 <Edit2 size={12} />
-                {t('editGroup') || '그룹 수정'}
+                {t('editGroup')}
               </button>
               <button
                 onClick={() => onSendMemo(allMemberIds)}
@@ -83,7 +83,7 @@ export function AddressBookGroupDetail({
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:bg-[var(--bg-surface-2)] text-xs font-bold transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <Send size={12} />
-                {t('sendMemo') || '쪽지 보내기'}
+                {t('sendMemo')}
               </button>
             </div>
           </div>
@@ -101,22 +101,22 @@ export function AddressBookGroupDetail({
         {loading ? (
           <div className="flex items-center justify-center py-16 text-[var(--text-muted)]">
             <div className="w-5 h-5 border-2 border-[var(--border-strong)] border-t-[var(--primary)] rounded-full animate-spin mr-2" />
-            <span className="text-xs font-medium">{t('loading') || '로딩 중...'}</span>
+            <span className="text-xs font-medium">{t('loading')}</span>
           </div>
         ) : members.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-[var(--text-muted)] gap-3">
             <User size={20} className="opacity-60" />
-            <p className="text-xs font-medium">{t('noMembers') || '그룹에 구성원이 없습니다.'}</p>
+            <p className="text-xs font-medium">{t('noMembers')}</p>
           </div>
         ) : (
           <table className="w-full text-left border-collapse table-fixed">
             <thead>
               <tr className="border-b border-[var(--border)] text-xs font-bold text-[var(--text-muted)] bg-[var(--bg-surface-2)]/50">
                 <th className="p-3 pl-6 w-12">{/* avatar */}</th>
-                <th className="p-3">{t('name') || '이름'}</th>
-                <th className="p-3 w-1/4">{t('login') || '아이디'}</th>
-                <th className="p-3 w-1/4 hidden md:table-cell">{t('email') || '이메일'}</th>
-                <th className="p-3 w-16 text-center">{t('actions') || '관리'}</th>
+                <th className="p-3">{t('name')}</th>
+                <th className="p-3 w-1/4">{t('login')}</th>
+                <th className="p-3 w-1/4 hidden md:table-cell">{t('email')}</th>
+                <th className="p-3 w-16 text-center">{t('actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--border)]">
@@ -149,7 +149,7 @@ export function AddressBookGroupDetail({
                     <button
                       onClick={() => handleRemoveMember(member.user_id)}
                       className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors cursor-pointer border-none"
-                      title={t('removeMember') || '제거'}
+                      title={t('removeMember')}
                     >
                       <X size={13} />
                     </button>

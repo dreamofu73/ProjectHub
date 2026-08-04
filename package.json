@@ -8,5 +8,11 @@
   "scripts": {
     "dev": "npm run dev --workspaces --if-present",
     "build": "npm run build --workspaces --if-present"
+  },
+  "overrides": {
+    "brace-expansion": "^2.0.2",
+    "postcss": "^8.5.23",
+    "react-router": "7.11.0",
+    "react-router-dom": "7.11.0"
   }
 }

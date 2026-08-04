@@ -44,21 +44,21 @@ export function PreferencesDialog({
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-slate-100 dark:border-slate-800">
           <DialogTitle className="flex items-center gap-2 text-base font-bold text-slate-900 dark:text-white">
             <Settings size={16} className="text-primary" />
-            {t('settings') || '설정'}
+            {t('settings')}
           </DialogTitle>
         </DialogHeader>
 
         <div className="px-6 py-5 flex flex-col gap-6 max-h-[60vh] overflow-y-auto custom-scrollbar">
           <div className="space-y-2.5">
             <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-              {t('language') || '언어'}
+              {t('language')}
             </Label>
             <div className="grid grid-cols-2 gap-2">
               {([
-                { code: 'ko', label: '한국어' },
-                { code: 'en', label: 'English' },
+                { code: 'ko', label: t('korean') },
                 { code: 'ja', label: '日本語' },
-                { code: 'zh', label: '简体中文' }
+                { code: 'en', label: 'English' },
+                { code: 'es', label: 'Español' }
               ] as { code: Language; label: string }[]).map(item => (
                 <button
                   key={item.code}
@@ -79,13 +79,13 @@ export function PreferencesDialog({
 
           <div className="space-y-2.5">
             <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-              {t('themeMode') || '화면 모드'}
+              {t('themeMode')}
             </Label>
             <div className="grid grid-cols-3 gap-2">
               {[
-                { id: 'light', label: t('themeLight') || '라이트' },
-                { id: 'dark', label: t('themeDark') || '다크' },
-                { id: 'system', label: t('themeSystem') || '시스템' }
+                { id: 'light', label: t('themeLight') },
+                { id: 'dark', label: t('themeDark') },
+                { id: 'system', label: t('themeSystem') }
               ].map(item => {
                 const isActive = lightDark === item.id;
                 return (
@@ -109,7 +109,7 @@ export function PreferencesDialog({
 
           <div className="space-y-2.5">
             <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-              {t('colorTheme') || '컬러 테마'}
+              {t('colorTheme')}
             </Label>
             <div className="flex flex-col gap-2">
               {themes.map(theme => {
@@ -131,7 +131,7 @@ export function PreferencesDialog({
                       />
                       <div>
                         <div className="text-xs font-bold text-slate-800 dark:text-slate-200">{theme.name}</div>
-                        <div className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{theme.desc}</div>
+                        <div className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{theme.descKey ? t(theme.descKey) : ''}</div>
                       </div>
                     </div>
                     <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${
@@ -153,7 +153,7 @@ export function PreferencesDialog({
             className="w-full h-9.5 text-white text-xs font-bold rounded-xl transition-all cursor-pointer border-none flex items-center justify-center"
             style={{ background: 'var(--primary)' }}
           >
-            {t('confirm') || '확인'}
+            {t('confirm')}
           </button>
         </div>
       </DialogContent>

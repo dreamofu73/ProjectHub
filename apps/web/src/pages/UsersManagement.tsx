@@ -93,8 +93,11 @@ export default function UsersManagementPage() {
 
   const handleBatchSetStatus = async (isActive: number) => {
     if (selectedIds.size === 0) return;
-    const actionName = isActive === 1 ? '활성화' : '비활성화';
-    if (!window.confirm(`선택한 ${selectedIds.size}명의 사용자를 ${actionName} 하시겠습니까?`)) return;
+    const actionName = isActive === 1 ? t('activate') : t('deactivate');
+    const confirmMsg = t('confirmUserStatusChange')
+      .replace('{count}', String(selectedIds.size))
+      .replace('{action}', actionName);
+    if (!window.confirm(confirmMsg)) return;
     
     let successCount = 0;
     for (const id of selectedIds) {
@@ -155,8 +158,11 @@ export default function UsersManagementPage() {
     if (selectedIds.size === 0) return;
     const deptName = departmentId 
       ? departments.find(d => d.id === departmentId)?.name || `ID:${departmentId}`
-      : '부서 없음';
-    if (!window.confirm(`선택한 ${selectedIds.size}명의 사용자 부서를 "${deptName}"(으)로 변경하시겠습니까?`)) return;
+      : t('noDept');
+    const confirmMsg = t('confirmUserDeptChange')
+      .replace('{count}', String(selectedIds.size))
+      .replace('{dept}', deptName);
+    if (!window.confirm(confirmMsg)) return;
     
     const updated = await handleBatchChangeDepartment([...selectedIds], departmentId);
     if (updated > 0) {
@@ -247,7 +253,7 @@ export default function UsersManagementPage() {
         <div className="flex items-center gap-3">
           <h2 className="text-sm font-bold text-[var(--text-primary)] flex items-center gap-2">
             <Users size={16} className="text-[var(--primary)]" />
-            <span>{t('users') || '사용자 관리'}</span>
+            <span>{t('users')}</span>
           </h2>
         </div>
         <div className="flex gap-2">
@@ -257,7 +263,7 @@ export default function UsersManagementPage() {
             className="h-8.5 px-3.5 bg-[var(--primary)] hover:opacity-90 text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer flex items-center gap-1.5 active:scale-[0.98] border-none"
           >
             <UserPlus size={13} />
-            {t('addUser') || '사용자 추가'}
+            {t('addUser')}
           </button>
         </div>
       </div>

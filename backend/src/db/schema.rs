@@ -1158,6 +1158,21 @@ async fn apply_legacy_upgrades(pool: &AnyPool) {
     add_column(pool, "messages", text("edited_at")).await;
     add_column(pool, "chat_room_members", int_null("last_read_message_id")).await;
 
+    // Postgres·MySQL: last_read_message_id 는 Sonyflake 63비트 ID 를 저장하므로
+    // BIGINT 여야 한다. 구버전 DB 에서 INTEGER(32비트) 로 잘못 생성된 경우 읽음 처리
+    // UPDATE 가 `integer out of range` 로 실패(500)하므로 타입을 교정한다.
+    // 이미 BIGINT 면 변경은 no-op 이다. SQLite 의 INTEGER 는 내부적으로 64비트라 제외.
+    if !matches!(get_kind(pool), DbKind::Sqlite) {
+        execute_schema_ignore(
+            pool,
+            &Table::alter()
+                .table("chat_room_members".to_string())
+                .modify_column(int_null("last_read_message_id"))
+                .to_owned(),
+        )
+        .await;
+    }
+
     add_column(pool, "wiki_pages", key_string("uuid")).await;
 }
 

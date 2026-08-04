@@ -101,7 +101,7 @@ export default function ChatPage() {
     yesterday.setDate(yesterday.getDate() - 1);
     if (date.toDateString() === today.toDateString()) return t('today');
     if (date.toDateString() === yesterday.toDateString()) return t('yesterday');
-    return date.toLocaleDateString(language === 'ko' ? 'ko-KR' : language === 'ja' ? 'ja-JP' : language === 'zh' ? 'zh-CN' : 'en-US', { month: '2-digit', day: '2-digit' });
+    return date.toLocaleDateString(language === 'ko' ? 'ko-KR' : language === 'ja' ? 'ja-JP' : language === 'es' ? 'es-ES' : 'en-US', { month: '2-digit', day: '2-digit' });
   };
 
   useEffect(() => {
@@ -429,7 +429,7 @@ export default function ChatPage() {
     setEditingId(null);
     try {
       const res = await api(`/api/chat/${messageId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content: text }) });
-      if (!res.ok) { showToast(t('chatEditFail') || '수정에 실패했습니다.', 'error'); fetchMessages(); }
+      if (!res.ok) { showToast(t('chatEditFail'), 'error'); fetchMessages(); }
     } catch { showToast(t('chatConnFail'), 'error'); fetchMessages(); }
   };
 
@@ -471,10 +471,10 @@ export default function ChatPage() {
         fetchChatRooms();
         window.dispatchEvent(new CustomEvent('refresh_chat_rooms'));
       } else {
-        showToast(json.error || t('errOccurred') || '이름 변경 실패', 'error');
+        showToast(json.error || t('errOccurred'), 'error');
       }
     } catch {
-      showToast(t('errOccurred') || '이름 변경 실패', 'error');
+      showToast(t('errOccurred'), 'error');
     } finally {
       setIsSavingRoomName(false);
     }
@@ -523,7 +523,7 @@ export default function ChatPage() {
             {!wsConnected && (
               <div className="absolute top-0 inset-x-0 z-30 flex items-center justify-center gap-2 px-4 py-1.5 bg-amber-500/95 text-white text-xs font-semibold shadow-sm animate-in fade-in slide-in-from-top-2">
                 <WifiOff size={13} className="shrink-0" />
-                <span>{t('chatReconnecting') || '연결이 끊겼습니다. 재연결 중…'}</span>
+                <span>{t('chatReconnecting')}</span>
               </div>
             )}
             <div className="flex items-center justify-between px-6 py-3.5 border-b border-[var(--border)] shrink-0 bg-[var(--bg-surface)]">
@@ -546,14 +546,14 @@ export default function ChatPage() {
                 ) : (
                   <>
                     <h2 className="text-base font-bold text-[var(--text-primary)] truncate">{activeRoom.name}</h2>
-                    <button onClick={() => { setEditingRoomName(activeRoom.name); setIsEditingRoomName(true); }} className="w-6 h-6 flex items-center justify-center rounded text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 border-none bg-transparent cursor-pointer ml-1" title={t('edit') || '이름 변경'} aria-label={t('edit') || '이름 변경'}>
+                    <button onClick={() => { setEditingRoomName(activeRoom.name); setIsEditingRoomName(true); }} className="w-6 h-6 flex items-center justify-center rounded text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 border-none bg-transparent cursor-pointer ml-1" title={t('edit')} aria-label={t('edit')}>
                       <Pencil size={13} />
                     </button>
                   </>
                 )}
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
-                <button onClick={() => setShowSearch(s => !s)} className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors border-none bg-transparent cursor-pointer ${showSearch ? 'text-[var(--primary)] bg-[var(--primary)]/10' : 'text-[var(--text-muted)] hover:bg-[var(--bg-surface-2)]'}`} title={t('search') || '검색'} aria-label={t('search') || '검색'}><Search size={15} /></button>
+                <button onClick={() => setShowSearch(s => !s)} className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors border-none bg-transparent cursor-pointer ${showSearch ? 'text-[var(--primary)] bg-[var(--primary)]/10' : 'text-[var(--text-muted)] hover:bg-[var(--bg-surface-2)]'}`} title={t('search')} aria-label={t('search')}><Search size={15} /></button>
                 <button onClick={() => setIsMembersOpen(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-[var(--text-secondary)] hover:bg-[var(--bg-surface-2)] transition-colors border-none bg-transparent cursor-pointer whitespace-nowrap"><Users size={13} />{t('members')}</button>
                 <button onClick={handleLeaveRoom} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors border border-rose-200 dark:border-rose-800/60 bg-transparent cursor-pointer whitespace-nowrap"><LogOut size={13} />{t('chatLeaveBtn')}</button>
               </div>
@@ -567,12 +567,12 @@ export default function ChatPage() {
                   value={searchQuery}
                   onChange={(e) => { setSearchQuery(e.target.value); setSearchMatchIndex(0); }}
                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (e.shiftKey) searchPrev(); else searchNext(); } else if (e.key === 'Escape') closeSearch(); }}
-                  placeholder={t('chatSearchPlaceholder') || '메시지 검색…'}
+                  placeholder={t('chatSearchPlaceholder')}
                   className="flex-1 min-w-0 bg-transparent border-none outline-none text-sm text-[var(--text-primary)] placeholder-slate-400 dark:placeholder-slate-500"
                 />
                 <span className="text-xs text-[var(--text-muted)] tabular-nums select-none shrink-0">{searchQuery.trim() ? `${searchMatches.length ? Math.min(searchMatchIndex, searchMatches.length - 1) + 1 : 0}/${searchMatches.length}` : ''}</span>
-                <button onClick={searchPrev} disabled={!searchMatches.length} className="w-6 h-6 flex items-center justify-center rounded text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30 border-none bg-transparent cursor-pointer" aria-label={t('prev') || '이전'}><ChevronUp size={14} /></button>
-                <button onClick={searchNext} disabled={!searchMatches.length} className="w-6 h-6 flex items-center justify-center rounded text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30 border-none bg-transparent cursor-pointer" aria-label={t('next') || '다음'}><ChevronDown size={14} /></button>
+                <button onClick={searchPrev} disabled={!searchMatches.length} className="w-6 h-6 flex items-center justify-center rounded text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30 border-none bg-transparent cursor-pointer" aria-label={t('prev')}><ChevronUp size={14} /></button>
+                <button onClick={searchNext} disabled={!searchMatches.length} className="w-6 h-6 flex items-center justify-center rounded text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30 border-none bg-transparent cursor-pointer" aria-label={t('next')}><ChevronDown size={14} /></button>
                 <button onClick={closeSearch} className="w-6 h-6 flex items-center justify-center rounded text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 border-none bg-transparent cursor-pointer" aria-label={t('cancel')}><X size={14} /></button>
               </div>
             )}
@@ -616,12 +616,12 @@ export default function ChatPage() {
                               <div className="flex flex-col gap-1.5 w-full min-w-[220px]">
                                 <textarea autoFocus value={editingText} onChange={(e) => setEditingText(e.target.value)} onKeyDown={(e) => { if (e.nativeEvent.isComposing) return; if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitEdit(msg.id); } else if (e.key === 'Escape') setEditingId(null); }} rows={1} className="px-3 py-2 rounded-xl text-sm bg-white dark:bg-slate-800 border border-[var(--primary)] outline-none resize-none text-[var(--text-primary)] custom-scrollbar leading-relaxed" />
                                 <div className={`flex items-center gap-2 text-xs ${isMe ? 'justify-end' : 'justify-start'}`}>
-                                  <button onClick={() => submitEdit(msg.id)} className="px-2.5 py-1 rounded-lg bg-[var(--primary)] hover:bg-[var(--primary)] text-white font-semibold border-none cursor-pointer transition-colors">{t('save') || '저장'}</button>
+                                  <button onClick={() => submitEdit(msg.id)} className="px-2.5 py-1 rounded-lg bg-[var(--primary)] hover:bg-[var(--primary)] text-white font-semibold border-none cursor-pointer transition-colors">{t('save')}</button>
                                   <button onClick={() => setEditingId(null)} className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-[var(--text-secondary)] font-semibold border-none cursor-pointer transition-colors">{t('cancel')}</button>
                                 </div>
                               </div>
                             ) : <div className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed break-words whitespace-pre-wrap ${isMe ? 'bg-[var(--primary)] text-white rounded-br-sm shadow-sm' : 'bg-[var(--bg-surface-2)] text-[var(--text-primary)] rounded-bl-sm'} ${msg.id === currentMatchMsgId ? 'ring-2 ring-amber-400 ring-offset-1 dark:ring-offset-slate-900' : ''}`}>{highlightContent(msg.content)}</div>}
-                            <div className={`flex items-center gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>{isMe && !fileMatch && <button onClick={() => startEdit(msg.id, msg.content)} className="w-5 h-5 rounded flex items-center justify-center text-slate-400 hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 transition-colors border-none bg-transparent cursor-pointer" title={t('edit') || '수정'}><Pencil size={10} /></button>}{isMe && <button onClick={() => handleDeleteMessage(msg.id)} className="w-5 h-5 rounded flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors border-none bg-transparent cursor-pointer"><Trash2 size={10} /></button>}{msg.edited_at && <span className="text-xs text-[var(--text-muted)] select-none italic px-0.5">{t('chatEdited') || '(수정됨)'}</span>}<span className="text-xs text-[var(--text-muted)] select-none px-0.5">{formatTime(msg.created_at, { hour: '2-digit', minute: '2-digit' })}</span></div>
+                            <div className={`flex items-center gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>{isMe && !fileMatch && <button onClick={() => startEdit(msg.id, msg.content)} className="w-5 h-5 rounded flex items-center justify-center text-slate-400 hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 transition-colors border-none bg-transparent cursor-pointer" title={t('edit')}><Pencil size={10} /></button>}{isMe && <button onClick={() => handleDeleteMessage(msg.id)} className="w-5 h-5 rounded flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors border-none bg-transparent cursor-pointer"><Trash2 size={10} /></button>}{msg.edited_at && <span className="text-xs text-[var(--text-muted)] select-none italic px-0.5">{t('chatEdited')}</span>}<span className="text-xs text-[var(--text-muted)] select-none px-0.5">{formatTime(msg.created_at, { hour: '2-digit', minute: '2-digit' })}</span></div>
                           </div>
                         </div>
                       </div>
@@ -636,9 +636,9 @@ export default function ChatPage() {
               <button
                 onClick={() => scrollToBottom('smooth')}
                 className="absolute bottom-24 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-[var(--primary)] hover:bg-[var(--primary)] text-white text-xs font-semibold shadow-lg border-none cursor-pointer animate-in fade-in slide-in-from-bottom-2 transition-colors"
-                aria-label={t('chatNewMessagesBtn') || '새 메시지로 이동'}
+                aria-label={t('chatNewMessagesBtn')}
               >
-                <ArrowDown size={14} />{t('chatNewMessagesBtn') || '새 메시지'}
+                <ArrowDown size={14} />{t('chatNewMessagesBtn')}
               </button>
             )}
 
@@ -657,7 +657,7 @@ export default function ChatPage() {
                   )}
                 </div>
               )}
-              <form onSubmit={handleSend}><div className="flex items-end gap-2 bg-[var(--bg-surface-2)] rounded-xl px-3 py-2 border border-[var(--border)] focus-within:border-[var(--primary)] focus-within:ring-2 focus-within:ring-[var(--primary)]/10 transition-all"><input type="file" id="chat-file-upload" multiple className="hidden" onChange={handleFileChange} disabled={isLoading || isUploadingFile} /><label htmlFor="chat-file-upload" className={`shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors mb-0.5 cursor-pointer ${isUploadingFile ? 'opacity-40 pointer-events-none' : ''}`}>          {isUploadingFile ? <div className="w-4 h-4 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" /> : <Paperclip size={15} />}</label><EmojiPicker onEmojiSelect={handleEmojiSelect} disabled={isUploadingFile} t={t} /><textarea ref={textareaRef} placeholder={isUploadingFile ? t('chatUploadingPlaceholder') : (t('chatPlaceholder') || '메시지를 입력하세요...')} value={newMessage} onChange={(e) => setNewMessage(e.target.value)} onKeyDown={handleKeyDown} onPaste={handlePaste} disabled={isLoading} rows={1} className="flex-1 min-w-0 bg-transparent border-none outline-none resize-none text-sm text-[var(--text-primary)] placeholder-slate-400 dark:placeholder-slate-500 max-h-[120px] min-h-[28px] py-1 custom-scrollbar leading-relaxed" /><button type="submit" disabled={!newMessage.trim() || isLoading} className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all mb-0.5 border-none cursor-pointer ${newMessage.trim() && !isLoading ? 'bg-[var(--primary)] hover:bg-[var(--primary)] text-white shadow-sm' : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed opacity-60'}`}>{isLoading ? <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Send size={14} />}</button></div><p className="text-xs text-[var(--text-muted)] text-right mt-1.5 pr-1 select-none">{t('chatKeyboardShortcut')}</p></form>
+              <form onSubmit={handleSend}><div className="flex items-end gap-2 bg-[var(--bg-surface-2)] rounded-xl px-3 py-2 border border-[var(--border)] focus-within:border-[var(--primary)] focus-within:ring-2 focus-within:ring-[var(--primary)]/10 transition-all"><input type="file" id="chat-file-upload" multiple className="hidden" onChange={handleFileChange} disabled={isLoading || isUploadingFile} /><label htmlFor="chat-file-upload" className={`shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors mb-0.5 cursor-pointer ${isUploadingFile ? 'opacity-40 pointer-events-none' : ''}`}>          {isUploadingFile ? <div className="w-4 h-4 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" /> : <Paperclip size={15} />}</label><EmojiPicker onEmojiSelect={handleEmojiSelect} disabled={isUploadingFile} t={t} /><textarea ref={textareaRef} placeholder={isUploadingFile ? t('chatUploadingPlaceholder') : t('chatPlaceholder')} value={newMessage} onChange={(e) => setNewMessage(e.target.value)} onKeyDown={handleKeyDown} onPaste={handlePaste} disabled={isLoading} rows={1} className="flex-1 min-w-0 bg-transparent border-none outline-none resize-none text-sm text-[var(--text-primary)] placeholder-slate-400 dark:placeholder-slate-500 max-h-[120px] min-h-[28px] py-1 custom-scrollbar leading-relaxed" /><button type="submit" disabled={!newMessage.trim() || isLoading} className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all mb-0.5 border-none cursor-pointer ${newMessage.trim() && !isLoading ? 'bg-[var(--primary)] hover:bg-[var(--primary)] text-white shadow-sm' : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed opacity-60'}`}>{isLoading ? <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Send size={14} />}</button></div><p className="text-xs text-[var(--text-muted)] text-right mt-1.5 pr-1 select-none">{t('chatKeyboardShortcut')}</p></form>
             </div>
           </div>
         ) : (
@@ -708,16 +708,16 @@ export default function ChatPage() {
               <div className="absolute -top-12 left-0 right-0 flex items-center justify-between text-white px-2">
                 <span className="text-sm font-semibold truncate max-w-[55vw]">{cur?.filename}{multiple ? ` · ${preview.index + 1}/${preview.images.length}` : ''}</span>
                 <div className="flex items-center gap-2">
-                  <button onClick={() => setPreviewZoom(z => Math.max(1, z - 0.25))} disabled={previewZoom <= 1} className="p-2 bg-white/10 hover:bg-white/20 disabled:opacity-30 rounded-full transition-colors border-none cursor-pointer text-white flex items-center justify-center" title="축소"><ZoomOut size={16} /></button>
-                  <button onClick={() => setPreviewZoom(z => Math.min(4, z + 0.25))} disabled={previewZoom >= 4} className="p-2 bg-white/10 hover:bg-white/20 disabled:opacity-30 rounded-full transition-colors border-none cursor-pointer text-white flex items-center justify-center" title="확대"><ZoomIn size={16} /></button>
+                  <button onClick={() => setPreviewZoom(z => Math.max(1, z - 0.25))} disabled={previewZoom <= 1} className="p-2 bg-white/10 hover:bg-white/20 disabled:opacity-30 rounded-full transition-colors border-none cursor-pointer text-white flex items-center justify-center" title={t('zoomOut')}><ZoomOut size={16} /></button>
+                  <button onClick={() => setPreviewZoom(z => Math.min(4, z + 0.25))} disabled={previewZoom >= 4} className="p-2 bg-white/10 hover:bg-white/20 disabled:opacity-30 rounded-full transition-colors border-none cursor-pointer text-white flex items-center justify-center" title={t('zoomIn')}><ZoomIn size={16} /></button>
                   {previewUrl && <a href={previewUrl} download={cur?.filename} className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors border-none cursor-pointer text-white flex items-center justify-center no-underline" title={t('chatDownload')}><Download size={16} /></a>}
                   <button onClick={() => setPreview(null)} className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors border-none cursor-pointer text-white flex items-center justify-center" title={t('cancel')}><X size={16} /></button>
                 </div>
               </div>
               {multiple && (
                 <>
-                  <button onClick={() => previewNav(-1)} className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-14 p-2.5 bg-white/10 hover:bg-white/20 rounded-full transition-colors border-none cursor-pointer text-white flex items-center justify-center" aria-label="이전"><ChevronLeft size={22} /></button>
-                  <button onClick={() => previewNav(1)} className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-14 p-2.5 bg-white/10 hover:bg-white/20 rounded-full transition-colors border-none cursor-pointer text-white flex items-center justify-center" aria-label="다음"><ChevronRight size={22} /></button>
+                  <button onClick={() => previewNav(-1)} className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-14 p-2.5 bg-white/10 hover:bg-white/20 rounded-full transition-colors border-none cursor-pointer text-white flex items-center justify-center" aria-label={t('previous')}><ChevronLeft size={22} /></button>
+                  <button onClick={() => previewNav(1)} className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-14 p-2.5 bg-white/10 hover:bg-white/20 rounded-full transition-colors border-none cursor-pointer text-white flex items-center justify-center" aria-label={t('next')}><ChevronRight size={22} /></button>
                 </>
               )}
               <div className="bg-slate-900/80 rounded-2xl overflow-hidden shadow-2xl border border-white/10 max-h-[80vh] flex items-center justify-center backdrop-blur-xl" onWheel={(e) => setPreviewZoom(z => Math.min(4, Math.max(1, z + (e.deltaY < 0 ? 0.25 : -0.25))))}>

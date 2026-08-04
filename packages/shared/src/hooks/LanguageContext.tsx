@@ -2,21 +2,21 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import ko from '../locales/ko';
 import en from '../locales/en';
 import ja from '../locales/ja';
-import zh from '../locales/zh';
+import es from '../locales/es';
 
-export type Language = 'ko' | 'ja' | 'zh' | 'en';
+export type Language = 'ko' | 'ja' | 'en' | 'es';
 
 export const defaultTimezones: Record<Language, string> = {
   ko: 'Asia/Seoul',
   ja: 'Asia/Tokyo',
-  zh: 'Asia/Shanghai',
+  es: 'Europe/Madrid',
   en: 'America/New_York',
 };
 
 export const timezoneLabels: Record<string, string> = {
   'Asia/Seoul': 'Asia/Seoul (KST, UTC+9)',
   'Asia/Tokyo': 'Asia/Tokyo (JST, UTC+9)',
-  'Asia/Shanghai': 'Asia/Shanghai (CST, UTC+8)',
+  'Europe/Madrid': 'Europe/Madrid (CET/CEST, UTC+1/UTC+2)',
   'America/New_York': 'America/New_York (EST/EDT, UTC-5/UTC-4)',
   'Europe/London': 'Europe/London (GMT/BST, UTC+0/UTC+1)',
   'UTC': 'UTC (Coordinated Universal Time)',
@@ -100,30 +100,30 @@ const projectSettingsTranslations: Record<Language, Record<string, string>> = {
     fieldTypeTime: '時刻',
     fieldTypeBoolean: '真偽値',
   },
-  zh: {
-    projectSettingsTitle: '项目设置',
-    taskTypesLabel: '任务类型（逗号分隔）',
-    issueTypesLabel: '问题类型（逗号分隔）',
-    statusesLabel: '状态（逗号分隔）',
-    taskCategoriesLabel: '任务分类（逗号分隔）',
-    taskStatusesLabel: '任务状态（逗号分隔）',
-    customFieldsTitle: '问题自定义属性',
-    customFieldsDesc: '可以为项目任务添加自定义属性。',
-    fieldNameLabel: '属性名',
-    fieldTypeLabel: '类型',
-    sortOrderLabel: '排序',
-    requiredLabel: '必填',
-    fieldNamePlaceholder: '例如: severity, estimated_hours',
-    addFieldBtn: '添加属性',
-    addingFieldBtn: '添加中...',
-    deleteFieldConfirm: '确定删除此自定义属性吗？',
-    fieldTypeInteger: '整数',
-    fieldTypeFloat: '浮点数',
-    fieldTypeString: '字符串',
-    fieldTypeText: '文本',
-    fieldTypeDate: '日期',
-    fieldTypeTime: '时间',
-    fieldTypeBoolean: '布尔值',
+  es: {
+    projectSettingsTitle: 'Configuración del Proyecto',
+    taskTypesLabel: 'Tipos de Tareas (separados por comas)',
+    issueTypesLabel: 'Tipos de Incidencias (separados por comas)',
+    statusesLabel: 'Estados (separados por comas)',
+    taskCategoriesLabel: 'Categorías de Tareas (separadas por comas)',
+    taskStatusesLabel: 'Estados de Tareas (separados por comas)',
+    customFieldsTitle: 'Campos Personalizados de Incidencias',
+    customFieldsDesc: 'Puede añadir campos personalizados a las tareas del proyecto.',
+    fieldNameLabel: 'Nombre del Campo',
+    fieldTypeLabel: 'Tipo',
+    sortOrderLabel: 'Orden de Clasificación',
+    requiredLabel: 'Requerido',
+    fieldNamePlaceholder: 'ej. severidad, horas_estimadas',
+    addFieldBtn: 'Añadir Campo',
+    addingFieldBtn: 'Añadiendo...',
+    deleteFieldConfirm: '¿Eliminar este campo personalizado?',
+    fieldTypeInteger: 'Entero',
+    fieldTypeFloat: 'Decimal',
+    fieldTypeString: 'Cadena',
+    fieldTypeText: 'Texto',
+    fieldTypeDate: 'Fecha',
+    fieldTypeTime: 'Hora',
+    fieldTypeBoolean: 'Booleano',
   },
 };
 
@@ -131,7 +131,7 @@ const translations: Record<Language, Record<string, string>> = {
   ko: { ...ko, ...projectSettingsTranslations.ko },
   en: { ...en, ...projectSettingsTranslations.en },
   ja: { ...ja, ...projectSettingsTranslations.ja },
-  zh: { ...zh, ...projectSettingsTranslations.zh },
+  es: { ...es, ...projectSettingsTranslations.es },
 };
 
 export function parseUTCDate(dateStr: string | Date | number | undefined | null): Date {
@@ -198,7 +198,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     switch (language) {
       case 'ko': return 'ko-KR';
       case 'ja': return 'ja-JP';
-      case 'zh': return 'zh-CN';
+      case 'es': return 'es-ES';
       case 'en': return 'en-US';
       default: return 'ko-KR';
     }

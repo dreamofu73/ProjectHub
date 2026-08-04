@@ -99,14 +99,14 @@ export default function PostDetailPage() {
     try {
       const res = await api(`/api/posts/${postId}`, { method: 'DELETE' });
       if (res.ok) {
-        showToast('게시글이 삭제되었습니다.', 'success');
+        showToast(t('postDeleted'), 'success');
         navigateBack();
       } else {
-        showToast('삭제 실패', 'error');
+        showToast(t('deleteFail'), 'error');
       }
     } catch (err) {
       console.error('Delete failed:', err);
-      showToast('삭제 중 오류가 발생했습니다.', 'error');
+      showToast(t('deleteError'), 'error');
     }
   };
 
@@ -123,7 +123,7 @@ export default function PostDetailPage() {
       document.body.removeChild(link);
       setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
     } catch {
-      showToast('파일을 다운로드할 수 없습니다.', 'error');
+      showToast(t('fileDownloadError'), 'error');
     } finally {
       setDownloadingAll(false);
     }
@@ -146,17 +146,17 @@ export default function PostDetailPage() {
   );
   if (loadError) return (
     <div className="flex flex-col items-center justify-center text-center py-20 gap-4">
-      <p className="text-sm font-semibold text-[var(--text-secondary)]">게시글을 불러오지 못했습니다.</p>
+      <p className="text-sm font-semibold text-[var(--text-secondary)]">{t('postLoadFail')}</p>
       <div className="flex items-center gap-2">
-        <Button variant="outline" size="sm" onClick={handleRetry}>다시 시도</Button>
-        <Button variant="ghost" size="sm" onClick={navigateBack}>목록으로</Button>
+        <Button variant="outline" size="sm" onClick={handleRetry}>{t('retry')}</Button>
+        <Button variant="ghost" size="sm" onClick={navigateBack}>{t('backToVersionList')}</Button>
       </div>
     </div>
   );
   if (!post) return (
     <div className="flex flex-col items-center justify-center text-center py-20 gap-4">
-      <p className="text-sm text-[var(--text-muted)]">게시글을 찾을 수 없습니다.</p>
-      <Button variant="outline" size="sm" icon={ArrowLeft} onClick={navigateBack}>목록으로</Button>
+      <p className="text-sm text-[var(--text-muted)]">{t('postNotFound')}</p>
+      <Button variant="outline" size="sm" icon={ArrowLeft} onClick={navigateBack}>{t('backToVersionList')}</Button>
     </div>
   );
 
@@ -171,15 +171,15 @@ export default function PostDetailPage() {
           onClick={navigateBack}
           className="text-muted hover:text-foreground"
         >
-          목록으로
+          {t('backToVersionList')}
         </Button>
 
         {isAuthorOrAdmin && (
           <div className="flex items-center gap-2">
             <Link to={isGlobal ? `/boards/${boardType}/${postId}/edit` : `/projects/${id}/board/${postId}/edit`}>
-              <Button variant="outline" size="sm" icon={Edit2}>수정</Button>
+              <Button variant="outline" size="sm" icon={Edit2}>{t('edit')}</Button>
             </Link>
-            <Button variant="danger" size="sm" icon={Trash2} onClick={() => setDeleteConfirmOpen(true)}>삭제</Button>
+            <Button variant="danger" size="sm" icon={Trash2} onClick={() => setDeleteConfirmOpen(true)}>{t('delete')}</Button>
           </div>
         )}
       </div>
@@ -192,7 +192,7 @@ export default function PostDetailPage() {
               post.category === 'resource' ? 'bg-success/10 text-success border-success/20' :
               'bg-primary/10 text-primary border-primary/20'
             }`}>
-              {post.category === 'notice' ? '공지사항' : post.category === 'resource' ? '자료실' : '일반'}
+              {post.category === 'notice' ? t('notices') : post.category === 'resource' ? t('resources') : t('general')}
             </span>
             <span className="text-xs text-muted font-medium">#{post.id}</span>
           </div>
@@ -226,7 +226,7 @@ export default function PostDetailPage() {
             {post.category === 'notice' && (post.popup_start_date || post.popup_end_date) && (
               <div className="flex items-center gap-1.5 text-danger font-semibold">
                 <Calendar size={14} />
-                <span>{t('popupPeriod') || '팝업 기간'} {post.popup_start_date || '—'} ~ {post.popup_end_date || '—'}</span>
+                <span>{t('popupPeriod')} {post.popup_start_date || '—'} ~ {post.popup_end_date || '—'}</span>
               </div>
             )}
           </div>
@@ -239,7 +239,7 @@ export default function PostDetailPage() {
               dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content) }}
             />
           ) : (
-            <div className="p-6 text-sm text-[var(--text-muted)] italic">{t('noContent') || '내용이 없습니다.'}</div>
+            <div className="p-6 text-sm text-[var(--text-muted)] italic">{t('noContent')}</div>
           )}
 
           <AttachmentList 

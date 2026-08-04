@@ -343,12 +343,12 @@ async fn send_memo(
                 "is_read", "sender_deleted", "receiver_deleted", "is_sent", "reserved_at"
             ])
             .values_panic([
-                id.into(), 
+                id.clone().into(), 
                 user.id.into(), 
                 receiver_id.into(), 
                 title.into(), 
                 content.into(), 
-                created_at.into(), 
+                created_at.clone().into(), 
                 0i64.into(), 
                 0i64.into(), 
                 0i64.into(), 
@@ -361,6 +361,36 @@ async fn send_memo(
             .execute(&mut *tx)
             .await
             .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()}))))?;
+
+        // 즉시 발송 쪽지(is_sent=1)만 수신자에게 알림 생성.
+        // 예약 발송 쪽지는 스케줄러(process_reserved_send)가 실제 발송 시 알림 처리.
+        if is_sent == 1 {
+            let notif_id = Uuid::new_v4().to_string();
+            let notif_title = "새 쪽지가 도착했습니다".to_string();
+            let notif_msg = format!("'{title}' 쪽지가 도착했습니다.");
+            let notif_link = format!("/memos/{id}");
+            let notif_stmt = SeaQuery::insert()
+                .into_table("notifications")
+                .columns([
+                    "id", "user_id", "type", "title", "message", "link", "is_read", "created_at",
+                ])
+                .values_panic([
+                    notif_id.into(),
+                    receiver_id.into(),
+                    "memo_received".into(),
+                    notif_title.into(),
+                    notif_msg.into(),
+                    notif_link.into(),
+                    0i64.into(),
+                    created_at.into(),
+                ])
+                .to_owned();
+            crate::db::to_query(&notif_stmt, crate::db::get_kind(&pool))
+                .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()}))))?
+                .execute(&mut *tx)
+                .await
+                .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()}))))?;
+        }
 
     }
 

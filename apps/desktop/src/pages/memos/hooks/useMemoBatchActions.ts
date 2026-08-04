@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { api } from 'shared/lib/api';
 import type { FolderType, Memo } from 'shared/types';
+import { useLanguage } from 'shared/hooks/LanguageContext';
 
 interface UseMemoBatchActionsProps {
   currentFolder: FolderType;
@@ -15,6 +16,7 @@ export function useMemoBatchActions({
   fetchMemos,
   filteredMemos,
 }: UseMemoBatchActionsProps) {
+  const { t } = useLanguage();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const toggleSelectRow = (id: string, e: React.MouseEvent) => {
@@ -42,8 +44,8 @@ export function useMemoBatchActions({
     if (selectedIds.size === 0) return;
     const isTrash = currentFolder === 'trash';
     const confirmMsg = isTrash
-      ? `선택한 ${selectedIds.size}개의 쪽지를 영구 삭제하시겠습니까? 삭제 후에는 복구할 수 없습니다.`
-      : `선택한 ${selectedIds.size}개의 쪽지를 삭제하시겠습니까? 삭제 시 휴지통으로 이동합니다.`;
+      ? t('confirmPermanentDeleteMemos').replace('{count}', String(selectedIds.size))
+      : t('confirmDeleteMemos').replace('{count}', String(selectedIds.size));
     if (!window.confirm(confirmMsg)) return;
 
     try {
@@ -51,13 +53,13 @@ export function useMemoBatchActions({
         Array.from(selectedIds).map(id => api(`/api/memos/${id}`, { method: 'DELETE' }).then(res => res.json()))
       );
       const failCount = results.filter(r => !r.success).length;
-      if (failCount === 0) showToast(isTrash ? '선택한 쪽지가 영구 삭제되었습니다.' : '선택한 쪽지가 삭제되었습니다.', 'success');
-      else showToast(`일부 쪽지(${failCount}건) 삭제에 실패했습니다.`, 'warning');
+      if (failCount === 0) showToast(isTrash ? t('selectedMemosDeleted') : t('selectedMemosTrashed'), 'success');
+      else showToast(t('someMemosDeleteFailed').replace('{count}', String(failCount)), 'warning');
       fetchMemos();
       window.dispatchEvent(new CustomEvent('memo_read_update'));
     } catch (err) {
       console.error(err);
-      showToast('삭제 작업 중 오류가 발생했습니다.', 'error');
+      showToast(t('deleteError2'), 'error');
     }
   };
 
@@ -68,13 +70,13 @@ export function useMemoBatchActions({
         Array.from(selectedIds).map(id => api(`/api/memos/${id}/restore`, { method: 'PUT' }).then(res => res.json()))
       );
       const failCount = results.filter(r => !r.success).length;
-      if (failCount === 0) showToast('선택한 쪽지가 복원되었습니다.', 'success');
-      else showToast(`일부 쪽지(${failCount}건) 복원에 실패했습니다.`, 'warning');
+      if (failCount === 0) showToast(t('selectedMemosRestored'), 'success');
+      else showToast(t('someMemosRestoreFailed').replace('{count}', String(failCount)), 'warning');
       fetchMemos();
       window.dispatchEvent(new CustomEvent('memo_read_update'));
     } catch (err) {
       console.error(err);
-      showToast('복원 작업 중 오류가 발생했습니다.', 'error');
+      showToast(t('restoreError'), 'error');
     }
   };
 
@@ -88,13 +90,13 @@ export function useMemoBatchActions({
       });
       const json = await res.json();
       if (json.success) {
-        showToast(folderId ? '선택한 쪽지가 폴더로 이동되었습니다.' : '선택한 쪽지가 폴더에서 제외되었습니다.', 'success');
+        showToast(folderId ? t('movedToFolder') : t('removedFromFolder'), 'success');
         setSelectedIds(new Set());
         fetchMemos();
-      } else showToast(json.error || '이동 실패', 'error');
+      } else showToast(json.error || t('moveFailed'), 'error');
     } catch (err) {
       console.error(err);
-      showToast('오류가 발생했습니다.', 'error');
+      showToast(t('errOccurred'), 'error');
     }
   };
 
@@ -108,17 +110,17 @@ export function useMemoBatchActions({
           body: JSON.stringify({ is_archived: 1 })
         }).then(res => res.json()))
       );
-      showToast('선택한 쪽지가 보관 처리되었습니다.', 'success');
+      showToast(t('selectedMemosArchived'), 'success');
       fetchMemos();
     } catch (err) {
       console.error(err);
-      showToast('보관 작업 중 오류가 발생했습니다.', 'error');
+      showToast(t('archiveError'), 'error');
     }
   };
 
   const handleBatchSpam = async () => {
     if (selectedIds.size === 0) return;
-    if (!window.confirm(`선택한 ${selectedIds.size}개의 쪽지를 스팸으로 신고하시겠습니까?`)) return;
+    if (!window.confirm(t('confirmReportSpamMemos').replace('{count}', String(selectedIds.size)))) return;
     try {
       await Promise.all(
         Array.from(selectedIds).map(id => api(`/api/memos/${id}/spam`, {
@@ -127,12 +129,12 @@ export function useMemoBatchActions({
           body: JSON.stringify({ is_spam: 1 })
         }).then(res => res.json()))
       );
-      showToast('선택한 쪽지가 스팸으로 신고되었습니다.', 'success');
+      showToast(t('selectedMemosSpammed'), 'success');
       fetchMemos();
       window.dispatchEvent(new CustomEvent('memo_read_update'));
     } catch (err) {
       console.error(err);
-      showToast('스팸 신고 중 오류가 발생했습니다.', 'error');
+      showToast(t('spamReportError'), 'error');
     }
   };
 
@@ -146,28 +148,28 @@ export function useMemoBatchActions({
           body: JSON.stringify({ is_spam: 0 })
         }).then(res => res.json()))
       );
-      showToast('선택한 쪽지의 스팸 신고가 해제되었습니다.', 'success');
+      showToast(t('spamCleared'), 'success');
       fetchMemos();
       window.dispatchEvent(new CustomEvent('memo_read_update'));
     } catch (err) {
       console.error(err);
-      showToast('스팸 해제 중 오류가 발생했습니다.', 'error');
+      showToast(t('spamClearError'), 'error');
     }
   };
 
   const handleDeleteAllUnread = async () => {
-    if (!window.confirm('안 읽은 모든 받은 쪽지를 일괄 삭제하시겠습니까?')) return;
+    if (!window.confirm(t('deleteAllUnread'))) return;
     try {
       const res = await api('/api/memos/received/unread', { method: 'DELETE' });
       const json = await res.json();
       if (json.success) {
-        showToast('안 읽은 받은 쪽지가 모두 삭제되었습니다.', 'success');
+        showToast(t('allUnreadDeleted'), 'success');
         fetchMemos();
         window.dispatchEvent(new CustomEvent('memo_read_update'));
-      } else showToast(json.error || '삭제 실패', 'error');
+      } else showToast(json.error || t('deleteFail'), 'error');
     } catch (err) {
       console.error(err);
-      showToast('삭제 중 오류가 발생했습니다.', 'error');
+      showToast(t('deleteError'), 'error');
     }
   };
 

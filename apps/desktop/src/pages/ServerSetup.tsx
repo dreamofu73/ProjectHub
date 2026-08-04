@@ -12,6 +12,7 @@ import { Label } from 'ui/shadcn/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from 'ui/shadcn/card';
 import { getBackendUrl, setBackendUrl, isTauri } from 'shared/lib/desktop-config';
 
+import { useLanguage } from 'shared/hooks/LanguageContext';
 const CSS = `
 .setup-bg {
   min-height: 100vh;
@@ -69,6 +70,7 @@ const CSS = `
 `;
 
 export default function ServerSetup() {
+  const { t } = useLanguage();
   const [url, setUrl] = useState('http://localhost:8000');
   const [error, setError] = useState('');
   const [checkStatus, setCheckStatus] = useState<'idle' | 'testing' | 'ok' | 'fail'>('idle');
@@ -100,11 +102,11 @@ export default function ServerSetup() {
         setCheckStatus('ok');
       } else {
         setCheckStatus('fail');
-        setError('서버에 연결할 수 없습니다. 주소를 확인해주세요.');
+        setError(t('serverConnectionError'));
       }
     } catch {
       setCheckStatus('fail');
-      setError('서버에 연결할 수 없습니다. 주소를 확인해주세요.');
+      setError(t('serverConnectionError'));
     }
   };
 
@@ -112,7 +114,7 @@ export default function ServerSetup() {
     const trimmed = url.replace(/\/+$/, '');
     setUrl(trimmed);
     if (!trimmed) {
-      setError('서버 주소를 입력해주세요.');
+      setError(t('enterServerAddress'));
       return;
     }
 
@@ -128,12 +130,12 @@ export default function ServerSetup() {
       });
       if (!(res.status >= 200 && res.status < 600)) {
         setCheckStatus('fail');
-        setError('서버에 연결할 수 없습니다. 주소를 확인해주세요.');
+        setError(t('serverConnectionError'));
         return;
       }
     } catch {
       setCheckStatus('fail');
-      setError('서버에 연결할 수 없습니다. 주소를 확인해주세요.');
+      setError(t('serverConnectionError'));
       return;
     }
 
@@ -143,7 +145,7 @@ export default function ServerSetup() {
       // Navigate to login (full reload so api.ts picks up the new URL)
       window.location.href = '/login';
     } catch {
-      setError('설정 저장 중 오류가 발생했습니다.');
+      setError(t('settingsSaveError'));
     } finally {
       setIsSaving(false);
     }
@@ -164,10 +166,10 @@ export default function ServerSetup() {
                 </div>
               </div>
               <CardTitle className="text-xl font-extrabold tracking-tight">
-                ProjectHub 연결 설정
+                {t('serverSetupTitle')}
               </CardTitle>
               <CardDescription className="text-sm mt-1">
-                데스크톱 앱이 연결할 백엔드 서버 주소를 입력하세요.
+                {t('serverSetupDesc')}
               </CardDescription>
             </CardHeader>
 
@@ -180,7 +182,7 @@ export default function ServerSetup() {
               )}
 
               <div className="setup-field space-y-1.5">
-                <Label htmlFor="server-url">서버 주소</Label>
+                <Label htmlFor="server-url">{t('serverAddress')}</Label>
                 <div className="flex gap-2">
                   <Input
                     id="server-url"
@@ -212,7 +214,7 @@ export default function ServerSetup() {
                     ) : (
                       <Server size={14} />
                     )}
-                    확인
+                    {t('confirm')}
                   </Button>
                 </div>
 
@@ -220,9 +222,9 @@ export default function ServerSetup() {
                 {checkStatus !== 'idle' && (
                   <div className="flex items-center gap-2 text-xs mt-1.5">
                     <span className={`connection-dot ${checkStatus === 'testing' ? 'idle' : checkStatus}`} />
-                    {checkStatus === 'testing' && <span className="text-muted-foreground">연결 확인 중...</span>}
-                    {checkStatus === 'ok' && <span className="text-emerald-600 dark:text-emerald-400">서버 연결 성공</span>}
-                    {checkStatus === 'fail' && <span className="text-red-600 dark:text-red-400">서버 연결 실패</span>}
+                    {checkStatus === 'testing' && <span className="text-muted-foreground">{t('checkingConnection')}</span>}
+                    {checkStatus === 'ok' && <span className="text-emerald-600 dark:text-emerald-400">{t('serverConnectSuccess')}</span>}
+                    {checkStatus === 'fail' && <span className="text-red-600 dark:text-red-400">{t('serverConnectFail')}</span>}
                   </div>
                 )}
               </div>
@@ -238,17 +240,17 @@ export default function ServerSetup() {
                 {isSaving ? (
                   <>
                     <Loader2 size={16} className="animate-spin" />
-                    저장 중...
+                    {t('saving')}
                   </>
                 ) : (
                   <>
                     <Check size={16} />
-                    저장하고 시작하기
+                    {t('saveAndStart')}
                   </>
                 )}
               </Button>
               <p className="text-xs text-muted-foreground text-center leading-relaxed mt-1">
-                입력한 주소는 저장되며, 다음 실행 시 자동으로 불러와집니다.
+                {t('serverAddressSavedHint')}
               </p>
             </CardFooter>
           </Card>

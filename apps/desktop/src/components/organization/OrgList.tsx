@@ -118,7 +118,7 @@ export function OrgList({
     return (
       <div className="py-20 text-center text-[var(--text-muted)]">
         <div className="w-5 h-5 border-2 border-[var(--border-strong)] border-t-[var(--primary)] rounded-full animate-spin mx-auto mb-2" />
-        <p className="font-medium text-xs">{t('loading') || '로딩 중...'}</p>
+        <p className="font-medium text-xs">{t('loading')}</p>
       </div>
     );
   }
@@ -126,7 +126,7 @@ export function OrgList({
   if (departments.length === 0) {
     return (
       <div className="py-24 text-center text-[var(--text-muted)] font-medium text-xs">
-        {t('noDeptsFound') || '등록된 부서가 없습니다.'}
+        {t('noDeptsFound')}
       </div>
     );
   }
@@ -134,7 +134,7 @@ export function OrgList({
   if (visibleTree.length === 0) {
     return (
       <div className="py-24 text-center text-[var(--text-muted)] font-medium text-xs">
-        {t('noSearchResults') || '검색 결과가 없습니다.'}
+        {t('noSearchResults')}
       </div>
     );
   }
@@ -216,7 +216,7 @@ export function OrgList({
                   onCreateChild(dept.id);
                 }}
                 className="opacity-0 group-hover:opacity-100 p-0.5 rounded text-[var(--text-muted)] hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 border-none bg-transparent cursor-pointer flex items-center justify-center transition-all"
-                title={t('addSubDept') || '하위 부서 추가'}
+                title={t('addSubDept')}
               >
                 <Plus size={13} />
               </button>

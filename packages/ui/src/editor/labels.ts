@@ -3,7 +3,7 @@
  * packages/ui는 앱 컨텍스트(useLanguage)에 의존하지 않으므로 사용처가 labels 객체를 주입한다.
  * 주입이 없으면 한국어 기본값(DEFAULT_HTML_EDITOR_LABELS)을 사용한다.
  */
-export type EditorLanguage = 'ko' | 'en' | 'ja' | 'zh';
+export type EditorLanguage = 'ko' | 'en' | 'ja' | 'es';
 
 export interface HTMLEditorLabels {
   headingStyle: string;

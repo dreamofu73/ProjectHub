@@ -153,7 +153,7 @@ export default function AddressBookPage() {
         if (memberUserIds.length > 0) {
           await addressBookApi.addMembers(res.data.id, { user_ids: memberUserIds });
         }
-        showToast(t('saved') || '저장되었습니다', 'success');
+        showToast(t('saved') || 'Saved successfully', 'success');
         setShowGroupEditModal(false);
         setIsCreatingGroup(false);
         await fetchGroups();
@@ -161,11 +161,11 @@ export default function AddressBookPage() {
         const membersRes = await addressBookApi.listMembers(res.data.id);
         if (membersRes.success) setGroupMembers(membersRes.data);
       } else {
-        showToast(t('saveFailed') || '저장에 실패했습니다', 'error');
+        showToast(t('saveFailed') || 'Failed to save', 'error');
       }
     } catch (err) {
       console.error('Failed to create group:', err);
-      showToast(t('saveFailed') || '저장에 실패했습니다', 'error');
+      showToast(t('saveFailed') || 'Failed to save', 'error');
     }
   };
 
@@ -198,7 +198,7 @@ export default function AddressBookPage() {
   };
 
   const handleDeleteGroup = async (groupId: string) => {
-    if (!window.confirm(t('confirmDeleteGroup') || '이 그룹을 삭제하시겠습니까?')) return;
+    if (!window.confirm(t('confirmDeleteGroup') || 'Delete this group?')) return;
     try {
       const res = await addressBookApi.deleteGroup(groupId);
       if (res.success) {
@@ -216,7 +216,7 @@ export default function AddressBookPage() {
       if (name !== selectedGroup.name) {
         const nameRes = await addressBookApi.updateGroup(selectedGroup.id, { name });
         if (!nameRes.success) {
-          showToast(t('saveFailed') || '저장에 실패했습니다', 'error');
+          showToast(t('saveFailed') || 'Failed to save', 'error');
           return;
         }
       }
@@ -229,7 +229,7 @@ export default function AddressBookPage() {
       if (toAdd.length > 0) {
         const addRes = await addressBookApi.addMembers(selectedGroup.id, { user_ids: toAdd });
         if (!addRes.success) {
-          showToast(t('saveFailed') || '저장에 실패했습니다', 'error');
+          showToast(t('saveFailed') || 'Failed to save', 'error');
           return;
         }
       }
@@ -237,12 +237,12 @@ export default function AddressBookPage() {
       for (const userId of toRemove) {
         const removeRes = await addressBookApi.removeMember(selectedGroup.id, userId);
         if (!removeRes.success) {
-          showToast(t('saveFailed') || '저장에 실패했습니다', 'error');
+          showToast(t('saveFailed') || 'Failed to save', 'error');
           return;
         }
       }
 
-      showToast(t('saved') || '저장되었습니다', 'success');
+      showToast(t('saved') || 'Saved successfully', 'success');
       setShowGroupEditModal(false);
 
       await fetchGroups();
@@ -250,7 +250,7 @@ export default function AddressBookPage() {
       if (membersRes.success) setGroupMembers(membersRes.data);
     } catch (err) {
       console.error('Failed to save group:', err);
-      showToast(t('saveFailed') || '저장에 실패했습니다', 'error');
+      showToast(t('saveFailed') || 'Failed to save', 'error');
     }
   };
 
@@ -322,9 +322,9 @@ export default function AddressBookPage() {
     const currentUserId = currentUser?.id ? String(currentUser.id) : null;
     
     let targetIds: string[] = isSelfWriteMode ? [currentUserId!] : composeRecipients.map(r => String(r.id));
-    if (!isSelfWriteMode && targetIds.length === 0) return showToast('수신자를 선택해주세요.', 'warning');
-    if (!composeTitle.trim()) return showToast('제목을 입력해주세요.', 'warning');
-    if (!composeContent.trim() || composeContent === '<p></p>') return showToast('내용을 입력해주세요.', 'warning');
+    if (!isSelfWriteMode && targetIds.length === 0) return showToast(t('selectRecipient'), 'warning');
+    if (!composeTitle.trim()) return showToast(t('enterTitle'), 'warning');
+    if (!composeContent.trim() || composeContent === '<p></p>') return showToast(t('enterContent'), 'warning');
 
     let reservedIso: string | undefined = undefined;
     if (composeIsReservedSend && composeReservedDate) {
@@ -354,18 +354,18 @@ export default function AddressBookPage() {
             await api('/api/attachments', { method: 'POST', body: formData });
           }
         }
-        showToast(composeIsReservedSend ? '쪽지가 예약 발송되었습니다.' : t('memoSendSuccess') || '쪽지를 보냈습니다.', 'success');
+        showToast(composeIsReservedSend ? 'Message scheduled.' : t('memoSendSuccess') || 'Message sent.', 'success');
         setIsComposeOpen(false);
         setComposeRecipients([]);
         setComposeTitle('');
         setComposeContent('');
         setComposeAttachedFiles([]);
       } else {
-        showToast(json.error || t('memoSendFail') || '쪽지 전송에 실패했습니다.', 'error');
+        showToast(json.error || t('memoSendFail') || 'Failed to send message.', 'error');
       }
     } catch (err) {
       console.error(err);
-      showToast(t('memoSendFail') || '쪽지 전송에 실패했습니다.', 'error');
+      showToast(t('memoSendFail') || 'Failed to send message.', 'error');
     } finally {
       setComposeSending(false);
     }
@@ -423,7 +423,7 @@ export default function AddressBookPage() {
               <div className="flex items-center gap-3">
                 <h2 className="text-sm font-bold text-[var(--text-primary)] flex items-center gap-2">
                   <Users size={16} className="text-[var(--primary)]" />
-                  <span>{t('addressBook') || '주소록'}</span>
+                  <span>{t('addressBook') || 'Address Book'}</span>
                 </h2>
               </div>
             </div>
@@ -436,7 +436,7 @@ export default function AddressBookPage() {
                 <Input
                   value={groupFormName}
                   onChange={(e) => setGroupFormName(e.target.value)}
-                  placeholder={t('groupNamePlaceholder') || '그룹 이름을 입력하세요'}
+                  placeholder={t('groupNamePlaceholder') || 'Enter group name'}
                   className="flex-1"
                   autoFocus
                   onKeyDown={(e) => {
@@ -448,9 +448,9 @@ export default function AddressBookPage() {
                   }}
                 />
                 <Button onClick={showGroupModal === 'create' ? handleCreateGroup : handleUpdateGroup} size="sm">
-                  {showGroupModal === 'create' ? (t('create') || '생성') : (t('save') || '저장')}
+                  {showGroupModal === 'create' ? (t('create') || 'Create') : (t('save') || 'Save')}
                 </Button>
-                <Button variant="secondary" size="sm" onClick={() => setShowGroupModal(null)}>{t('cancel') || '취소'}</Button>
+                <Button variant="secondary" size="sm" onClick={() => setShowGroupModal(null)}>{t('cancel') || 'Cancel'}</Button>
               </div>
             </div>
           )}
@@ -491,7 +491,7 @@ export default function AddressBookPage() {
                 {/* 툴바 */}
                 <div className="flex items-center justify-between shrink-0">
                   <span className="text-xs text-[var(--text-muted)] font-medium">
-                    {t('myGroups') || '내 그룹'}
+                    {t('myGroups') || 'My Groups'}
                     {groups.length > 0 && (
                       <span className="ml-1">({groups.length})</span>
                     )}
@@ -502,7 +502,7 @@ export default function AddressBookPage() {
                     className="h-8.5 px-3.5 bg-[var(--primary)] hover:opacity-90 text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer flex items-center gap-1.5 active:scale-[0.98] border-none"
                   >
                     <Plus size={13} />
-                    {t('createGroup') || '그룹 생성'}
+                    {t('createGroup') || 'Create Group'}
                   </button>
                 </div>
 

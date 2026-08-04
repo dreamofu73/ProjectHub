@@ -7,6 +7,7 @@ import { OrganizationMemberPicker } from '../organization/OrganizationMemberPick
 import { organizationApi } from 'shared/lib/api';
 import type { Department } from 'shared/types/organization';
 import type { UserData } from 'shared/types/user';
+import { useLanguage } from 'shared/hooks/LanguageContext';
 
 interface AddMemberModalProps {
   show: boolean;
@@ -33,6 +34,7 @@ export function AddMemberModal({
   adding,
   addError,
 }: AddMemberModalProps) {
+  const { t } = useLanguage();
   const containerRef = useFocusTrap(show);
   const [departments, setDepartments] = useState<Department[]>([]);
 
@@ -64,7 +66,7 @@ export function AddMemberModal({
           title={
             <span id="add-member-title" className="flex items-center gap-2">
               <UserPlus size={18} className="text-primary" />
-              새 멤버 초대
+              {t('inviteNewMember')}
             </span>
           }
           allUsers={allUsers}
@@ -77,14 +79,14 @@ export function AddMemberModal({
           saving={adding}
           t={(key) => {
             const translations: Record<string, string> = {
-              save: '초대하기',
-              processing: '초대 중...',
+              save: t('chatInviteActionBtn'),
+              processing: t('inviting'),
             };
             return translations[key] || '';
           }}
           footerLeft={
             <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-[var(--text-primary)]">프로젝트 권한:</span>
+              <span className="text-sm font-bold text-[var(--text-primary)]">{t('projectRoleColon')}</span>
               <div className="w-48">
                 <Select
                   value={addRole}

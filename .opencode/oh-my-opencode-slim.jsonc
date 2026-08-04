@@ -65,7 +65,7 @@
         ]
       },
       "fixer": {
-        "model": "opencode/north-mini-code-free",
+        "model": "opencode/deepseek-v4-flash-free",
         "variant": "high",
         "skills": [
           "rust-best-practices",

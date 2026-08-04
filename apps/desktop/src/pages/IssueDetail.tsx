@@ -58,9 +58,9 @@ export default function IssueDetail() {
     return (
       <Card className="border-danger max-w-xl mx-auto mt-8">
         <CardBody className="text-center py-8">
-          <p className="text-danger font-bold mb-4">{error || '이슈 데이터를 찾을 수 없습니다.'}</p>
+          <p className="text-danger font-bold mb-4">{error || t('issueNotFound') || 'Issue data not found.'}</p>
           <Link to={`/projects/${projectId}/dashboard`}>
-            <Button variant="secondary" icon={ArrowLeft}>프로젝트로 돌아가기</Button>
+            <Button variant="secondary" icon={ArrowLeft}>{t('backToProject') || 'Back to Project'}</Button>
           </Link>
         </CardBody>
       </Card>
@@ -74,7 +74,7 @@ export default function IssueDetail() {
       {/* 브레드크럼 & 헤더 */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-1.5 text-xs text-muted font-semibold">
-          <Link to="/projects" className="hover:text-primary transition-colors">프로젝트</Link>
+          <Link to="/projects" className="hover:text-primary transition-colors">{t('projects') || 'Projects'}</Link>
           <ChevronRight size={12} className="opacity-50" />
           <Link to={`/projects/${projectId}/dashboard`} className="hover:text-primary transition-colors">{issue.project_name}</Link>
           <ChevronRight size={12} className="opacity-50" />
@@ -82,7 +82,7 @@ export default function IssueDetail() {
         </div>
         <div className="flex items-center gap-2">
           <Link to={`/projects/${projectId}/dashboard`}>
-            <Button variant="secondary" size="sm" icon={ArrowLeft}>목록으로</Button>
+            <Button variant="secondary" size="sm" icon={ArrowLeft}>{t('backToList') || 'Back to List'}</Button>
           </Link>
           <Button 
             variant="danger" 
@@ -90,7 +90,7 @@ export default function IssueDetail() {
             icon={Trash2} 
             onClick={() => setShowDeleteConfirm(true)}
           >
-            삭제
+            {t('delete') || 'Delete'}
           </Button>
         </div>
       </div>
@@ -98,10 +98,10 @@ export default function IssueDetail() {
       {showDeleteConfirm && (
         <Card className="border-danger bg-danger/5 stagger-1">
           <CardBody className="flex items-center justify-between flex-wrap gap-4 py-3">
-            <div className="text-sm font-semibold text-danger">이 이슈를 정말로 삭제하시겠습니까? 되돌릴 수 없습니다.</div>
+            <div className="text-sm font-semibold text-danger">{t('confirmDeleteIssue') || 'Are you sure you want to delete this issue?'}</div>
             <div className="flex gap-2">
-              <Button size="sm" variant="danger" onClick={handleDeleteIssue}>예, 삭제합니다</Button>
-              <Button size="sm" variant="secondary" onClick={() => setShowDeleteConfirm(false)}>취소</Button>
+              <Button size="sm" variant="danger" onClick={handleDeleteIssue}>{t('yesDelete') || 'Yes, Delete'}</Button>
+              <Button size="sm" variant="secondary" onClick={() => setShowDeleteConfirm(false)}>{t('cancel') || 'Cancel'}</Button>
             </div>
           </CardBody>
         </Card>
@@ -120,14 +120,14 @@ export default function IssueDetail() {
                     className="form-control text-lg font-bold w-full"
                     value={editSubject}
                     onChange={(e) => setEditSubject(e.target.value)}
-                    placeholder="이슈 제목"
+                    placeholder={t('issueTitle') || "Issue Title"}
                   />
                   <textarea
                     rows={6}
                     className="form-control text-sm w-full"
                     value={editDescription}
                     onChange={(e) => setEditDescription(e.target.value)}
-                    placeholder="이슈 설명 (Markdown 지원)"
+                    placeholder={t('leaveCommentPlaceholder') || "Issue Description"}
                   />
                   <div className="flex gap-2 justify-end">
                     <Button 
@@ -135,9 +135,9 @@ export default function IssueDetail() {
                       onClick={() => handleUpdateIssue({ subject: editSubject, description: editDescription })}
                       disabled={isUpdatingIssue}
                     >
-                      {isUpdatingIssue ? '저장 중...' : '저장'}
+                      {isUpdatingIssue ? (t('saving') || 'Saving...') : (t('save') || 'Save')}
                     </Button>
-                    <Button size="sm" variant="secondary" onClick={() => setIsEditMode(false)}>취소</Button>
+                    <Button size="sm" variant="secondary" onClick={() => setIsEditMode(false)}>{t('cancel') || 'Cancel'}</Button>
                   </div>
                 </div>
               ) : (
@@ -151,11 +151,11 @@ export default function IssueDetail() {
                       </div>
                       <h1 className="text-xl font-bold text-foreground leading-snug">{issue.subject}</h1>
                     </div>
-                    <Button variant="secondary" size="sm" onClick={() => setIsEditMode(true)}>수정</Button>
+                    <Button variant="secondary" size="sm" onClick={() => setIsEditMode(true)}>{t('edit') || 'Edit'}</Button>
                   </div>
 
                   <div className="text-sm leading-relaxed text-secondary whitespace-pre-wrap min-h-[100px]">
-                    {issue.description || <span className="text-muted italic">작성된 설명이 없습니다.</span>}
+                    {issue.description || <span className="text-muted italic">{t('noDescription') || 'No description provided.'}</span>}
                   </div>
                 </>
               )}
@@ -165,7 +165,7 @@ export default function IssueDetail() {
           {/* 댓글 목록 */}
           <div className="flex flex-col gap-2 mt-2">
             <h3 className="text-base font-bold text-foreground flex items-center gap-1.5 px-1.5">
-              <MessageSquare size={16} />댓글 ({comments.length})
+              <MessageSquare size={16} />{t('comments') || 'Comments'} ({comments.length})
             </h3>
             {comments.map((comment) => (
               <Card key={comment.id} className="border-l-2 border-l-indigo-500/30">
@@ -193,7 +193,7 @@ export default function IssueDetail() {
                 <textarea
                   rows={3}
                   className="form-control text-sm w-full"
-                  placeholder="의견을 남겨주세요... (Markdown 지원)"
+                  placeholder={t('leaveCommentPlaceholder') || "Write a comment..."}
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   disabled={isSubmitting}
@@ -213,12 +213,12 @@ export default function IssueDetail() {
                 )}
 
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted">엔터 대신 전송 버튼을 눌러 입력하세요.</span>
+                  <span className="text-xs text-muted">{t('pressSendToSubmit') || 'Press Send button to submit.'}</span>
                   <Button 
                     type="submit" 
                     disabled={isSubmitting || !newComment.trim()}
                   >
-                    {isSubmitting ? '전송 중...' : '댓글 등록'}
+                    {isSubmitting ? (t('sending') || 'Sending...') : (t('addComment') || 'Add Comment')}
                   </Button>
                 </div>
               </form>
@@ -230,12 +230,12 @@ export default function IssueDetail() {
         <div className="flex flex-col gap-3">
           <Card>
             <CardBody className="p-4 flex flex-col gap-4">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-muted border-b border-border pb-2">메타데이터</h3>
+              <h3 className="text-sm font-bold uppercase tracking-wider text-muted border-b border-border pb-2">{t('metadata') || 'Metadata'}</h3>
 
               <div className="flex flex-col gap-4">
                 <div className="pt-0">
                   <div className="text-sm font-bold text-foreground uppercase mb-2 tracking-widest flex justify-between items-center">
-                    상태
+                    {t('status') || 'Status'}
                     {isUpdatingField === 'status' && <div className="spinner text-primary w-3 h-3 border-[1.5px]" />}
                   </div>
                   <select 
@@ -252,7 +252,7 @@ export default function IssueDetail() {
 
                 <div className="pt-4">
                   <div className="text-sm font-bold text-foreground uppercase mb-2 tracking-widest flex justify-between items-center">
-                    담당자
+                    {t('assignee') || 'Assignee'}
                     {isUpdatingField === 'assigned_to_id' && <div className="spinner text-primary w-3 h-3 border-[1.5px]" />}
                   </div>
                   <select 
@@ -261,7 +261,7 @@ export default function IssueDetail() {
                     onChange={(e) => handleFieldUpdate('assigned_to_id', e.target.value === '' ? null : Number(e.target.value))}
                     disabled={isUpdatingField === 'assigned_to_id'}
                   >
-                    <option value="">미배정</option>
+                    <option value="">{t('unassigned') || 'Unassigned'}</option>
                     {members.map(member => (
                       <option key={member.user_id} value={member.user_id}>
                         {member.firstname} {member.lastname} (@{member.login})
@@ -272,7 +272,7 @@ export default function IssueDetail() {
 
                 <div className="pt-4">
                   <div className="text-sm font-bold text-foreground uppercase mb-2 tracking-widest flex justify-between items-center">
-                    우선순위
+                    {t('priority') || 'Priority'}
                     {isUpdatingField === 'priority' && <div className="spinner text-primary w-3 h-3 border-[1.5px]" />}
                   </div>
                   <div className="flex gap-2 items-center">
@@ -294,7 +294,7 @@ export default function IssueDetail() {
 
                 <div className="pt-4">
                   <div className="text-sm font-bold text-foreground uppercase mb-2 tracking-widest flex justify-between items-center">
-                    유형
+                    {t('category') || 'Tracker'}
                     {isUpdatingField === 'tracker' && <div className="spinner text-primary w-3 h-3 border-[1.5px]" />}
                   </div>
                   <div className="flex gap-2 items-center">
@@ -316,7 +316,7 @@ export default function IssueDetail() {
 
                 <div className="pt-4">
                   <div className="text-sm font-bold text-foreground uppercase mb-2 tracking-widest flex justify-between items-center">
-                    진행률 ({issue.done_ratio || 0}%)
+                    {t('progress') || 'Progress'} ({issue.done_ratio || 0}%)
                     {isUpdatingField === 'done_ratio' && <div className="spinner text-primary w-3 h-3 border-[1.5px]" />}
                   </div>
                   <div className="flex flex-col gap-2">
@@ -338,15 +338,15 @@ export default function IssueDetail() {
 
                 <div className="pt-4 border-t border-border mt-2 text-xs font-semibold text-muted flex flex-col gap-2">
                   <div className="flex justify-between">
-                    <span>만든 이</span>
+                    <span>{t('author') || 'Author'}</span>
                     <span className="text-secondary font-bold">{issue.author_name}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>생성일</span>
+                    <span>{t('createdDate') || 'Created Date'}</span>
                     <span className="text-secondary font-bold">{formatDate(issue.created_at)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>수정일</span>
+                    <span>{t('updatedDate') || 'Updated Date'}</span>
                     <span className="text-secondary font-bold">{formatDate(issue.updated_at)}</span>
                   </div>
                 </div>

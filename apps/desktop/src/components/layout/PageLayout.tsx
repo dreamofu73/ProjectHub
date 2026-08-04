@@ -25,7 +25,7 @@ export function PageLayout({ children, sidebar, noPadding, minimalPadding }: Pag
   return (
     <div className="flex h-full w-full items-start">
       {sidebar || (hasSidebar && <Sidebar />)}
-      <div id="page-scroll-container" className={`flex-1 w-full min-w-0 overflow-y-auto h-[calc(100vh-var(--header-height))] ${paddingClass}`}>
+      <div id="page-scroll-container" className={`flex-1 w-full min-w-0 overflow-y-auto overflow-x-hidden h-[calc(100vh-var(--header-height))] ${paddingClass}`}>
         <div className={containerClass}>
           {children}
         </div>

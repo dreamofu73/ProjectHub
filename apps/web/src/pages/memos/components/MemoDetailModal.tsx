@@ -1,5 +1,6 @@
 import { Paperclip, Download, X } from 'lucide-react';
 import { sanitizeHtml } from 'shared/lib/sanitize';
+import { useLanguage } from '../../../context/LanguageContext';
 import type { Memo, CustomFolder, FolderType } from 'shared/types';
 
 interface MemoDetailModalProps {
@@ -25,6 +26,7 @@ export function MemoDetailModal({
   handleExtendExpiry,
   showCloseButton = false
 }: MemoDetailModalProps) {
+  const { t } = useLanguage();
 
   if (!memo) return null;
 
@@ -60,7 +62,7 @@ export function MemoDetailModal({
             type="button"
             onClick={onClose}
             className="p-2 rounded-lg border border-[var(--border)] bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-2)] cursor-pointer shrink-0"
-            title="닫기"
+            title={t('close')}
           >
             <X size={16} />
           </button>
@@ -70,7 +72,7 @@ export function MemoDetailModal({
         {/* 메타데이터 영역 */}
       <div className="px-6 py-3 border-b border-[var(--border)] text-xs flex items-center gap-6 shrink-0 bg-[var(--bg-surface-2)]/20">
         <div className="flex items-center gap-2">
-          <span className="text-[var(--text-muted)] font-medium shrink-0">{isOutgoing ? '받는사람' : '보낸사람'}</span>
+          <span className="text-[var(--text-muted)] font-medium shrink-0">{isOutgoing ? t('receiver') : t('sender')}</span>
           <span className="text-[var(--text-primary)] font-bold flex items-center gap-1">
             {senderLabel}
             {isOutgoing
@@ -80,7 +82,7 @@ export function MemoDetailModal({
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-[var(--text-muted)] font-medium shrink-0">받은시간</span>
+          <span className="text-[var(--text-muted)] font-medium shrink-0">{t('receivedTime')}</span>
           <span className="text-[var(--text-secondary)] font-medium mr-2">
             {formatMemoDate(memo.created_at)}
           </span>
@@ -91,7 +93,7 @@ export function MemoDetailModal({
                 onClick={() => handleBlockSender(memo.sender_login!)}
                 className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:underline border-none bg-transparent cursor-pointer font-semibold text-xs"
               >
-                차단
+                {t('block')}
               </button>
             </>
           )}
@@ -99,17 +101,17 @@ export function MemoDetailModal({
         {currentFolder === 'reserved' && (
           <div className="flex items-center gap-3 ml-auto">
             <div className="flex items-center gap-2">
-              <span className="text-[var(--text-muted)] font-medium shrink-0">발송상태</span>
+              <span className="text-[var(--text-muted)] font-medium shrink-0">{t('sendState')}</span>
               <span className={`text-xs font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${
                 memo.is_sent
                   ? 'bg-green-500/10 text-green-600'
                   : 'bg-amber-500/10 text-amber-600'
               }`}>
-                {memo.is_sent ? '발송완료' : '예약중'}
+                {memo.is_sent ? t('sentSuccess') : t('scheduled')}
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-[var(--text-muted)] font-medium shrink-0">발송예정</span>
+              <span className="text-[var(--text-muted)] font-medium shrink-0">{t('scheduledTime')}</span>
               <span className="text-[var(--text-secondary)] font-medium">
                 {memo.reserved_at ? formatMemoDate(memo.reserved_at) : '-'}
               </span>
@@ -124,16 +126,16 @@ export function MemoDetailModal({
         {memo.is_read === 1 && memo.is_archived === 0 && memo.expires_at && (
           <div className="flex items-center justify-between p-3.5 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs animate-in fade-in duration-200 select-text">
             <div className="flex flex-col gap-0.5 min-w-0">
-              <span className="text-amber-600 dark:text-amber-400 font-bold">보관 만료 예정일</span>
+              <span className="text-amber-600 dark:text-amber-400 font-bold">{t('expirationDate')}</span>
               <span className="text-[var(--text-secondary)] font-semibold truncate">
-                {formatMemoDate(memo.expires_at)} (30일 후 자동 삭제)
+                {formatMemoDate(memo.expires_at)} {t('autoDelete30Days')}
               </span>
             </div>
             <button
               onClick={() => handleExtendExpiry(memo.id)}
               className="px-3 py-1.5 h-8 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg transition-colors border-none cursor-pointer text-xs shrink-0 select-none"
             >
-              30일 연장하기
+              {t('extend30Days')}
             </button>
           </div>
         )}
@@ -148,7 +150,7 @@ export function MemoDetailModal({
           <div className="pt-4 border-t border-[var(--border)] space-y-2.5">
             <div className="flex items-center justify-between">
               <h4 className="text-xs font-bold text-[var(--text-primary)] flex items-center gap-1.5">
-                첨부파일 ({memo.attachments.length})
+                {t('attachmentsLabel')} ({memo.attachments.length})
               </h4>
               {memo.attachments.length > 1 && (
                 <a
@@ -156,7 +158,7 @@ export function MemoDetailModal({
                   download
                   className="text-xs font-bold hover:opacity-85 flex items-center gap-1 cursor-pointer text-[var(--primary)]"
                 >
-                  전체 다운로드
+                  {t('downloadAll')}
                 </a>
               )}
             </div>

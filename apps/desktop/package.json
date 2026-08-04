@@ -15,9 +15,6 @@
     "tauri": "tauri"
   },
   "dependencies": {
-    "@tauri-apps/api": "^2.11.1",
-    "ui": "*",
-    "shared": "*",
     "@emoji-mart/data": "^1.2.1",
     "@emoji-mart/react": "^1.1.1",
     "@hello-pangea/dnd": "^18.0.1",
@@ -36,6 +33,7 @@
     "@radix-ui/react-tabs": "^1.1.14",
     "@radix-ui/react-tooltip": "^1.2.9",
     "@tailwindcss/typography": "^0.5.20",
+    "@tauri-apps/api": "^2.11.1",
     "@tiptap/extension-image": "^3.26.1",
     "@tiptap/extension-link": "^3.26.1",
     "@tiptap/extension-table": "^3.26.1",
@@ -56,15 +54,17 @@
     "radix-ui": "^1.5.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
-    "react-router-dom": "^7.15.1",
-    "tailwind-merge": "^3.6.0"
+    "react-router-dom": "^7.11.0",
+    "shared": "*",
+    "tailwind-merge": "^3.6.0",
+    "ui": "*"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^2.0.0",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.60.0",
     "@tailwindcss/postcss": "^4.0.0",
     "@tailwindcss/vite": "4.3.0",
+    "@tauri-apps/cli": "^2.0.0",
     "@types/node": "^24.12.4",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
@@ -74,7 +74,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
-    "postcss": "^8.5.15",
+    "postcss": "^8.5.23",
     "tailwindcss": "4.3.0",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",

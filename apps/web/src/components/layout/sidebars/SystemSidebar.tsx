@@ -12,10 +12,10 @@ export function SystemSidebar() {
   const systemNav = [
     { name: t('users'), path: '/users', icon: User },
     { name: t('adminGroups'), path: '/admin/groups', icon: Shield },
-    { name: t('organizationInfo') || '조직정보 관리', path: '/admin/organization', icon: Building2 },
+    { name: t('organizationInfo'), path: '/admin/organization', icon: Building2 },
     { name: t('scheduler'), path: '/admin/scheduler', icon: Clock },
-    { name: t('projectManagement') || '프로젝트 관리', path: '/admin/projects', icon: Folder },
-    { name: t('logs') || '로그 관리', path: '/admin/logs', icon: FileText },
+    { name: t('projectManagement'), path: '/admin/projects', icon: Folder },
+    { name: t('logs'), path: '/admin/logs', icon: FileText },
   ];
 
   return (
@@ -27,7 +27,7 @@ export function SystemSidebar() {
               {t('systemManagement')}
             </div>
           )}
-          <ul className="sidebar-nav" aria-label="시스템 관리 메뉴">
+          <ul className="sidebar-nav" aria-label={t('systemMenu')}>
             {systemNav.map(item => {
               const isActive = location.pathname.startsWith(item.path);
               return (
@@ -51,7 +51,7 @@ export function SystemSidebar() {
       <button
         onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
         className="sidebar-toggle-btn z-50"
-        aria-label={isSidebarCollapsed ? '사이드바 펼치기' : '사이드바 접기'}
+        aria-label={isSidebarCollapsed ? t('sidebarExpand') : t('sidebarCollapse')}
         aria-expanded={!isSidebarCollapsed}
       >
         <ChevronRight size={14} className={isSidebarCollapsed ? '' : 'rotate-180 transition-transform'} />

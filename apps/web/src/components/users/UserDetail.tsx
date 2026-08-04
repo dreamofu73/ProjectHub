@@ -54,8 +54,8 @@ export function UserDetail({
           <User size={24} className="text-[var(--text-muted)] opacity-60" />
         </div>
         <div className="text-center">
-          <p className="text-xs font-bold text-[var(--text-secondary)]">선택된 사용자가 없습니다.</p>
-          <p className="text-xs text-[var(--text-muted)] mt-1">목록에서 확인하려는 사용자를 선택하세요.</p>
+          <p className="text-xs font-bold text-[var(--text-secondary)]">{t('noUserSelected')}</p>
+          <p className="text-xs text-[var(--text-muted)] mt-1">{t('selectUserHint')}</p>
         </div>
       </div>
     );
@@ -79,24 +79,24 @@ export function UserDetail({
             <div className="flex items-center gap-2">
               <button onClick={() => onEdit(user)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] hover:bg-[var(--bg-surface-2)] text-[var(--text-secondary)] text-sm font-bold transition-colors cursor-pointer">
                 <Edit2 size={14} />
-                {t('edit') || '수정'}
+                {t('edit')}
               </button>
               <button onClick={() => onResetPassword(user)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] hover:bg-[var(--bg-surface-2)] text-[var(--text-secondary)] text-sm font-bold transition-colors cursor-pointer">
                 <Key size={14} />
-                비밀번호
+                {t('password')}
               </button>
               <button onClick={() => onDelete(user.id)} disabled={user.id === '1'} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 text-sm font-bold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
                 <Trash2 size={14} />
-                {t('delete') || '삭제'}
+                {t('delete')}
               </button>
             </div>
           </div>
           <div className="flex items-center gap-3 mt-2">
             <span className="text-2xl font-extrabold text-[var(--text-primary)]">{user.firstname} {user.lastname}</span>
             {user.is_active === 1 ? (
-              <span className="flex items-center gap-1 px-2 py-1 rounded-md bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs font-bold"><CheckCircle size={12} /> 활성</span>
+              <span className="flex items-center gap-1 px-2 py-1 rounded-md bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs font-bold"><CheckCircle size={12} /> {t('active')}</span>
             ) : (
-              <span className="flex items-center gap-1 px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-bold"><XCircle size={12} /> 비활성</span>
+              <span className="flex items-center gap-1 px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-bold"><XCircle size={12} /> {t('inactive')}</span>
             )}
             <span className="text-sm text-[var(--text-muted)] font-medium">@{user.login}</span>
           </div>
@@ -114,7 +114,7 @@ export function UserDetail({
           }`}
         >
           <Info size={14} />
-          기본 정보
+          {t('basicInfo')}
         </button>
         <button
           onClick={() => setActiveTab('activity')}
@@ -125,7 +125,7 @@ export function UserDetail({
           }`}
         >
           <BarChart3 size={14} />
-          활동 요약
+          {t('activitySummary')}
         </button>
       </div>
 
@@ -135,25 +135,25 @@ export function UserDetail({
           /* 기본 정보 */
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-[var(--bg-surface-2)]/40 p-4 rounded-xl border border-[var(--border)] flex flex-col gap-1">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--text-muted)]"><Mail size={14} /> 이메일</div>
+              <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--text-muted)]"><Mail size={14} /> {t('email')}</div>
               <span className="text-sm font-semibold text-[var(--text-primary)] truncate" title={user.email}>{user.email || '-'}</span>
             </div>
             <div className="bg-[var(--bg-surface-2)]/40 p-4 rounded-xl border border-[var(--border)] flex flex-col gap-1">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--text-muted)]"><Shield size={14} /> 권한</div>
+              <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--text-muted)]"><Shield size={14} /> {t('permission')}</div>
               <span className={`text-sm font-bold ${user.role === 'admin' ? 'text-rose-500' : user.role === 'overseer' ? 'text-blue-500' : 'text-[var(--text-secondary)]'}`}>
-                {user.role === 'admin' ? t('admin') : user.role === 'overseer' ? t('overseer') : t('regularUser') || '일반'}
+                {user.role === 'admin' ? t('admin') : user.role === 'overseer' ? t('overseer') : t('regularUser')}
               </span>
             </div>
             <div className="bg-[var(--bg-surface-2)]/40 p-4 rounded-xl border border-[var(--border)] flex flex-col gap-1">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--text-muted)]"><Building2 size={14} /> 조직</div>
+              <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--text-muted)]"><Building2 size={14} /> {t('organization')}</div>
               <span className="text-sm font-semibold text-[var(--text-primary)] truncate">{user.organization_name || '-'}</span>
             </div>
             <div className="bg-[var(--bg-surface-2)]/40 p-4 rounded-xl border border-[var(--border)] flex flex-col gap-1">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--text-muted)]"><Building2 size={14} /> 부서</div>
+              <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--text-muted)]"><Building2 size={14} /> {t('department')}</div>
               <span className="text-sm font-semibold text-[var(--text-primary)] truncate">{user.department_name || '-'}</span>
             </div>
             <div className="bg-[var(--bg-surface-2)]/40 p-4 rounded-xl border border-[var(--border)] flex flex-col gap-1 col-span-2">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--text-muted)]"><Calendar size={14} /> 가입일</div>
+              <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--text-muted)]"><Calendar size={14} /> {t('signupDate')}</div>
               <span className="text-sm font-semibold text-[var(--text-primary)]">{formatDate(user.created_at)}</span>
             </div>
           </div>
@@ -166,34 +166,34 @@ export function UserDetail({
               <div className="bg-[var(--bg-surface)] p-4 rounded-xl border border-[var(--border)] flex items-center gap-3 shadow-sm">
                 <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-500 shrink-0"><Clock size={18} /></div>
                 <div className="flex flex-col min-w-0">
-                  <span className="text-xs font-bold text-[var(--text-muted)]">최근 활동</span>
-                  <span className="text-sm font-bold text-[var(--text-primary)] truncate">{activity.last_activity ? formatDate(activity.last_activity) : '기록 없음'}</span>
+                  <span className="text-xs font-bold text-[var(--text-muted)]">{t('recentActivities')}</span>
+                  <span className="text-sm font-bold text-[var(--text-primary)] truncate">{activity.last_activity ? formatDate(activity.last_activity) : t('noHistory')}</span>
                 </div>
               </div>
               <div className="bg-[var(--bg-surface)] p-4 rounded-xl border border-[var(--border)] flex items-center gap-3 shadow-sm">
                 <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center text-amber-500 shrink-0"><Bug size={18} /></div>
                 <div className="flex flex-col min-w-0">
-                  <span className="text-xs font-bold text-[var(--text-muted)]">할당된 이슈</span>
-                  <span className="text-sm font-bold text-[var(--text-primary)] truncate">{activity.assigned_issues}개</span>
+                  <span className="text-xs font-bold text-[var(--text-muted)]">{t('assignedIssues')}</span>
+                  <span className="text-sm font-bold text-[var(--text-primary)] truncate">{t('countItems').replace('{count}', String(activity.assigned_issues))}</span>
                 </div>
               </div>
               <div className="bg-[var(--bg-surface)] p-4 rounded-xl border border-[var(--border)] flex items-center gap-3 shadow-sm">
                 <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center text-emerald-500 shrink-0"><PenTool size={18} /></div>
                 <div className="flex flex-col min-w-0">
-                  <span className="text-xs font-bold text-[var(--text-muted)]">작성한 이슈</span>
-                  <span className="text-sm font-bold text-[var(--text-primary)] truncate">{activity.created_issues}개</span>
+                  <span className="text-xs font-bold text-[var(--text-muted)]">{t('authoredIssues')}</span>
+                  <span className="text-sm font-bold text-[var(--text-primary)] truncate">{t('countItems').replace('{count}', String(activity.created_issues))}</span>
                 </div>
               </div>
               <div className="bg-[var(--bg-surface)] p-4 rounded-xl border border-[var(--border)] flex items-center gap-3 shadow-sm">
                 <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center text-purple-500 shrink-0"><FolderKanban size={18} /></div>
                 <div className="flex flex-col min-w-0">
-                  <span className="text-xs font-bold text-[var(--text-muted)]">참여 프로젝트</span>
-                  <span className="text-sm font-bold text-[var(--text-primary)] truncate">{activity.projects_count}개</span>
+                  <span className="text-xs font-bold text-[var(--text-muted)]">{t('joinedProjects')}</span>
+                  <span className="text-sm font-bold text-[var(--text-primary)] truncate">{t('countItems').replace('{count}', String(activity.projects_count))}</span>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="text-center py-12 text-sm text-[var(--text-muted)]">활동 정보를 불러올 수 없습니다.</div>
+            <div className="text-center py-12 text-sm text-[var(--text-muted)]">{t('activityLoadError')}</div>
           )
         )}
       </div>

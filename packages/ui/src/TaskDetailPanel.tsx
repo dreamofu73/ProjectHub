@@ -368,6 +368,7 @@ function TaskDependenciesSection({
   onUpdated?: () => void;
 }) {
   const { showToast } = useToast();
+  const { t } = useLanguage();
   const [dependencies, setDependencies] = useState<TaskDependency[]>([]);
   const [allTasks, setAllTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(false);
@@ -435,15 +436,15 @@ function TaskDependenciesSection({
           }
         }
 
-        showToast('선후행 관계 추가 및 계획일자가 자동 변경되었습니다.', 'success');
+        showToast(t('depAdded'), 'success');
         setSelectedPredId('');
         fetchDeps();
         onUpdated?.();
       } else {
-        showToast(json.error || '의존성 추가에 실패했습니다.', 'error');
+        showToast(json.error || t('depAddFailed'), 'error');
       }
     } catch {
-      showToast('서버 연결 오류가 발생했습니다.', 'error');
+      showToast(t('serverConnectionError'), 'error');
     }
   };
 
@@ -474,14 +475,14 @@ function TaskDependenciesSection({
             });
           }
         }
-        showToast('의존관계 조건 및 계획일자가 자동 변경되었습니다.', 'success');
+        showToast(t('depAutoSyncToast'), 'success');
         fetchDeps();
         onUpdated?.();
       } else {
-        showToast(json.error || '의존성 변경에 실패했습니다.', 'error');
+        showToast(json.error || t('depUpdateFailed'), 'error');
       }
     } catch {
-      showToast('의존성 변경 중 오류가 발생했습니다.', 'error');
+      showToast(t('depUpdateError'), 'error');
     }
   };
 
@@ -490,12 +491,12 @@ function TaskDependenciesSection({
       const res = await api(`/api/tasks/dependencies/${depId}`, { method: 'DELETE' });
       const json = await res.json();
       if (json.success) {
-        showToast('선후행 관계가 삭제되었습니다.', 'success');
+        showToast(t('depRemoved'), 'success');
         fetchDeps();
         onUpdated?.();
       }
     } catch {
-      showToast('삭제 중 오류가 발생했습니다.', 'error');
+      showToast(t('deleteError'), 'error');
     }
   };
 
@@ -504,22 +505,24 @@ function TaskDependenciesSection({
       <div className="flex items-center justify-between">
         <h4 className="font-bold text-xs text-[var(--text-secondary)] flex items-center gap-1.5">
           <Link2 size={14} className="text-[var(--primary)]" />
-          <span>선후행 의존성 (Task Dependencies)</span>
+          <span>{t('taskDependencies')}</span>
         </h4>
         <span className="text-[11px] text-[var(--text-muted)]">
-          선행 {predecessors.length}건 / 후행 {successors.length}건
+          {t('predSuccCount')
+            .replace('{pred}', String(predecessors.length))
+            .replace('{succ}', String(successors.length))}
         </span>
       </div>
 
       {loading ? (
-        <div className="text-xs text-[var(--text-muted)]">의존성 정보 로딩중...</div>
+        <div className="text-xs text-[var(--text-muted)]">{t('depLoading')}</div>
       ) : (
         <div className="space-y-2.5">
           {/* Predecessors List */}
           <div className="space-y-1.5">
-            <span className="text-[11px] font-semibold text-[var(--text-muted)] block">선행 일감 (Predecessors - 이 일감 전에 완료되어야 함):</span>
+            <span className="text-[11px] font-semibold text-[var(--text-muted)] block">{t('predecessorsLabel')}</span>
             {predecessors.length === 0 ? (
-              <div className="text-xs text-[var(--text-muted)] italic pl-2">등록된 선행 일감이 없습니다.</div>
+              <div className="text-xs text-[var(--text-muted)] italic pl-2">{t('noPredecessors')}</div>
             ) : (
               predecessors.map(dep => {
                 const predTask = allTasks.find(t => String(t.id) === String(dep.predecessor_id));
@@ -531,7 +534,7 @@ function TaskDependenciesSection({
                         onChange={(e) => handleUpdateDepType(dep, e.target.value as 'FS'|'SS'|'FF'|'SF')}
                         className="px-1.5 py-0.5 text-[10px] font-bold rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 cursor-pointer focus:outline-none focus:ring-1 focus:ring-indigo-500"
                         disabled={isArchived}
-                        title="의존관계 조건 변경 (FS/SS/FF/SF)"
+                        title={t('depTypeChange')}
                       >
                         <option value="FS">FS (Finish to Start)</option>
                         <option value="SS">SS (Start to Start)</option>
@@ -548,7 +551,7 @@ function TaskDependenciesSection({
                         type="button"
                         onClick={() => handleDeleteDep(dep.id)}
                         className="p-1 text-[var(--text-muted)] hover:text-rose-500 rounded transition-colors"
-                        title="의존성 삭제"
+                        title={t('dependencyDelete')}
                       >
                         <TrashIcon size={12} />
                       </button>
@@ -561,9 +564,9 @@ function TaskDependenciesSection({
 
           {/* Successors List */}
           <div className="space-y-1.5">
-            <span className="text-[11px] font-semibold text-[var(--text-muted)] block">후행 일감 (Successors - 이 일감 이후 진행됨):</span>
+            <span className="text-[11px] font-semibold text-[var(--text-muted)] block">{t('successorsLabel')}</span>
             {successors.length === 0 ? (
-              <div className="text-xs text-[var(--text-muted)] italic pl-2">등록된 후행 일감이 없습니다.</div>
+              <div className="text-xs text-[var(--text-muted)] italic pl-2">{t('noSuccessors')}</div>
             ) : (
               successors.map(dep => {
                 const succTask = allTasks.find(t => String(t.id) === String(dep.successor_id));
@@ -583,7 +586,7 @@ function TaskDependenciesSection({
                         type="button"
                         onClick={() => handleDeleteDep(dep.id)}
                         className="p-1 text-[var(--text-muted)] hover:text-rose-500 rounded transition-colors"
-                        title="의존성 삭제"
+                        title={t('dependencyDelete')}
                       >
                         <TrashIcon size={12} />
                       </button>
@@ -597,14 +600,14 @@ function TaskDependenciesSection({
           {/* Add Predecessor Form */}
           {!isArchived && (
             <div className="pt-2 border-t border-[var(--border)] space-y-2">
-              <span className="text-[11px] font-bold text-[var(--text-secondary)] block">+ 선행 일감 연결 추가</span>
+              <span className="text-[11px] font-bold text-[var(--text-secondary)] block">+ {t('addPredecessorLink')}</span>
               <div className="flex items-center gap-2">
                 <select
                   value={selectedPredId}
                   onChange={(e) => setSelectedPredId(e.target.value)}
                   className="flex-1 h-8 px-2 rounded-lg text-xs bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text-primary)] focus:border-[var(--primary)] outline-none"
                 >
-                  <option value="">선행 일감 선택...</option>
+                  <option value="">{t('selectPredecessor')}</option>
                   {availablePredTasks.map(t => (
                     <option key={t.id} value={t.id}>
                       #{t.id} {t.title}
@@ -617,10 +620,10 @@ function TaskDependenciesSection({
                   onChange={(e) => setDepType(e.target.value as any)}
                   className="w-32 h-8 px-2 rounded-lg text-xs bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text-primary)] focus:border-[var(--primary)] outline-none"
                 >
-                  <option value="FS">FS (종료➔시작)</option>
-                  <option value="SS">SS (동시시작)</option>
-                  <option value="FF">FF (동시종료)</option>
-                  <option value="SF">SF (시작➔종료)</option>
+                  <option value="FS">{t('depTypeFsShort')}</option>
+                  <option value="SS">{t('depTypeSsShort')}</option>
+                  <option value="FF">{t('depTypeFfShort')}</option>
+                  <option value="SF">{t('depTypeSfShort')}</option>
                 </select>
 
                 <button
@@ -630,7 +633,7 @@ function TaskDependenciesSection({
                   className="h-8 px-3 bg-[var(--primary)] hover:opacity-90 disabled:opacity-40 text-white rounded-lg text-xs font-bold transition-all cursor-pointer border-none flex items-center gap-1 shrink-0"
                 >
                   <PlusIcon size={13} />
-                  <span>연결</span>
+                  <span>{t('linkAction')}</span>
                 </button>
               </div>
             </div>

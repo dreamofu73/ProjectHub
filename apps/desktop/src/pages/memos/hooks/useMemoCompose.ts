@@ -83,9 +83,9 @@ export function useMemoCompose({
   const handleSendMemo = async (e: React.FormEvent) => {
     e.preventDefault();
     let targetIds: string[] = isSelfWriteMode ? [currentUserId!] : recipients.map(r => String(r.id));
-    if (!isSelfWriteMode && targetIds.length === 0) return showToast('수신자를 선택해주세요.', 'warning');
-    if (!title.trim()) return showToast('제목을 입력해주세요.', 'warning');
-    if (!content.trim() || content === '<p></p>') return showToast('내용을 입력해주세요.', 'warning');
+    if (!isSelfWriteMode && targetIds.length === 0) return showToast(t('selectRecipient'), 'warning');
+    if (!title.trim()) return showToast(t('enterTitle'), 'warning');
+    if (!content.trim() || content === '<p></p>') return showToast(t('enterContent'), 'warning');
 
     let reservedIso: string | undefined = undefined;
     if (isReservedSend && reservedDate) {
@@ -115,7 +115,7 @@ export function useMemoCompose({
             await api('/api/attachments', { method: 'POST', body: formData });
           }
         }
-        showToast(isReservedSend ? '쪽지가 예약 발송되었습니다.' : t('memoSendSuccess'), 'success');
+        showToast(isReservedSend ? t('memoScheduled') : t('memoSendSuccess'), 'success');
         setIsComposeOpen(false);
         setRecipients([]);
         setTitle('');

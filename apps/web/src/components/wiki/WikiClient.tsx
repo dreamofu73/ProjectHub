@@ -601,7 +601,7 @@ export default function WikiClient({ project, wikiList, activePage, initialId, i
               {/* ── 제목 ── */}
               <div className="flex items-center gap-3">
                 <label className="text-xs font-bold text-slate-500 dark:text-slate-400 shrink-0">
-                  {t('title') || '제목'} <span className="text-red-500">*</span>
+                  {t('title')} <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -618,7 +618,7 @@ export default function WikiClient({ project, wikiList, activePage, initialId, i
               {project && (
                 <div className="flex items-center gap-3">
                   <label className="text-xs font-bold text-slate-500 dark:text-slate-400 shrink-0">
-                    {t('parentPage') || '부모 페이지'}
+                    {t('parentPage')}
                   </label>
                   {mode === 'create' && searchParams.get('parent_id') ? (
                     <div className="flex-1 px-3.5 py-2 h-9.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs cursor-not-allowed opacity-70">
@@ -631,7 +631,7 @@ export default function WikiClient({ project, wikiList, activePage, initialId, i
                       onChange={(e) => setParentId(e.target.value || null)}
                       disabled={isLoading}
                     >
-                      <option value="">{t('noParent') || '없음'}</option>
+                      <option value="">{t('noParent')}</option>
                       {wikiList.filter(p => p.id !== activePage?.id).map(p => (
                         <option key={p.id} value={p.id}>{p.title}</option>
                       ))}
@@ -661,7 +661,7 @@ export default function WikiClient({ project, wikiList, activePage, initialId, i
                 </div>
                 {mode === 'edit' && attachments.length > 0 && (
                   <div className="space-y-2 mt-3">
-                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400">{t('existingAttachments') || '기존 첨부 파일'}</label>
+                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400">{t('existingAttachments')}</label>
                     <div className="flex flex-wrap gap-2">
                       {attachments.map(file => (
                         <div key={file.id} className="flex items-center gap-2 pl-3 pr-2 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs shadow-xs">
@@ -708,7 +708,7 @@ export default function WikiClient({ project, wikiList, activePage, initialId, i
                   className="bg-indigo-600 hover:opacity-90 text-white font-bold px-5 py-2 rounded-xl text-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50 h-9 border-none"
                 >
                   {isLoading ? (
-                    <><svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>저장 중...</>
+                    <><svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>{t('saving')}</>
                   ) : (
                     <><Save size={13} />{t('saveBtn')}</>
                   )}
@@ -727,12 +727,12 @@ export default function WikiClient({ project, wikiList, activePage, initialId, i
             </button>
             <div className="px-4 pt-5 pb-4 mb-2 flex items-center gap-1.5 text-[var(--text-primary)] shrink-0 border-b border-[var(--border)] bg-white dark:bg-slate-950">
               <BookOpen size={14} className="text-[var(--primary)]" />
-              <span className="text-sm font-bold">{t('tocHeader') || '목차'}</span>
+              <span className="text-sm font-bold">{t('tocHeader')}</span>
             </div>
             <nav className="overflow-y-auto px-4 pb-4 flex flex-col gap-1 custom-scrollbar">
               {toc.length === 0 ? (
                 <div className="text-xs text-[var(--text-muted)] py-2 px-1">
-                  {t('noToc') || '목차가 없습니다.'}
+                  {t('noToc')}
                 </div>
               ) : (
                 toc.map((item, idx) => {
@@ -762,7 +762,7 @@ export default function WikiClient({ project, wikiList, activePage, initialId, i
             <button 
               onClick={() => setShowToc(!showToc)}
               className="absolute -left-[12px] top-[20px] w-[24px] h-[24px] bg-[var(--bg-surface)] border border-[var(--border)] rounded-full flex items-center justify-center shadow-sm text-[var(--text-muted)] hover:text-white hover:bg-[var(--primary)] hover:border-[var(--primary)] z-20 hidden lg:flex cursor-pointer transition-all"
-              aria-label={showToc ? t('collapseToc') || '목차 접기' : t('expandToc') || '목차 펼치기'}
+              aria-label={showToc ? t('collapseToc') : t('expandToc')}
             >
               <ChevronRight size={14} className={showToc ? '' : 'rotate-180 transition-transform'} />
             </button>

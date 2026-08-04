@@ -25,14 +25,14 @@ const TASK_COLORS = [
 ];
 
 const CRON_PRESETS = [
-  { label: '매 30초',      value: '*/30 * * * *' },
-  { label: '매 1분',       value: '0 * * * *' },
-  { label: '매 5분',       value: '0 */5 * * *' },
-  { label: '매 30분',      value: '0 */30 * * *' },
-  { label: '매 1시간',     value: '0 0 * * *' },
-  { label: '매 6시간',     value: '0 */6 * * *' },
-  { label: '매일 09:00',   value: '0 0 9 * *' },
-  { label: '매일 자정',    value: '0 0 0 * *' },
+  { labelKey: 'every30Seconds',      value: '*/30 * * * *' },
+  { labelKey: 'everyMinute',       value: '0 * * * *' },
+  { labelKey: 'every5Minutes',       value: '0 */5 * * *' },
+  { labelKey: 'every30Minutes',      value: '0 */30 * * *' },
+  { labelKey: 'everyHour',     value: '0 0 * * *' },
+  { labelKey: 'every6Hours',     value: '0 */6 * * *' },
+  { labelKey: 'daily9am',   value: '0 0 9 * *' },
+  { labelKey: 'dailyMidnight',    value: '0 0 0 * *' },
 ];
 
 export default function SchedulerPage() {
@@ -179,7 +179,7 @@ export default function SchedulerPage() {
       const res = await schedulerApi.runTask(taskId);
       if (res.success && res.data?.tasks) {
         setTasks(res.data.tasks);
-        showToast(t('schedulerTaskRunSuccess') || '작업이 강제 실행되었습니다.', 'success');
+        showToast(t('schedulerTaskRunSuccess'), 'success');
       } else {
         showToast(res.message || t('serverCommunicationError'), 'error');
       }
@@ -198,7 +198,7 @@ export default function SchedulerPage() {
     if (!expr) return;
     const parts = expr.split(/\s+/);
     if (parts.length !== 5) {
-      showToast(t('schedulerCronInvalid') || '올바른 cron 형식이 아닙니다. (초 분 시 일 월)', 'error');
+      showToast(t('schedulerCronInvalid'), 'error');
       return;
     }
     updateTask(taskId, { cron_expression: expr });
@@ -260,7 +260,7 @@ export default function SchedulerPage() {
           <div className="text-center">
             <Clock className="w-12 h-12 mx-auto text-[var(--text-muted)]" />
             <p className="mt-3 text-sm text-[var(--text-muted)]">
-              {t('schedulerSelectTask') || '왼쪽에서 작업을 선택하세요'}
+              {t('schedulerSelectTask')}
             </p>
           </div>
         </div>
@@ -300,7 +300,7 @@ export default function SchedulerPage() {
           {/* Status & Processing (merged) */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-xs text-[var(--text-muted)]">{t('schedulerStatus') || '상태'}:</span>
+              <span className="text-xs text-[var(--text-muted)]">{t('schedulerStatus')}:</span>
               {(() => {
                 if (!task.running) {
                   return (
@@ -314,7 +314,7 @@ export default function SchedulerPage() {
                   return (
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800">
                       <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-                      {t('schedulerProcessing') || '처리중'}
+                      {t('schedulerProcessing')}
                     </span>
                   );
                 }
@@ -322,14 +322,14 @@ export default function SchedulerPage() {
                   return (
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                      {t('schedulerStarted') || '시작됨'}
+                      {t('schedulerStarted')}
                     </span>
                   );
                 }
                 return (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    {t('schedulerWaiting') || '대기중'}
+                    {t('schedulerWaiting')}
                   </span>
                 );
               })()}
@@ -342,7 +342,7 @@ export default function SchedulerPage() {
                 className="gap-1.5"
               >
                 <Play className="w-4 h-4" />
-                {t('schedulerRunNow') || '강제 실행'}
+                {t('schedulerRunNow')}
               </Button>
               <Button
                 onClick={() => handleToggleRunning(task.id, task.running)}
@@ -393,7 +393,7 @@ export default function SchedulerPage() {
                           onClick={() => handleCronChange(task.id, preset.value)}
                           className="w-full text-left px-3 py-1.5 text-sm hover:bg-[var(--bg-surface-2)] text-[var(--text-primary)] transition-colors"
                         >
-                          <span className="font-medium">{preset.label}</span>
+                          <span className="font-medium">{t(preset.labelKey)}</span>
                           <span className="block text-xs text-[var(--text-muted)] font-mono">
                             {preset.value}
                           </span>
@@ -445,7 +445,7 @@ export default function SchedulerPage() {
           <div>
             <h1 className="text-lg font-bold">{t('scheduler')}</h1>
             <p className="text-xs text-[var(--text-muted)]">
-              {t('schedulerCronFormat') || '초 분 시 일 월 — 크론탭 문법'}
+              {t('schedulerCronFormat')}
             </p>
           </div>
         </div>

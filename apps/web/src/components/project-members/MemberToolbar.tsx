@@ -43,16 +43,16 @@ export function MemberToolbar({
           onChange={(e) => setRoleFilter(e.target.value)}
           className="h-8 px-2 border border-[var(--border)] rounded bg-[var(--bg-surface)] text-xs focus:outline-none text-[var(--text-primary)] cursor-pointer font-medium"
         >
-          <option value="all">{t('allRoles') || '전체 권한'}</option>
-          <option value="manager">매니저</option>
-          <option value="developer">개발자</option>
-          <option value="viewer">뷰어</option>
+          <option value="all">{t('allRoles')}</option>
+          <option value="manager">{t('manager')}</option>
+          <option value="developer">{t('roleDeveloper')}</option>
+          <option value="viewer">{t('groupViewer')}</option>
         </select>
 
         <div className="relative">
           <input
             type="text"
-            placeholder={t('searchMembersPlaceholder') || '멤버 검색...'}
+            placeholder={t('searchMembersPlaceholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-2 pr-7 py-1 h-8 w-48 border border-[var(--border)] rounded bg-[var(--bg-surface)] text-xs focus:outline-none text-[var(--text-primary)]"
@@ -69,7 +69,7 @@ export function MemberToolbar({
             className="flex items-center gap-1 px-2.5 py-1.5 border border-[var(--border)] hover:bg-[var(--bg-surface-2)] text-[var(--text-secondary)] disabled:opacity-45 disabled:hover:bg-transparent rounded text-xs font-semibold transition-all cursor-pointer bg-[var(--bg-surface)] h-8"
           >
             <Shield size={11} />
-            권한 변경
+            {t('changeRole')}
             <ChevronDown size={10} className="opacity-60" />
           </button>
           {activeDropdown === 'role' && (
@@ -93,7 +93,7 @@ export function MemberToolbar({
           className="flex items-center gap-1 px-2.5 py-1.5 border border-[var(--border)] hover:bg-red-50 dark:hover:bg-red-950/20 text-[var(--text-secondary)] hover:text-red-500 disabled:opacity-45 disabled:hover:bg-transparent disabled:hover:text-[var(--text-secondary)] rounded text-xs font-semibold transition-all cursor-pointer bg-[var(--bg-surface)] h-8"
         >
           <Trash2 size={11} />
-          {t('bulkDelete') || '삭제'}
+          {t('bulkDelete')}
         </button>
       </div>
     </div>

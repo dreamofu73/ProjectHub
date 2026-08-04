@@ -61,8 +61,8 @@ export function MemberDetailPanel({
           <User size={24} className="text-[var(--text-muted)] opacity-60" />
         </div>
         <div className="text-center">
-          <p className="text-xs font-bold text-[var(--text-secondary)]">선택된 멤버가 없습니다.</p>
-          <p className="text-xs text-[var(--text-muted)] mt-1">목록에서 확인하려는 멤버를 선택하세요.</p>
+          <p className="text-xs font-bold text-[var(--text-secondary)]">{t('noMemberSelected')}</p>
+          <p className="text-xs text-[var(--text-muted)] mt-1">{t('selectMemberHint')}</p>
         </div>
       </div>
     );
@@ -84,7 +84,7 @@ export function MemberDetailPanel({
               {!isArchived && (
                 <button onClick={() => onDelete(member.id)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 text-sm font-bold transition-colors cursor-pointer">
                   <Trash2 size={14} />
-                  {t('delete') || '삭제'}
+                  {t('delete')}
                 </button>
               )}
             </div>
@@ -107,7 +107,7 @@ export function MemberDetailPanel({
           }`}
         >
           <Info size={14} />
-          기본 정보
+          {t('basicInfo')}
         </button>
         <button
           onClick={() => setActiveTab('activity')}
@@ -118,7 +118,7 @@ export function MemberDetailPanel({
           }`}
         >
           <BarChart3 size={14} />
-          활동 요약
+          {t('activitySummary')}
         </button>
       </div>
 
@@ -127,15 +127,15 @@ export function MemberDetailPanel({
         {activeTab === 'basic' ? (
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-[var(--bg-surface-2)]/40 p-4 rounded-xl border border-[var(--border)] flex flex-col gap-1">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--text-muted)]"><Mail size={14} /> 이메일</div>
+              <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--text-muted)]"><Mail size={14} /> {t('email')}</div>
               <span className="text-sm font-semibold text-[var(--text-primary)] truncate" title={member.email}>{member.email || '-'}</span>
             </div>
             <div className="bg-[var(--bg-surface-2)]/40 p-4 rounded-xl border border-[var(--border)] flex flex-col gap-1">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--text-muted)]"><Shield size={14} /> 권한</div>
+              <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--text-muted)]"><Shield size={14} /> {t('permission')}</div>
               <span className="text-sm font-bold text-[var(--text-secondary)]">{member.role}</span>
             </div>
             <div className="bg-[var(--bg-surface-2)]/40 p-4 rounded-xl border border-[var(--border)] flex flex-col gap-1 col-span-2">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--text-muted)]"><Calendar size={14} /> 가입일</div>
+              <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--text-muted)]"><Calendar size={14} /> {t('signupDate')}</div>
               <span className="text-sm font-semibold text-[var(--text-primary)]">{formatDate(member.created_at)}</span>
             </div>
           </div>
@@ -147,34 +147,34 @@ export function MemberDetailPanel({
               <div className="bg-[var(--bg-surface)] p-4 rounded-xl border border-[var(--border)] flex items-center gap-3 shadow-sm">
                 <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-500 shrink-0"><Clock size={18} /></div>
                 <div className="flex flex-col min-w-0">
-                  <span className="text-xs font-bold text-[var(--text-muted)]">최근 활동</span>
-                  <span className="text-sm font-bold text-[var(--text-primary)] truncate">{activity.last_activity ? formatDate(activity.last_activity) : '기록 없음'}</span>
+                  <span className="text-xs font-bold text-[var(--text-muted)]">{t('recentActivities')}</span>
+                  <span className="text-sm font-bold text-[var(--text-primary)] truncate">{activity.last_activity ? formatDate(activity.last_activity) : t('noHistory')}</span>
                 </div>
               </div>
               <div className="bg-[var(--bg-surface)] p-4 rounded-xl border border-[var(--border)] flex items-center gap-3 shadow-sm">
                 <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center text-amber-500 shrink-0"><Bug size={18} /></div>
                 <div className="flex flex-col min-w-0">
-                  <span className="text-xs font-bold text-[var(--text-muted)]">할당된 이슈</span>
-                  <span className="text-sm font-bold text-[var(--text-primary)] truncate">{activity.assigned_issues}개</span>
+                  <span className="text-xs font-bold text-[var(--text-muted)]">{t('assignedIssues')}</span>
+                  <span className="text-sm font-bold text-[var(--text-primary)] truncate">{t('countItems').replace('{count}', String(activity.assigned_issues))}</span>
                 </div>
               </div>
               <div className="bg-[var(--bg-surface)] p-4 rounded-xl border border-[var(--border)] flex items-center gap-3 shadow-sm">
                 <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center text-emerald-500 shrink-0"><PenTool size={18} /></div>
                 <div className="flex flex-col min-w-0">
-                  <span className="text-xs font-bold text-[var(--text-muted)]">작성한 이슈</span>
-                  <span className="text-sm font-bold text-[var(--text-primary)] truncate">{activity.created_issues}개</span>
+                  <span className="text-xs font-bold text-[var(--text-muted)]">{t('authoredIssues')}</span>
+                  <span className="text-sm font-bold text-[var(--text-primary)] truncate">{t('countItems').replace('{count}', String(activity.created_issues))}</span>
                 </div>
               </div>
               <div className="bg-[var(--bg-surface)] p-4 rounded-xl border border-[var(--border)] flex items-center gap-3 shadow-sm">
                 <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center text-purple-500 shrink-0"><FolderKanban size={18} /></div>
                 <div className="flex flex-col min-w-0">
-                  <span className="text-xs font-bold text-[var(--text-muted)]">참여 프로젝트</span>
-                  <span className="text-sm font-bold text-[var(--text-primary)] truncate">{activity.projects_count}개</span>
+                  <span className="text-xs font-bold text-[var(--text-muted)]">{t('joinedProjects')}</span>
+                  <span className="text-sm font-bold text-[var(--text-primary)] truncate">{t('countItems').replace('{count}', String(activity.projects_count))}</span>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="text-center py-12 text-sm text-[var(--text-muted)]">활동 정보를 불러올 수 없습니다.</div>
+            <div className="text-center py-12 text-sm text-[var(--text-muted)]">{t('activityLoadError')}</div>
           )
         )}
       </div>
