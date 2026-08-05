@@ -1,17 +1,17 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { 
   FolderKanban, Plus, Search, Globe, Lock, 
   Users, Bug, ArrowRight, LayoutGrid, List
 } from 'lucide-react';
-import { PageHeader } from 'ui/PageHeader';
-import { Card, CardBody } from 'ui/Card';
-import { Badge } from 'ui/Badge';
-import { Button } from 'ui/Button';
-import { Input, Select } from 'ui/Input';
+import { PageHeader } from '../PageHeader';
+import { Card, CardBody } from '../Card';
+import { Badge } from '../Badge';
+import { Button } from '../Button';
+import { Input, Select } from '../Input';
 import { api } from 'shared/lib/api';
-import { useLanguage } from '../context/LanguageContext';
-import { Pagination } from 'ui/Pagination';
+import { useLanguage } from 'shared/hooks/LanguageContext';
+import { Pagination } from '../Pagination';
 
 interface Project {
   id: string;
@@ -29,12 +29,16 @@ interface Project {
 
 export default function ProjectsPage() {
   const { t } = useLanguage();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [projects, setProjects] = useState<Project[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [membershipFilter, setMembershipFilter] = useState<'all' | 'mine'>(
+    () => (searchParams.get('all') === 'true' ? 'all' : 'mine')
+  );
   const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -46,6 +50,8 @@ export default function ProjectsPage() {
       const params = new URLSearchParams({
         status: statusFilter,
         search: searchTerm,
+        my_projects_only: String(membershipFilter === 'mine'),
+        all: String(membershipFilter === 'all'),
         page: String(currentPage),
         limit: String(pageSize),
       }).toString();
@@ -64,7 +70,7 @@ export default function ProjectsPage() {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, searchTerm, currentPage, pageSize, t]);
+  }, [statusFilter, membershipFilter, searchTerm, currentPage, pageSize, t]);
 
   useEffect(() => {
     fetchProjects();
@@ -72,40 +78,49 @@ export default function ProjectsPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [statusFilter, searchTerm]);
+  }, [statusFilter, membershipFilter, searchTerm]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setCurrentPage(1);
   };
 
+  const userStr = localStorage.getItem('user');
+  const currentUser = userStr ? JSON.parse(userStr) : null;
+  const isSysAdmin = currentUser?.role === 'admin';
   const pagedProjects = projects;
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader 
-        title={t('projects')} 
-        description={t('projectsPageDesc')}
-        actions={
-          <Link to="/projects/new">
-            <Button icon={Plus}>{t('newProject')}</Button>
-          </Link>
-        }
-      />
+      <div className="stagger-1">
+        <PageHeader 
+          title={t('projects')} 
+          description={t('projectsPageDesc')}
+          actions={
+            isSysAdmin ? (
+              <Link to="/projects/new">
+                <Button icon={Plus}>{t('newProject')}</Button>
+              </Link>
+            ) : undefined
+          }
+        />
+      </div>
 
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-        <div className="flex items-center gap-1 bg-gray-100 dark:bg-slate-800 p-1 rounded-lg">
+      <div className="stagger-2 flex flex-col md:flex-row gap-4 items-center justify-between">
+        <div className="flex items-center gap-1 bg-[var(--bg-surface-2)]! p-1 rounded-lg" role="group" aria-label={t('viewMode')}>
           <button
             onClick={() => setViewMode('card')}
-            className={`p-2 rounded-md transition-all ${viewMode === 'card' ? 'bg-white dark:bg-slate-700 shadow-sm text-primary' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+            className={`p-2 rounded-md transition-all ${viewMode === 'card' ? 'bg-[var(--bg-surface)] shadow-sm text-primary' : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'}`}
             title={t('cardView')}
+            aria-pressed={viewMode === 'card'}
           >
             <LayoutGrid size={18} />
           </button>
           <button
             onClick={() => setViewMode('table')}
-            className={`p-2 rounded-md transition-all ${viewMode === 'table' ? 'bg-white dark:bg-slate-700 shadow-sm text-primary' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+            className={`p-2 rounded-md transition-all ${viewMode === 'table' ? 'bg-[var(--bg-surface)] shadow-sm text-primary' : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'}`}
             title={t('tableView')}
+            aria-pressed={viewMode === 'table'}
           >
             <List size={18} />
           </button>
@@ -114,7 +129,30 @@ export default function ProjectsPage() {
         <Card className="w-full md:w-auto shadow-sm border-border/50">
           <CardBody className="p-1.5 flex flex-row gap-2 items-center">
             <form onSubmit={handleSearchSubmit} className="flex flex-wrap md:flex-nowrap items-center gap-2">
-              <div className="w-40">
+              <div className="w-44">
+                <Select 
+                  value={membershipFilter} 
+                  onChange={(e) => {
+                    const v = e.target.value as 'all' | 'mine';
+                    setMembershipFilter(v);
+                    const params = new URLSearchParams(searchParams);
+                    if (v === 'all') params.set('all', 'true');
+                    else {
+                      params.delete('all');
+                      params.delete('my_projects_only');
+                    }
+                    setSearchParams(params);
+                  }}
+                  options={[
+                    { value: 'mine', label: t('myProjectsOnly') },
+                    { value: 'all', label: t('allProjects') }
+                  ]}
+                  fullWidth
+                  className="bg-[var(--bg-surface-2)]!"
+                />
+              </div>
+
+              <div className="w-36">
                 <Select 
                   value={statusFilter} 
                   onChange={(e) => setStatusFilter(e.target.value)}
@@ -124,7 +162,7 @@ export default function ProjectsPage() {
                     { value: 'all', label: t('all') }
                   ]}
                   fullWidth
-                  className="bg-gray-50 dark:bg-slate-800"
+                  className="bg-[var(--bg-surface-2)]!"
                 />
               </div>
 
@@ -135,7 +173,7 @@ export default function ProjectsPage() {
                   value={searchTerm} 
                   onChange={(e) => setSearchTerm(e.target.value)}
                   fullWidth
-                  className="bg-gray-50 dark:bg-slate-800 border-none"
+                  className="bg-[var(--bg-surface-2)]! border-none"
                 />
               </div>
               
@@ -148,7 +186,7 @@ export default function ProjectsPage() {
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {[1, 2, 3].map(n => (
-            <div key={n} className="card animate-pulse h-48 bg-white" />
+            <div key={n} className="card animate-pulse h-48" />
           ))}
         </div>
       ) : error ? (
@@ -159,17 +197,25 @@ export default function ProjectsPage() {
           </CardBody>
         </Card>
       ) : projects.length === 0 ? (
-        <Card>
-          <CardBody className="text-center py-20 text-muted">
-            <FolderKanban size={48} className="mx-auto mb-4 opacity-20" />
-            <p>{t('noProjects')}</p>
+        <Card className="stagger-3">
+          <CardBody className="text-center py-20">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[var(--primary-bg)] text-[var(--primary)] mb-5">
+              <FolderKanban size={28} />
+            </div>
+            <p className="text-[var(--text-primary)] font-semibold text-lg">{t('noProjects')}</p>
+            <p className="text-[var(--text-muted)] text-sm mt-1.5 max-w-sm mx-auto">{t('noProjectsDesc')}</p>
+            {isSysAdmin && (
+              <Link to="/projects/new">
+                <Button icon={Plus} className="mt-6">{t('newProject')}</Button>
+              </Link>
+            )}
           </CardBody>
         </Card>
       ) : viewMode === 'card' ? (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 stagger-3">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {pagedProjects.map((project) => (
-              <Card key={project.id} className="group relative overflow-hidden border border-gray-200 dark:border-slate-700/60 hover:border-primary/50 hover:shadow-lg transition-all duration-300 bg-white dark:bg-slate-900 rounded-xl">
+              <Card key={project.id} className="group relative overflow-hidden border hover:shadow-lg transition-all duration-300 bg-[var(--bg-surface)]">
                 {/* Header */}
                 <div className="p-5 pb-3">
                   <div className="flex items-start justify-between gap-3">
@@ -178,10 +224,10 @@ export default function ProjectsPage() {
                         <FolderKanban size={20} />
                       </div>
                       <div className="min-w-0">
-                        <h3 className="font-bold text-base text-gray-900 dark:text-slate-100 truncate group-hover/link:text-primary transition-colors">
+                        <h3 className="font-bold text-base text-[var(--text-primary)] truncate group-hover/link:text-primary transition-colors">
                           {project.name}
                         </h3>
-                        <span className="text-xs text-muted dark:text-slate-500 font-mono">{project.identifier}</span>
+                        <span className="text-xs text-[var(--text-muted)] font-mono">{project.identifier}</span>
                       </div>
                     </Link>
                     <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -193,7 +239,7 @@ export default function ProjectsPage() {
                     </div>
                   </div>
 
-                  <p className="mt-3 text-sm text-secondary dark:text-slate-400 line-clamp-2 leading-relaxed min-h-[2.5em]">
+                  <p className="mt-3 text-sm text-[var(--text-secondary)] line-clamp-2 leading-relaxed min-h-[2.5em]">
                     {project.description || t('noDescriptionRegistered')}
                   </p>
                 </div>
@@ -201,10 +247,10 @@ export default function ProjectsPage() {
                 {/* Progress */}
                 <div className="px-5 pb-3">
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[11px] font-bold text-muted dark:text-slate-500 uppercase tracking-wider">{t('progress')}</span>
+                    <span className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">{t('progress')}</span>
                     <span className="text-sm font-bold text-primary">{Math.round(((project.issue_count - project.open_issue_count) / (project.issue_count || 1)) * 100)}%</span>
                   </div>
-                  <div className="progress-bar h-2 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                  <div className="progress-bar h-2 bg-[var(--border)] rounded-full overflow-hidden">
                     <div 
                       className="progress-fill h-full bg-gradient-to-r from-primary to-primary/70 rounded-full transition-all duration-500" 
                       style={{ width: `${Math.round(((project.issue_count - project.open_issue_count) / (project.issue_count || 1)) * 100)}%` }}
@@ -213,7 +259,7 @@ export default function ProjectsPage() {
                 </div>
 
                 {/* Footer - clickable member/issue links */}
-                <div className="border-t border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-800/30 px-5 py-3 flex items-center justify-between">
+                <div className="border-t border-[var(--border)] bg-[var(--bg-surface-2)]/50! px-5 py-3 flex items-center justify-between">
                   <div className="flex gap-1">
                     <Link
                       to={`/projects/${project.identifier}/members`}
@@ -221,18 +267,18 @@ export default function ProjectsPage() {
                       className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-primary hover:bg-primary/10 transition-colors cursor-pointer"
                     >
                       <Users size={13} />
-                      {t('members')} <span className="text-gray-500 dark:text-slate-400 font-normal">{project.member_count}</span>
+                      {t('members')} <span className="text-[var(--text-muted)] font-normal">{project.member_count}</span>
                     </Link>
                     <Link
                       to={`/projects/${project.identifier}/issues`}
                       onClick={(e) => e.stopPropagation()}
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-danger hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors cursor-pointer"
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-danger hover:bg-[var(--danger-bg)] transition-colors cursor-pointer"
                     >
                       <Bug size={13} />
-                      {t('issues')} <span className="text-gray-500 dark:text-slate-400 font-normal">{project.open_issue_count}</span>
+                      {t('issues')} <span className="text-[var(--text-muted)] font-normal">{project.open_issue_count}</span>
                     </Link>
                   </div>
-                  <Link to={`/projects/${project.identifier}/dashboard`} className="w-7 h-7 rounded-full bg-white dark:bg-slate-900 border border-border flex items-center justify-center text-primary shadow-sm group-hover:bg-primary group-hover:text-white transition-all">
+                  <Link to={`/projects/${project.identifier}/dashboard`} className="w-7 h-7 rounded-full bg-[var(--bg-surface)] border border-border flex items-center justify-center text-primary shadow-sm group-hover:bg-primary group-hover:text-white transition-all">
                     <ArrowRight size={14} />
                   </Link>
                 </div>
@@ -240,7 +286,7 @@ export default function ProjectsPage() {
             ))}
           </div>
           {totalCount > 0 && (
-            <div className="border-t border-border relative mt-6">
+            <div className="border-t border-border mt-4 pt-4">
               <Pagination
                 currentPage={currentPage}
                 totalCount={totalCount}
@@ -253,11 +299,11 @@ export default function ProjectsPage() {
           )}
         </div>
       ) : (
-        <Card className="overflow-hidden">
+        <Card className="overflow-hidden stagger-3">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-gray-50 dark:bg-slate-800/50 border-b border-border">
+                <tr className="bg-[var(--bg-surface-2)]! border-b border-border">
                   <th className="py-3 px-4 text-xs font-semibold text-muted uppercase tracking-wider">{t('projects')}</th>
                   <th className="py-3 px-4 text-xs font-semibold text-muted uppercase tracking-wider">{t('visibility')}</th>
                   <th className="py-3 px-4 text-xs font-semibold text-muted uppercase tracking-wider">{t('progress')}</th>
@@ -268,14 +314,14 @@ export default function ProjectsPage() {
               </thead>
               <tbody className="divide-y divide-border">
                 {pagedProjects.map((project) => (
-                  <tr key={project.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/30 transition-colors group">
+                  <tr key={project.id} className="hover:bg-[var(--bg-surface-2)]/60! transition-colors group">
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-primary-bg rounded-lg text-primary flex-shrink-0">
                           <FolderKanban size={16} />
                         </div>
                         <div>
-                          <Link to={`/projects/${project.identifier}/dashboard`} className="font-bold text-gray-900 dark:text-slate-100 hover:text-primary transition-colors">
+                          <Link to={`/projects/${project.identifier}/dashboard`} className="font-bold text-[var(--text-primary)] hover:text-primary transition-colors">
                             {project.name}
                           </Link>
                           <div className="text-sm text-muted truncate max-w-xs">
@@ -293,7 +339,7 @@ export default function ProjectsPage() {
                     </td>
                     <td className="py-3 px-4 w-48">
                       <div className="flex items-center gap-2">
-                        <div className="flex-1 progress-bar h-1.5 bg-gray-200 dark:bg-slate-800">
+                        <div className="flex-1 progress-bar h-1.5 bg-[var(--border)]">
                           <div 
                             className="progress-fill h-full bg-primary" 
                             style={{ width: `${Math.round(((project.issue_count - project.open_issue_count) / (project.issue_count || 1)) * 100)}%` }}
@@ -305,12 +351,12 @@ export default function ProjectsPage() {
                       </div>
                     </td>
                     <td className="py-3 px-4">
-                      <span className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-slate-300">
+                      <span className="flex items-center gap-1.5 text-sm font-medium text-[var(--text-secondary)]">
                         <Users size={14} className="text-primary" /> {project.member_count}
                       </span>
                     </td>
                     <td className="py-3 px-4">
-                      <span className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-slate-300">
+                      <span className="flex items-center gap-1.5 text-sm font-medium text-[var(--text-secondary)]">
                         <Bug size={14} className="text-danger" /> {project.open_issue_count}
                       </span>
                     </td>
@@ -327,7 +373,7 @@ export default function ProjectsPage() {
             </table>
           </div>
           {totalCount > 0 && (
-            <div className="border-t border-border relative">
+            <div className="border-t border-border pt-4">
               <Pagination
                 currentPage={currentPage}
                 totalCount={totalCount}

@@ -867,7 +867,7 @@ a:hover { text-decoration: underline; }
 .card {
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: var(--border-radius-lg);
+  border-radius: var(--border-radius-xl);
   overflow: hidden;
   transition: border-color 0.15s;
 }
@@ -1097,9 +1097,6 @@ a:hover { text-decoration: underline; }
    STATS & MISC
    ============================================ */
 .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
-
-.progress-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
-.progress-fill { height: 100%; border-radius: 2px; background: var(--primary); transition: width 0.4s ease; }
 
 .page-header {
   display: flex;

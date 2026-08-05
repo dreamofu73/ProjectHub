@@ -10,8 +10,8 @@ import { isTauri, getBackendUrl } from 'shared/lib/desktop-config';
 // Lazy loaded page components
 const LoginPage = lazy(() => import('./pages/Login'));
 const RegisterPage = lazy(() => import('./pages/Register'));
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const ProjectsPage = lazy(() => import('./pages/Projects'));
+const Dashboard = lazy(() => import('ui/pages/Dashboard'));
+const ProjectsPage = lazy(() => import('ui/pages/Projects'));
 const ProjectMembersPage = lazy(() => import('./pages/ProjectMembers'));
 const UsersManagementPage = lazy(() => import('./pages/UsersManagement'));
 const NewProject = lazy(() => import('./pages/NewProject'));
