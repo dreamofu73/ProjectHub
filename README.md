@@ -47,7 +47,7 @@ Built with Rust (Axum) + React (Vite) + Tauri, supporting both Web and Desktop.
 | **Address Book** | Department/group-based contact management |
 | **Admin** | User management, org chart (departments), scheduler, system logs |
 | **Authentication** | Login/logout, JWT-based auth |
-| **i18n** | Korean · English · Japanese · Chinese |
+| **i18n** | Korean · English · Japanese · Spanish |
 | **Theming** | Light / Dark / System themes, color swatches |
 | **Attachments** | File upload/download, image/document preview |
 

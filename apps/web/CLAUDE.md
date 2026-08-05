@@ -30,7 +30,7 @@ The three rules below apply to **every** screen, component, inline panel, and to
   - `packages/shared/src/locales/ko.ts` (Korean)
   - `packages/shared/src/locales/en.ts` (English)
   - `packages/shared/src/locales/ja.ts` (Japanese)
-  - `packages/shared/src/locales/zh.ts` (Chinese)
+  - `packages/shared/src/locales/es.ts` (Spanish)
 
 ```tsx
 import { useLanguage } from '../context/LanguageContext'; // re-exports shared/hooks/LanguageContext

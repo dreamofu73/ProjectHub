@@ -11,7 +11,7 @@ packages/
 ├── shared/      # Shared hooks, data types, API client, i18n locales
 │   └── src/
 │       ├── hooks/     # LanguageContext, useTasks, useMilestones, ...
-│       ├── locales/   # ko.ts, en.ts, ja.ts, zh.ts (single source of truth)
+│       ├── locales/   # ko.ts, en.ts, ja.ts, es.ts (single source of truth)
 │       ├── types/     # Shared TypeScript types
 │       └── lib/       # Shared utilities
 └── ui/          # Shared UI components (Button, Card, Pagination,

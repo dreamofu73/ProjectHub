@@ -1,6 +1,6 @@
 # 03. Internationalisation (i18n) ⭐ **[MANDATORY]**
 
-Every user-facing string (UI text) — screens, components, inline panels, toasts, and error messages — **must** be translated. Hardcoding literal text in the source is forbidden. Four languages are supported today: Korean (`ko`), English (`en`), Japanese (`ja`), and Chinese (`zh`).
+Every user-facing string (UI text) — screens, components, inline panels, toasts, and error messages — **must** be translated. Hardcoding literal text in the source is forbidden. Four languages are supported today: Korean (`ko`), English (`en`), Japanese (`ja`), and Spanish (`es`).
 
 ## 1. Translation system
 
@@ -77,7 +77,7 @@ When adding new UI text, **the same key must be added to all four files in the s
 1. `packages/shared/src/locales/ko.ts` — Korean
 2. `packages/shared/src/locales/en.ts` — English
 3. `packages/shared/src/locales/ja.ts` — Japanese
-4. `packages/shared/src/locales/zh.ts` — Chinese
+4. `packages/shared/src/locales/es.ts` — Spanish
 
 **Key naming rules**:
 - Use **camelCase** (for example `loginTitle`, `noUsersFound`)
