@@ -107,5 +107,31 @@ t('totalIssues').replace('{count}', items.length.toString())
 
 - Use `formatDate()` to display a date.
 - Use `formatDateTime()` to display a date and time.
-- These helpers apply the per-language locale (ko-KR, en-US, ja-JP, zh-CN) and timezone automatically.
+- These helpers apply the per-language locale (ko-KR, en-US, ja-JP, es-ES) and timezone automatically.
 - UTC date strings returned by the API are converted automatically through `parseUTCDate()`.
+
+---
+
+## 6. Frontend Feature Enhancement Guidelines (i18n Mandatory Workflow) 🚀
+
+When adding new features or enhancing existing components, follow this mandatory workflow to guarantee full internationalisation support:
+
+1. **Audit All User-Facing UI Strings**:
+   - Before writing component code, list all user-facing strings (labels, menu items, table headers, placeholder text, tooltips, action buttons, confirm/cancel dialogs, empty state messages, error toasts).
+2. **Reuse Existing Locale Keys First**:
+   - Check `packages/shared/src/locales/ko.ts` to see if a matching key already exists (e.g., `add`, `save`, `cancel`, `delete`, `all`, `search`, `processing`, `confirm`, `settings`, `permissionDenied`).
+3. **Register New Keys Across All 4 Locale Dictionaries**:
+   - When introducing new UI text, register the new key simultaneously in **all 4 locale files**:
+     - `packages/shared/src/locales/ko.ts` (Korean)
+     - `packages/shared/src/locales/en.ts` (English)
+     - `packages/shared/src/locales/ja.ts` (Japanese)
+     - `packages/shared/src/locales/es.ts` (Spanish)
+4. **Follow Concise Terminology Standards**:
+   - **Menu items**: Use concise single-word terms in English and Spanish (e.g., `Admin`, `Projects`, `Tasks`, `Memos`, `Ajustes`, `Registros`).
+   - **Korean terminology**: Adhere to project standards (`멤버` ➔ `구성원`, `리스트` ➔ `목록`, member addition ➔ `추가`).
+5. **Hook and Prop Passing Patterns**:
+   - Top-level screens & pages: Call `const { t, formatDate } = useLanguage();`.
+   - Reusable child components: Declare `t` and `formatDate` in component props interface (`interface ComponentProps { t: (key: string) => string; ... }`) and pass them down from parent.
+6. **Compile Verification**:
+   - Run `npm run build --workspaces` to verify that all locale imports and TypeScript types compile without errors.
+

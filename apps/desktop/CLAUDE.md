@@ -26,11 +26,14 @@ The three rules below apply to **every** screen, component, inline panel, and to
 
 - **Never hardcode user-facing text** (Korean, English, or any other language) in source files.
 - Read every string through the shared `useLanguage()` hook and its `t('key')` helper.
-- When a new UI string is introduced, register the key in **all four** locale dictionaries within the same change:
+- **Feature Enhancements & New Features**: When adding or enhancing any frontend component, audit all UI text and register new keys in **all four** locale dictionaries in the same change:
   - `packages/shared/src/locales/ko.ts` (Korean)
   - `packages/shared/src/locales/en.ts` (English)
   - `packages/shared/src/locales/ja.ts` (Japanese)
   - `packages/shared/src/locales/es.ts` (Spanish)
+- **Terminology Standards**:
+  - Menu items: Prefer concise single-word terms in English/Spanish (`Admin`, `Projects`, `Tasks`, `Ajustes`, `Registros`).
+  - Korean terminology: Follow project standards (`멤버` ➔ `구성원`, `리스트` ➔ `목록`, member addition ➔ `추가`).
 
 ```tsx
 import { useLanguage } from '../context/LanguageContext'; // re-exports shared/hooks/LanguageContext
@@ -41,7 +44,7 @@ export function MyComponent() {
 }
 ```
 
-Full rules: [03. Internationalisation (i18n)](../web/docs/guides/03_i18n_rules.md)
+Full rules & enhancement workflow: [03. Internationalisation (i18n)](../web/docs/guides/03_i18n_rules.md)
 
 ### 2. Global theme sync — MANDATORY
 
@@ -70,6 +73,7 @@ Every component must follow the app-wide theme (Dark/Light × Default/Warm/Laven
   - `packages/ui` — shared UI components (buttons, cards, tables, Gantt chart, Kanban board, …)
   - `apps/web`, `apps/desktop` — page-level composition for the web and desktop apps
 - Keep app-specific screens in `apps/*`; anything reused by both apps belongs in `packages/*`.
+- CSS class vs utility ownership: unlayered CSS classes in `src/index.css` (e.g. `.card`) override Tailwind utilities. Do not add duplicate utilities for properties a CSS class already sets (border/radius/background on `.card`, etc.) — they are dead code that silently loses to the CSS class. Pick one owner per property.
 
 ---
 
