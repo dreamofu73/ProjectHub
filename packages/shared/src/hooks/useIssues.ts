@@ -1,28 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useParams } from 'react-router-dom';
-import { useLanguage } from '../context/LanguageContext';
-import { api } from 'shared/lib/api';
+import { useLanguage } from './LanguageContext';
+import { api } from '../lib/api';
 
-import type { Issue, Project, User } from 'shared/types';
-
-function sortIssues(issues: Issue[], sortKey: string, sortOrder: 'asc' | 'desc') {
-  return [...issues].sort((a, b) => {
-    let aVal = a[sortKey as keyof Issue] as unknown as string | number | null | undefined;
-    let bVal = b[sortKey as keyof Issue] as unknown as string | number | null | undefined;
-    if (sortKey === 'assigned_name') { aVal = a.assigned_name || ''; bVal = b.assigned_name || ''; }
-    else if (sortKey === 'project_name') { aVal = a.project_name || ''; bVal = b.project_name || ''; }
-    if (aVal === undefined || aVal === null) return 1;
-    if (bVal === undefined || bVal === null) return -1;
-    if (typeof aVal === 'string') {
-      return sortOrder === 'asc'
-        ? aVal.localeCompare(bVal as string, undefined, { numeric: true, sensitivity: 'base' })
-        : (bVal as string).localeCompare(aVal, undefined, { numeric: true, sensitivity: 'base' });
-    }
-    const aNum = aVal as number;
-    const bNum = bVal as number;
-    return sortOrder === 'asc' ? (aNum > bNum ? 1 : -1) : (bNum > aNum ? 1 : -1);
-  });
-}
+import type { Issue, Project, User } from '../types';
 
 export function useIssues() {
   const { t } = useLanguage();
@@ -114,9 +95,8 @@ export function useIssues() {
     setSearchParams(params);
   }, [searchParams, setSearchParams]);
 
-  const sortedIssues = sortIssues(issues, searchParams.get('sort_by') || 'updated_at', (searchParams.get('sort_order') as 'asc' | 'desc') || 'desc');
-  const startIndex = (page - 1) * limit;
-  const paginatedIssues = sortedIssues.slice(startIndex, startIndex + limit);
+  // 서버가 정렬+페이지네이션 완료
+  const paginatedIssues = issues;
 
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) setSelectedIssues(paginatedIssues.map(i => i.id));
@@ -127,6 +107,49 @@ export function useIssues() {
     setSelectedIssues(prev => 
       prev.includes(id) ? prev.filter(iid => iid !== id) : [...prev, id]
     );
+  };
+
+  const handleBulkConvertToTask = async (projectId: string) => {
+    if (selectedIssues.length === 0) return;
+    if (!window.confirm(t('confirmConvertToTask').replace('{count}', String(selectedIssues.length)))) return;
+    
+    try {
+      const issuesToConvert = issues.filter(i => selectedIssues.includes(i.id));
+      let successCount = 0;
+      
+      for (const issue of issuesToConvert) {
+        const res = await api('/api/tasks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            project_id: projectId,
+            title: issue.subject,
+            description: issue.description || '',
+            status: 'todo',
+            priority: issue.priority || 'normal',
+            start_date: null,
+            due_date: issue.due_date || null,
+            parent_id: null,
+          }),
+        });
+        if (res.ok) {
+          successCount++;
+          // 이슈 상태를 resolved로 변경 (옵션)
+          await api(`/api/issues/${issue.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'resolved' }),
+          });
+        }
+      }
+      
+      alert(t('convertToTaskSuccess').replace('{count}', String(successCount)));
+      setSelectedIssues([]);
+      fetchIssues();
+    } catch (err) {
+      console.error('Failed to convert issues to tasks:', err);
+      alert(t('convertToTaskError'));
+    }
   };
 
   const handleBulkAction = async (type: 'status' | 'assignee' | 'due_date', value: string) => {
@@ -214,6 +237,7 @@ export function useIssues() {
     handleSelectAll,
     handleSelectIssue,
     handleBulkAction,
+    handleBulkConvertToTask,
     handleSort,
     handleResetFilters,
     handlePageChange,

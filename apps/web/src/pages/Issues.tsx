@@ -7,7 +7,7 @@ import { IssuesToolbar } from '../components/issues/IssuesToolbar';
 
 import { IssueDetailPanel } from '../components/issues/IssueDetailPanel';
 import { NewIssuePanel } from '../components/issues/NewIssuePanel';
-import { useIssues } from './useIssues';
+import { useIssues } from 'shared/hooks/useIssues';
 import {
   STATUS_CONFIG,
   buildPriorityConfig,
@@ -262,7 +262,7 @@ export default function IssuesPage() {
         </div>
 
         {/* 페이지네이션 */}
-        {!loading && issues.length > 0 && (
+        {!loading && total > 0 && (
           <div className="border-t border-[var(--border)] shrink-0 bg-[var(--bg-surface-2)]/20">
             <Pagination
               currentPage={page}

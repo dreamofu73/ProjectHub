@@ -12,7 +12,7 @@ use sqlx::{AnyPool, Row};
 use crate::auth::AuthUser;
 use std::collections::HashMap;
 use crate::routes::utils::{check_project_access, require_project_member, is_project_archived, display_name};
-use sea_query::{Asterisk, Expr, ExprTrait, JoinType, Order, Query as SeaQuery};
+use sea_query::{Alias, Asterisk, Expr, ExprTrait, Func, JoinType, Order, Query as SeaQuery, SelectStatement};
 
 pub fn router() -> crate::routes::ProtectedRoutes {
     crate::routes::ProtectedRoutes::from_router(
@@ -42,123 +42,204 @@ async fn get_issues(
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     let is_admin = user.role == "admin";
 
+    // 페이지네이션: page 는 1 이상, limit 은 1..=200 으로 클램프
+    let page = params.get("page").and_then(|v| v.parse::<u64>().ok()).filter(|v| *v >= 1).unwrap_or(1);
+    let limit = params.get("limit").and_then(|v| v.parse::<u64>().ok()).unwrap_or(10).clamp(1, 200);
+    let offset = (page - 1) * limit;
+
+    // 모든 필터는 SQL WHERE 로 변환되며, 목록/건수 질의에 동일하게 적용됩니다.
+    let apply_filters = |stmt: &mut SelectStatement| {
+        // project_id (또는 레거시 project): identifier 또는 숫자 id(문자열 변환) 매칭
+        if let Some(p) = params.get("project_id").or_else(|| params.get("project")) {
+            if !p.is_empty() && p != "all" {
+                stmt.and_where(
+                    Expr::col(("p", "identifier")).eq(p.clone())
+                        .or(Expr::col(("i", "project_id")).cast_as(Alias::new("TEXT")).eq(p.clone())),
+                );
+            }
+        }
+        // tracker
+        if let Some(track) = params.get("tracker") {
+            if !track.is_empty() && track != "all" {
+                stmt.and_where(Expr::col(("i", "tracker")).eq(track.clone()));
+            }
+        }
+        // status: 쉼표 구분 목록을 IN 으로 변환
+        if let Some(stat) = params.get("status") {
+            if !stat.is_empty() && stat != "all" {
+                let statuses: Vec<String> = stat.split(',').map(|s| s.trim().to_string()).filter(|s| !s.is_empty()).collect();
+                if !statuses.is_empty() {
+                    stmt.and_where(Expr::col(("i", "status")).is_in(statuses));
+                }
+            }
+        }
+        // priority: 프론트가 전송하던 파라미터를 이제 서버에서 필터링
+        if let Some(pr) = params.get("priority") {
+            if !pr.is_empty() && pr != "all" {
+                stmt.and_where(Expr::col(("i", "priority")).eq(pr.clone()));
+            }
+        }
+        // assigned_to: "me" 는 현재 사용자, 그 외는 로그인 ID 매칭
+        if let Some(assigned) = params.get("assigned_to") {
+            if !assigned.is_empty() && assigned != "all" {
+                if assigned == "me" {
+                    stmt.and_where(Expr::col(("i", "assigned_to_id")).eq(user.id));
+                } else {
+                    stmt.and_where(Expr::col(("u", "login")).eq(assigned.clone()));
+                }
+            }
+        }
+        // search: 제목/설명 부분 일치 (LIKE 이스케이프 없음 — 기존 동작 유지)
+        if let Some(q) = params.get("search") {
+            if !q.is_empty() {
+                let pattern = format!("%{}%", q.to_lowercase());
+                stmt.and_where(
+                    Expr::expr(Func::lower(Expr::col(("i", "subject")))).like(pattern.clone())
+                        .or(Expr::expr(Func::lower(Expr::col(("i", "description")))).like(pattern)),
+                );
+            }
+        }
+    };
+
+    // ---- 건수 질의 (동일 WHERE/조인) ----
+    let mut count_stmt = SeaQuery::select();
+    count_stmt
+        .expr(Func::count(Expr::col(("i", "id"))))
+        .from_as("issues", "i")
+        .join_as(JoinType::InnerJoin, "projects", "p", Expr::col(("i", "project_id")).equals(("p", "id")))
+        .join_as(JoinType::LeftJoin, "users", "u", Expr::col(("i", "assigned_to_id")).equals(("u", "id")))
+        .join_as(JoinType::LeftJoin, "users", "au", Expr::col(("i", "author_id")).equals(("au", "id")));
+    if !is_admin {
+        count_stmt.join_as(JoinType::InnerJoin, "project_members", "pm", Expr::col(("pm", "project_id")).equals(("i", "project_id")).and(Expr::col(("pm", "user_id")).eq(user.id)));
+    }
+    apply_filters(&mut count_stmt);
+
+    let total: i64 = crate::db::fetch_scalar(&pool, &count_stmt)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()}))))?;
+
+    // ---- 목록 질의 ----
     let mut stmt = SeaQuery::select();
     stmt.columns([
-        ("i", Asterisk),
+        ("i", "id"),
+        ("i", "project_id"),
+        ("i", "tracker"),
+        ("i", "subject"),
+        ("i", "status"),
+        ("i", "priority"),
+        ("i", "assigned_to_id"),
+        ("i", "task_type"),
+        ("i", "author_id"),
+        ("i", "due_date"),
+        ("i", "planned_start_date"),
+        ("i", "actual_start_date"),
+        ("i", "actual_end_date"),
+        ("i", "created_at"),
+        ("i", "updated_at"),
     ])
     .expr_as(Expr::col(("p", "name")), "project_name")
     .expr_as(Expr::col(("p", "identifier")), "project_identifier")
     .expr_as(Expr::col(("u", "login")), "assigned_login")
     .expr_as(Expr::col(("u", "firstname")), "assigned_firstname")
     .expr_as(Expr::col(("u", "lastname")), "assigned_lastname")
+    .expr_as(Expr::col(("au", "login")), "author_login")
+    .expr_as(Expr::col(("au", "firstname")), "author_firstname")
+    .expr_as(Expr::col(("au", "lastname")), "author_lastname")
     .from_as("issues", "i")
     .join_as(JoinType::InnerJoin, "projects", "p", Expr::col(("i", "project_id")).equals(("p", "id")))
-    .join_as(JoinType::LeftJoin, "users", "u", Expr::col(("i", "assigned_to_id")).equals(("u", "id")));
+    .join_as(JoinType::LeftJoin, "users", "u", Expr::col(("i", "assigned_to_id")).equals(("u", "id")))
+    .join_as(JoinType::LeftJoin, "users", "au", Expr::col(("i", "author_id")).equals(("au", "id")));
 
     if !is_admin {
         stmt.join_as(JoinType::InnerJoin, "project_members", "pm", Expr::col(("pm", "project_id")).equals(("i", "project_id")).and(Expr::col(("pm", "user_id")).eq(user.id)));
     }
 
-    stmt.order_by(("i", "updated_at"), Order::Desc);
+    apply_filters(&mut stmt);
 
-    let issues = crate::db::fetch_all(&pool, &stmt.to_owned()).await.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()}))))?;
+    // ---- 정렬 (화이트리스트, 모르는 키는 기본 updated_at desc 로 폴백) ----
+    let sort_by = params.get("sort_by").map(|s| s.as_str()).unwrap_or("updated_at");
+    let sort_order = params.get("sort_order").map(|s| s.to_lowercase());
+    let sort_dir = match sort_order.as_deref() {
+        Some("asc") => Order::Asc,
+        _ => Order::Desc,
+    };
+    match sort_by {
+        "id" => { stmt.order_by(("i", "id"), sort_dir); }
+        "tracker" => { stmt.order_by(("i", "tracker"), sort_dir); }
+        "task_type" => { stmt.order_by(("i", "task_type"), sort_dir); }
+        "priority" => { stmt.order_by(("i", "priority"), sort_dir); }
+        "status" => { stmt.order_by(("i", "status"), sort_dir); }
+        "subject" => { stmt.order_by(("i", "subject"), sort_dir); }
+        "project_name" => { stmt.order_by(("p", "name"), sort_dir); }
+        "created_at" => { stmt.order_by(("i", "created_at"), sort_dir); }
+        "updated_at" => { stmt.order_by(("i", "updated_at"), sort_dir); }
+        "assigned_name" => {
+            // nulls-last 보장 (방향 무관), 이후 coalesce 값으로 정렬
+            stmt.order_by_expr(Expr::col(("i", "assigned_to_id")).is_null(), Order::Asc);
+            stmt.order_by_expr(Expr::expr(Func::coalesce([Expr::col(("u", "firstname")), Expr::col(("u", "login"))])), sort_dir);
+        }
+        "author_name" => {
+            stmt.order_by_expr(Expr::col(("au", "id")).is_null(), Order::Asc);
+            stmt.order_by_expr(Expr::expr(Func::coalesce([Expr::col(("au", "firstname")), Expr::col(("au", "login"))])), sort_dir);
+        }
+        "planned_start_date" => {
+            stmt.order_by_expr(Expr::col(("i", "planned_start_date")).is_null(), Order::Asc);
+            stmt.order_by(("i", "planned_start_date"), sort_dir);
+        }
+        "actual_start_date" => {
+            stmt.order_by_expr(Expr::col(("i", "actual_start_date")).is_null(), Order::Asc);
+            stmt.order_by(("i", "actual_start_date"), sort_dir);
+        }
+        "actual_end_date" => {
+            stmt.order_by_expr(Expr::col(("i", "actual_end_date")).is_null(), Order::Asc);
+            stmt.order_by(("i", "actual_end_date"), sort_dir);
+        }
+        _ => { stmt.order_by(("i", "updated_at"), Order::Desc); }
+    }
 
-    let mut filtered_data: Vec<Value> = issues.into_iter().map(|i| {
-        let firstname: Option<String> = i.get("assigned_firstname");
-        let lastname: Option<String> = i.get("assigned_lastname");
-        let login: Option<String> = i.get("assigned_login");
-        
-        let assigned_name = if let Some(l) = login.as_ref() {
-            Some(display_name(firstname.as_deref(), lastname.as_deref(), l))
-        } else {
-            None
-        };
+    stmt.limit(limit).offset(offset);
+
+    let rows = crate::db::fetch_all(&pool, &stmt)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()}))))?;
+
+    let data: Vec<Value> = rows.into_iter().map(|i| {
+        let assigned_firstname: Option<String> = i.get("assigned_firstname");
+        let assigned_lastname: Option<String> = i.get("assigned_lastname");
+        let assigned_login: Option<String> = i.get("assigned_login");
+        let assigned_name = assigned_login.as_ref().map(|l| display_name(assigned_firstname.as_deref(), assigned_lastname.as_deref(), l));
+
+        let author_login: Option<String> = i.get("author_login");
+        let author_firstname: Option<String> = i.get("author_firstname");
+        let author_lastname: Option<String> = i.get("author_lastname");
+        let author_name = author_login.as_ref().map(|l| display_name(author_firstname.as_deref(), author_lastname.as_deref(), l)).unwrap_or_default();
 
         json!({
             "id": i.get::<i64, _>("id").to_string(),
             "project_id": i.get::<i64, _>("project_id").to_string(),
             "tracker": i.get::<String, _>("tracker"),
             "subject": i.get::<String, _>("subject"),
-            "description": i.get::<Option<String>, _>("description"),
             "status": i.get::<String, _>("status"),
             "priority": i.get::<String, _>("priority"),
+            "task_type": i.get::<Option<String>, _>("task_type"),
             "assigned_to_id": i.get::<Option<i64>, _>("assigned_to_id").map(|v| v.to_string()),
-            "assigned_login": login,
+            "assigned_login": assigned_login,
             "assigned_name": assigned_name,
+            "author_id": i.get::<i64, _>("author_id").to_string(),
+            "author_login": author_login,
+            "author_name": author_name,
             "project_name": i.get::<String, _>("project_name"),
             "project_identifier": i.get::<String, _>("project_identifier"),
             "due_date": i.get::<Option<String>, _>("due_date"),
-            "updated_at": i.get::<String, _>("updated_at")
+            "planned_start_date": i.get::<Option<String>, _>("planned_start_date"),
+            "actual_start_date": i.get::<Option<String>, _>("actual_start_date"),
+            "actual_end_date": i.get::<Option<String>, _>("actual_end_date"),
+            "created_at": i.get::<String, _>("created_at"),
+            "updated_at": i.get::<String, _>("updated_at"),
         })
     }).collect();
 
-    // Accept both `project_id` (client/api convention) and `project` (legacy web param) as fallback.
-    let project = params.get("project_id").or_else(|| params.get("project"));
-    let status = params.get("status");
-    let tracker = params.get("tracker");
-    let search = params.get("search");
-    let assigned_to = params.get("assigned_to");
-
-    if let Some(p_id) = project {
-        if !p_id.is_empty() && p_id != "all" {
-            filtered_data.retain(|item| {
-                item["project_identifier"].as_str() == Some(p_id.as_str()) ||
-                item["project_id"].as_str() == Some(p_id.as_str())
-            });
-        }
-    }
-    if let Some(track) = tracker {
-        if !track.is_empty() && track != "all" {
-            filtered_data.retain(|item| item["tracker"].as_str() == Some(track));
-        }
-    }
-    if let Some(assigned) = assigned_to {
-        if !assigned.is_empty() && assigned != "all" {
-            if assigned == "me" {
-                let my_id = user.id;
-                filtered_data.retain(|item| {
-                    item["assigned_to_id"].as_i64() == Some(my_id)
-                });
-            } else {
-                filtered_data.retain(|item| {
-                    item["assigned_login"].as_str() == Some(assigned) ||
-                    item["assigned_name"].as_str() == Some(assigned)
-                });
-            }
-        }
-    }
-    if let Some(q) = search {
-        if !q.is_empty() {
-            let q_lower = q.to_lowercase();
-            filtered_data.retain(|item| {
-                item["subject"].as_str().map(|s| s.to_lowercase().contains(&q_lower)).unwrap_or(false) ||
-                item["description"].as_str().map(|s| s.to_lowercase().contains(&q_lower)).unwrap_or(false)
-            });
-        }
-    }
-
-    let mut status_counts = std::collections::HashMap::new();
-    for item in &filtered_data {
-        let s = item["status"].as_str().unwrap_or("unknown").to_string();
-        *status_counts.entry(s).or_insert(0i64) += 1;
-    }
-    let pretotal = filtered_data.len() as i64;
-
-    if let Some(stat) = status {
-        if !stat.is_empty() && stat != "all" {
-            let stats: Vec<&str> = stat.split(',').collect();
-            filtered_data.retain(|item| {
-                if let Some(s) = item["status"].as_str() {
-                    stats.contains(&s)
-                } else {
-                    false
-                }
-            });
-        }
-    }
-
-    let total = filtered_data.len();
-    Ok(Json(json!({ "success": true, "data": filtered_data, "total": total, "pretotal": pretotal, "status_counts": status_counts })))
+    Ok(Json(json!({ "success": true, "data": data, "total": total, "page": page, "limit": limit })))
 }
 
 #[utoipa::path(
