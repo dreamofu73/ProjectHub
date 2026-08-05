@@ -1,56 +1,27 @@
 import { useState } from 'react';
 import { api } from 'shared/lib/api';
 import type { Member, UserData } from 'shared/hooks/useProjectMembers';
-
 import { useLanguage } from 'shared/hooks/LanguageContext';
+
 export function useAddMemberModal(
   projectId: string | undefined,
-  members: Member[],
-  allUsers: UserData[],
+  _members: Member[],
+  _allUsers: UserData[],
   fetchMembers: () => void
 ) {
   const { t } = useLanguage();
   const [showAddModal, setShowAddModal] = useState(false);
-  const [addUserSearch, setAddUserSearch] = useState('');
-  const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
   const [addRole, setAddRole] = useState<'manager' | 'developer' | 'reporter' | 'viewer' | 'lead' | 'overseer'>('developer');
   const [addError, setAddError] = useState('');
   const [adding, setAdding] = useState(false);
 
-  const toggleInSet = (prev: Set<string>, item: string): Set<string> => {
-    const next = new Set(prev);
-    if (next.has(item)) next.delete(item);
-    else next.add(item);
-    return next;
-  };
-
-  const matchesSearch = (fields: string[], term: string) =>
-    fields.some(f => f.toLowerCase().includes(term.toLowerCase()));
-
-  const availableUsers = allUsers.filter(u => !members.some(m => m.user_id === u.id));
-  const filteredAvailable = availableUsers.filter(u =>
-    matchesSearch([u.login, u.firstname, u.lastname, u.email], addUserSearch)
-  );
-
-  const toggleUserSelection = (uid: string) => setSelectedUserIds(prev => toggleInSet(prev, uid));
-
-  const toggleAllAvailable = () => {
-    if (selectedUserIds.size === filteredAvailable.length && filteredAvailable.length > 0) {
-      setSelectedUserIds(new Set());
-    } else {
-      setSelectedUserIds(new Set(filteredAvailable.map(u => u.id)));
-    }
-  };
-
   const closeAddModal = () => {
     setShowAddModal(false);
-    setAddUserSearch('');
-    setSelectedUserIds(new Set());
     setAddError('');
   };
 
-  const handleAddMembers = async () => {
-    if (selectedUserIds.size === 0 || !projectId) return;
+  const handleAddMembers = async (addedIds: string[]) => {
+    if (addedIds.length === 0 || !projectId) return;
     setAdding(true);
     setAddError('');
     try {
@@ -58,7 +29,7 @@ export function useAddMemberModal(
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          user_ids: Array.from(selectedUserIds),
+          user_ids: addedIds,
           role: addRole,
         }),
       });
@@ -79,16 +50,10 @@ export function useAddMemberModal(
   return {
     showAddModal,
     setShowAddModal,
-    addUserSearch,
-    setAddUserSearch,
-    selectedUserIds,
     addRole,
     setAddRole,
     addError,
     adding,
-    filteredAvailable,
-    toggleUserSelection,
-    toggleAllAvailable,
     closeAddModal,
     handleAddMembers,
   };

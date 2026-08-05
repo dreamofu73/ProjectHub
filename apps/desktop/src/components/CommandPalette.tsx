@@ -82,6 +82,10 @@ export default function CommandPalette({ isOpen, onClose, isDark, toggleTheme }:
     { name: t('cpCmdWiki'), action: () => navigate('/wiki'), icon: BookOpen, category: t('cpCategoryGo') },
   ];
 
+  const userStr = localStorage.getItem('user');
+  const currentUser = userStr ? JSON.parse(userStr) : null;
+  const isSysAdmin = currentUser?.role === 'admin';
+
   // Actions
   const actionCommands = [
     { 
@@ -90,12 +94,12 @@ export default function CommandPalette({ isOpen, onClose, isDark, toggleTheme }:
       icon: isDark ? Sun : Moon, 
       category: t('cpCategorySettings') 
     },
-    { 
+    ...(isSysAdmin ? [{ 
       name: t('cpCmdNewProject'), 
       action: () => navigate('/projects/new'), 
       icon: FolderKanban, 
       category: t('cpCategoryAction') 
-    }
+    }] : [])
   ];
 
   // Filter commands by query

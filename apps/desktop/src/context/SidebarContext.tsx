@@ -27,6 +27,7 @@ export interface SidebarProps {
   chatUnreadCounts: Record<string, number>;
   wikiList: any[];
   navigate: (path: string) => void;
+  isProjectManager?: boolean;
 }
 
 export const SidebarContext = createContext<SidebarProps | null>(null);

@@ -80,6 +80,10 @@ async fn create_project(
     Extension(pool): Extension<Arc<AnyPool>>,
     axum::Json(req): axum::Json<CreateProjectRequest>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    if user.role != "admin" {
+        return Err((StatusCode::FORBIDDEN, Json(json!({"success": false, "error": "프로젝트 생성은 시스템 관리자만 가능합니다."}))));
+    }
+
     let is_public = if req.is_public.unwrap_or(true) { 1 } else { 0 };
 
     let project_id = crate::db::new_id();
@@ -132,25 +136,50 @@ async fn get_projects(
     let page = params.get("page").and_then(|v| v.parse::<i64>().ok()).unwrap_or(1).clamp(1, i64::MAX);
     let limit = params.get("limit").and_then(|v| v.parse::<i64>().ok()).unwrap_or(10).clamp(1, 100);
     let offset = (page - 1) * limit;
-    let status_param = params.get("status").map(|s| s.as_str()).unwrap_or("active").to_string();
+    let status_param = params.get("status").map(|s| s.as_str()).unwrap_or("all").to_string();
     let search_param = params.get("search").map(|s| s.as_str()).unwrap_or("").to_string();
+    let my_projects_only = params.get("my_projects_only").map(|s| s == "true" || s == "1").unwrap_or(false);
+    let show_all = params.get("all").map(|s| s == "true" || s == "1").unwrap_or(false);
 
     // 목록/건수 질의는 조건이 동적이라 SeaQuery 로 조립합니다.
     // sqlx 의 QueryBuilder 는 방언과 무관하게 항상 `?` 플레이스홀더를 생성하므로
     // PostgreSQL(`$1` 필요)에서 문법 오류가 납니다. SeaQuery 는 연결된 엔진에 맞춰 생성합니다.
     let search_pattern = (!search_param.is_empty()).then(|| format!("%{}%", search_param));
 
+    // 비관리자는 기본적으로 참여 중인 프로젝트만 표시하고,
+    // all=true 파라미터가 있을 때만 모든 공개 프로젝트를 포함합니다.
+    // admin은 show_all과 무관하게 항상 전체를 봅니다.
+    let member_or_shared = Expr::col(("p", "id")).in_subquery(
+        SeaQuery::select()
+            .column("project_id")
+            .from("project_members")
+            .and_where(Expr::col("user_id").eq(user_id))
+            .to_owned()
+    ).or(
+        Expr::col(("p", "id")).in_subquery(
+            SeaQuery::select()
+                .column("resource_id")
+                .from("group_resource_shares")
+                .and_where(Expr::col("resource_type").eq("project"))
+                .and_where(Expr::col("group_id").in_subquery(
+                    SeaQuery::select()
+                        .column("group_id")
+                        .from("user_group_members")
+                        .and_where(Expr::col("user_id").eq(user_id))
+                        .to_owned()
+                ))
+                .to_owned()
+        )
+    );
+
     // 건수 질의와 목록 질의에 동일한 접근 제어·필터 조건을 적용합니다.
     let apply_filters = |select: &mut SelectStatement| {
-        if !is_admin {
-            select.join_as(
-                JoinType::InnerJoin,
-                "project_members",
-                "pm",
-                Expr::col(("pm", "project_id"))
-                    .equals(("p", "id"))
-                    .and(Expr::col(("pm", "user_id")).eq(user_id)),
-            );
+        if my_projects_only || (!is_admin && !show_all) {
+            // 참여 중인 프로젝트만
+            select.and_where(member_or_shared.clone());
+        } else if !is_admin {
+            // 모든 공개 프로젝트
+            select.and_where(Expr::col(("p", "is_public")).eq(1).or(member_or_shared.clone()));
         }
         if status_param != "all" && !status_param.is_empty() {
             select.and_where(Expr::col(("p", "status")).eq(status_param.clone()));
@@ -363,7 +392,7 @@ async fn get_project_members(
     user: AuthUser,
     Extension(pool): Extension<Arc<AnyPool>>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
-    let project_id = require_project_admin(&pool, &user, &id).await?;
+    let project_id = check_project_access(&pool, &user, &id).await?;
 
     let stmt = SeaQuery::select()
         .columns([("pm", "id"), ("pm", "user_id"), ("pm", "role"), ("pm", "created_at"), ("u", "login"), ("u", "email"), ("u", "firstname"), ("u", "lastname")])
@@ -380,12 +409,12 @@ async fn get_project_members(
         json!({
             "id": m.get::<i64, _>("id").to_string(),
             "user_id": m.get::<i64, _>("user_id").to_string(),
-            "login": m.get::<String, _>("login"),
-            "email": m.get::<String, _>("email"),
-            "firstname": m.get::<String, _>("firstname"),
-            "lastname": m.get::<String, _>("lastname"),
-            "role": m.get::<String, _>("role"),
-            "created_at": m.get::<String, _>("created_at")
+            "login": m.get::<Option<String>, _>("login").unwrap_or_default(),
+            "email": m.get::<Option<String>, _>("email").unwrap_or_default(),
+            "firstname": m.get::<Option<String>, _>("firstname").unwrap_or_default(),
+            "lastname": m.get::<Option<String>, _>("lastname").unwrap_or_default(),
+            "role": m.get::<Option<String>, _>("role").unwrap_or_else(|| "developer".to_string()),
+            "created_at": m.get::<Option<String>, _>("created_at").unwrap_or_default()
         })
     }).collect();
 

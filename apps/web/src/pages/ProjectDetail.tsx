@@ -81,11 +81,9 @@ export default function ProjectDetail() {
                   <Button variant="secondary">{t('settings')}</Button>
                 </Link>
               )}
-              {(isSysAdmin || project.my_role === 'manager') && !isArchived && (
-                <Link to={`/projects/${project.identifier}/members`}>
-                  <Button variant="secondary" icon={Users}>{t('members')}</Button>
-                </Link>
-              )}
+              <Link to={`/projects/${project.identifier}/members`}>
+                <Button variant="secondary" icon={Users}>{t('members')}</Button>
+              </Link>
               <Link to={`/projects/${project.identifier}/wiki`}>
                 <Button variant="secondary">{t('wiki')}</Button>
               </Link>
@@ -160,11 +158,9 @@ export default function ProjectDetail() {
                   
                     <div className="flex items-center justify-between border-t border-border pt-4 mt-4">
                      <span className="text-xs text-muted font-medium">{t('memberList')}</span>
-                     {(isSysAdmin || project.my_role === 'manager') && !isArchived && (
-                       <Link to={`/projects/${id}/members`} className="text-sm font-bold text-primary hover:underline">
-                          {t('manageMembers')} &rarr;
-                       </Link>
-                     )}
+                     <Link to={`/projects/${id}/members`} className="text-sm font-bold text-primary hover:underline">
+                        {t('memberList')} &rarr;
+                     </Link>
                    </div>
                 </CardBody>
              </Card>

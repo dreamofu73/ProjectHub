@@ -55,6 +55,7 @@ export default function Layout({ children }: LayoutProps) {
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
+  const [currentProjectRole, setCurrentProjectRole] = useState<string | null>(null);
 
   // --- Custom Memo Folders State ---
   const [customFolders, setCustomFolders] = useState<CustomFolder[]>([]);
@@ -283,6 +284,25 @@ export default function Layout({ children }: LayoutProps) {
   const projectId = isProjectContext ? pathSegments[1] : null;
   const isSystemContext = location.pathname.startsWith('/users') || location.pathname.startsWith('/admin/groups') || location.pathname.startsWith('/admin/organization') || location.pathname.startsWith('/admin/scheduler') || location.pathname.startsWith('/admin/logs');
 
+  useEffect(() => {
+    if (!projectId) {
+      setCurrentProjectRole(null);
+      return;
+    }
+    api(`/api/projects/${projectId}`)
+      .then(res => res.json())
+      .then(json => {
+        if (json.success) {
+          setCurrentProjectRole(json.data.my_role);
+        } else {
+          setCurrentProjectRole(null);
+        }
+      })
+      .catch(() => setCurrentProjectRole(null));
+  }, [projectId]);
+
+  const isProjectManager = role === 'admin' || currentProjectRole === 'manager';
+
   // 헤더 채팅 배지 + 메시지 도착 알림: 전역에서 방별 안읽음 수를 주기적으로 재조회한다.
   useEffect(() => {
     refreshChatUnread();
@@ -353,7 +373,8 @@ export default function Layout({ children }: LayoutProps) {
     chatRooms,
     chatUnreadCounts,
     wikiList,
-    navigate
+    navigate,
+    isProjectManager
   };
 
   return (

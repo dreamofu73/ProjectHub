@@ -15,6 +15,7 @@ interface MemberData {
 interface MemberDetailPanelProps {
   member: MemberData | null;
   isArchived?: boolean;
+  canManageMembers?: boolean;
   onDelete: (id: string) => void;
   formatDate: (date: string) => string;
   t: (key: string) => string;
@@ -23,6 +24,7 @@ interface MemberDetailPanelProps {
 export function MemberDetailPanel({
   member,
   isArchived,
+  canManageMembers = true,
   onDelete,
   formatDate,
   t,
@@ -81,7 +83,7 @@ export function MemberDetailPanel({
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {!isArchived && (
+              {!isArchived && canManageMembers && (
                 <button onClick={() => onDelete(member.id)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 text-sm font-bold transition-colors cursor-pointer">
                   <Trash2 size={14} />
                   {t('delete')}

@@ -26,23 +26,37 @@ export default function ProjectMembersPage() {
   const { t, formatDate } = useLanguage();
   const roleOptions = ROLE_OPTIONS.map(o => ({ value: o.value, label: t(o.labelKey) }));
 
+  const userStr = localStorage.getItem('user');
+  const currentUser = userStr ? JSON.parse(userStr) : null;
+  const isSysAdmin = currentUser?.role === 'admin';
+
   const { members, allUsers, fetchMembers } = useProjectMembers(id);
   const [projectStatus, setProjectStatus] = useState('');
+  const [projectRole, setProjectRole] = useState<string | null>(null);
   const isArchived = projectStatus === 'archived';
 
   useEffect(() => {
     api(`/api/projects/${id}`)
       .then(res => res.json())
       .then(json => {
-        if (json.success) setProjectStatus(json.data.status);
+        if (json.success) {
+          setProjectStatus(json.data.status);
+          setProjectRole(json.data.my_role);
+        }
       });
   }, [id]);
+
+  const canManageMembers = !isArchived && (isSysAdmin || projectRole === 'manager');
 
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [selectedMember, setSelectedMember] = useState<any | null>(null);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, roleFilter]);
 
   const {
     selectedIds,
@@ -78,10 +92,10 @@ export default function ProjectMembersPage() {
 
   const filteredMembers = members.filter(m =>
     (roleFilter === 'all' || m.role === roleFilter) &&
-    (m.login.toLowerCase().includes(searchTerm.toLowerCase()) || 
-     m.firstname.toLowerCase().includes(searchTerm.toLowerCase()) || 
-     m.lastname.toLowerCase().includes(searchTerm.toLowerCase()) || 
-     m.email.toLowerCase().includes(searchTerm.toLowerCase()))
+    ((m.login || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+     (m.firstname || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+     (m.lastname || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+     (m.email || '').toLowerCase().includes(searchTerm.toLowerCase()))
   );
   const pagedMembers = filteredMembers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
@@ -90,7 +104,7 @@ export default function ProjectMembersPage() {
       {/* 헤더 */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)] shrink-0">
         <h2 className="text-sm font-bold text-[var(--text-primary)]">{t('manageMembers')}</h2>
-        {!isArchived && <Button icon={UserPlus} onClick={() => setShowAddModal(true)}>{t('chatGroupAddMembers')}</Button>}
+        {canManageMembers && <Button icon={UserPlus} onClick={() => setShowAddModal(true)}>{t('chatGroupAddMembers')}</Button>}
       </div>
 
       {/* 툴바 */}
@@ -103,6 +117,7 @@ export default function ProjectMembersPage() {
           selectedIds={selectedIds}
           handleBatchDelete={handleBulkDelete}
           handleBatchChangeRole={handleBulkRoleChange}
+          canManageMembers={canManageMembers}
           t={t}
         />
       </div>
@@ -114,14 +129,16 @@ export default function ProjectMembersPage() {
           <table className="w-full">
             <thead className="sticky top-0 z-10 bg-[var(--bg-surface-2)]">
               <tr className="border-b border-[var(--border)]">
-                <th className="py-1.5 px-4 w-10">
-                  <input
-                    type="checkbox"
-                    className="w-4 h-4 rounded border-gray-300 text-primary cursor-pointer accent-current"
-                    checked={selectedIds.size === pagedMembers.length && pagedMembers.length > 0}
-                    onChange={() => toggleSelectAll(pagedMembers)}
-                  />
-                </th>
+                {canManageMembers && (
+                  <th className="py-1.5 px-4 w-10">
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4 rounded border-gray-300 text-primary cursor-pointer accent-current"
+                      checked={selectedIds.size === pagedMembers.length && pagedMembers.length > 0}
+                      onChange={() => toggleSelectAll(pagedMembers)}
+                    />
+                  </th>
+                )}
                 <th className="py-1.5 px-4 text-xs font-bold text-muted uppercase tracking-wider text-left">{t('member')}</th>
                 <th className="py-1.5 px-4 text-xs font-bold text-muted uppercase tracking-wider text-left hidden sm:table-cell">{t('email')}</th>
                 <th className="py-1.5 px-4 text-xs font-bold text-muted uppercase tracking-wider text-left">{t('permission')}</th>
@@ -144,14 +161,16 @@ export default function ProjectMembersPage() {
                     selectedMember?.id === member.user_id ? 'bg-[var(--primary-bg)]' : ''
                   } ${selectedIds.has(member.user_id) ? 'bg-[var(--primary-bg)]/50' : ''}`}
                 >
-                  <td className="py-1.5 px-4" onClick={(e) => e.stopPropagation()}>
-                    <input
-                      type="checkbox"
-                      className="w-4 h-4 rounded border-gray-300 text-primary cursor-pointer accent-current"
-                      checked={selectedIds.has(member.user_id)}
-                      onChange={() => toggleSelect(member.user_id)}
-                    />
-                  </td>
+                  {canManageMembers && (
+                    <td className="py-1.5 px-4" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 rounded border-gray-300 text-primary cursor-pointer accent-current"
+                        checked={selectedIds.has(member.user_id)}
+                        onChange={() => toggleSelect(member.user_id)}
+                      />
+                    </td>
+                  )}
                   <td className="py-1.5 px-4">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-primary-bg text-primary flex items-center justify-center font-bold text-xs shrink-0">
@@ -188,6 +207,7 @@ export default function ProjectMembersPage() {
           <MemberDetailPanel 
             member={selectedMember}
             isArchived={isArchived}
+            canManageMembers={canManageMembers}
             onDelete={(id) => handleRemoveMember(id, `${selectedMember?.firstname} ${selectedMember?.lastname}`)}
             formatDate={formatDate}
             t={t}

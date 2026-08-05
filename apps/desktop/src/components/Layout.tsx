@@ -55,6 +55,7 @@ export default function Layout({ children }: LayoutProps) {
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
+  const [currentProjectRole, setCurrentProjectRole] = useState<string | null>(null);
 
   // --- Custom Memo Folders State ---
   const [customFolders, setCustomFolders] = useState<CustomFolder[]>([]);
@@ -319,6 +320,25 @@ export default function Layout({ children }: LayoutProps) {
     mainNav.push({ name: t('systemManagement'), path: '/users', icon: Settings });
   }
 
+  useEffect(() => {
+    if (!projectId) {
+      setCurrentProjectRole(null);
+      return;
+    }
+    api(`/api/projects/${projectId}`)
+      .then(res => res.json())
+      .then(json => {
+        if (json.success) {
+          setCurrentProjectRole(json.data.my_role);
+        } else {
+          setCurrentProjectRole(null);
+        }
+      })
+      .catch(() => setCurrentProjectRole(null));
+  }, [projectId]);
+
+  const isProjectManager = role === 'admin' || currentProjectRole === 'manager';
+
   const isProjectMainPage = (() => {
     if (!location.pathname.startsWith('/projects/')) return false;
     const after = location.pathname.slice(10);
@@ -353,7 +373,8 @@ export default function Layout({ children }: LayoutProps) {
     chatRooms,
     chatUnreadCounts,
     wikiList,
-    navigate
+    navigate,
+    isProjectManager
   };
 
   return (

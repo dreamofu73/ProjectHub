@@ -45,7 +45,7 @@ const ko: Record<string, string> = {
   board: '게시판',
   notices: '공지사항',
   resources: '자료실',
-  
+
   // Header & Info
   status: '상태',
   searchPlaceholder: '통합 검색 및 명령 (⌘K)...',
@@ -62,7 +62,7 @@ const ko: Record<string, string> = {
   themeSelect: '테마 선택',
   themeChange: '테마 변경 ({name})',
   confirm: '확인',
-  
+
   // Common actions & fields
   id: 'ID',
   project: '프로젝트',
@@ -84,37 +84,37 @@ const ko: Record<string, string> = {
   actions: '작업',
   role: '역할',
   category: '카테고리',
-  
+
   // Roles
   admin: '관리자',
   manager: '매니저',
-  member: '멤버',
+  member: '구성원',
   overseer: '프로젝트 감시자',
   user: '사용자',
-  
+
   // Issue tracker
   task: '작업',
   support: '지원',
   enhancement: '개선',
-  
+
   // Priorities
   low: '낮음',
   normal: '보통',
   high: '높음',
   urgent: '긴급',
   immediate: '즉시',
-  
+
   // Issue status
   new: '신규',
   in_progress: '진행중',
   feedback: '피드백',
-  
+
   // Chat & Board
   inviteMember: '대화 상대 초대',
   inputMessage: '메시지를 입력하세요...',
   activeMembers: '참여자',
   comments: '댓글',
-  
+
   // Dashboard
   recentActivities: '최근 활동',
   myIssues: '내 이슈',
@@ -228,7 +228,7 @@ const ko: Record<string, string> = {
   attachNewFile: '새 파일 첨부',
   saveBtn: '저장하기',
   editComplete: '수정 완료',
-  boardDesc: '프로젝트 멤버들과 자유롭게 의견을 나누고 자료를 공유하는 공간입니다.',
+  boardDesc: '프로젝트 구성원들과 자유롭게 의견을 나누고 자료를 공유하는 공간입니다.',
   close: '닫기',
   loading: '불러오는 중...',
   noPostSelected: '선택된 게시글이 없습니다.',
@@ -242,8 +242,10 @@ const ko: Record<string, string> = {
   archived: '보관됨',
   cardView: '카드 뷰',
   tableView: '테이블 뷰',
+  viewMode: '보기 모드',
   retry: '다시 시도',
   noProjects: '프로젝트가 존재하지 않습니다.',
+  noProjectsDesc: '이슈를 정리하고 추적할 수 있는 프로젝트를 만들어 보세요.',
   public: '공개',
   private: '비공개',
   noDescriptionRegistered: '프로젝트 설명이 등록되지 않았습니다.',
@@ -299,7 +301,7 @@ const ko: Record<string, string> = {
   refresh: '새로고침',
   totalUsers: '전체 {count}명',
   changeRoleTo: '권한 변경...',
-  
+
   // Issues Page Extensions
   projectIssuesTitle: '{name} 이슈 목록',
   totalIssuesTitle: '통합 이슈 목록',
@@ -311,7 +313,6 @@ const ko: Record<string, string> = {
   myIssuesTooltip: '나에게 할당된 이슈만 보기',
   filter: '필터',
   resetFilters: '필터 초기화',
-  allProjects: '프로젝트',
   allProjectsFilter: '모든 프로젝트',
   activeProjectsOnly: '활성 프로젝트만',
   archivedProjectsOnly: '보관된 프로젝트만',
@@ -394,7 +395,7 @@ const ko: Record<string, string> = {
   chatKeyboardShortcut: 'Enter 전송 · Shift+Enter 줄바꿈',
   selectChatRoom: '채팅방을 선택하세요',
   selectChannelDesc: '왼쪽에서 채널을 선택하거나 새로 만들어보세요.',
-  chatRoomMembers: '채팅방 멤버',
+  chatRoomMembers: '채팅방 구성원',
   permissionDenied: '권한이 없습니다.',
 
   // Pagination
@@ -442,8 +443,8 @@ const ko: Record<string, string> = {
   chatGroupCreateBtn: '그룹 만들기',
   chatGroupMemberCount: '{count}명',
   chatGroupSelectMemberCount: '{count}명 선택됨',
-  chatGroupAddMembers: '멤버 추가',
-  chatGroupRemoveMember: '멤버 제거',
+  chatGroupAddMembers: '구성원 추가',
+  chatGroupRemoveMember: '구성원 제거',
   manageUserGroups: '사용자 그룹 관리',
 
   // Enhanced User Group Management (Phase 2)
@@ -453,7 +454,7 @@ const ko: Record<string, string> = {
   groupUpdate: '그룹 수정',
   groupTransfer: '소유권 이전',
   groupTransferConfirm: '소유권을 {name}님에게 이전하시겠습니까?',
-  groupMembers: '멤버',
+  groupMembers: '구성원',
   groupShares: '리소스 공유',
   groupChatRoom: '채팅방',
   groupCreateChatRoom: '채팅방 생성',
@@ -462,8 +463,8 @@ const ko: Record<string, string> = {
   groupAdmin: '관리자',
   groupViewer: '뷰어',
   groupRole: '역할',
-  groupAddMembers: '멤버 추가',
-  groupRemoveMember: '멤버 제거',
+  groupAddMembers: '구성원 추가',
+  groupRemoveMember: '구성원 제거',
   groupShareResource: '리소스 공유',
   groupRemoveShare: '공유 제거',
   groupShareProject: '프로젝트 공유',
@@ -492,7 +493,7 @@ const ko: Record<string, string> = {
   login: '아이디',
   allDepartments: '전체 부서',
   alreadyAdded: '이미 추가됨',
-  add: '추가하기',
+  add: '추가',
   addMembers: '구성원 추가',
   addMembersToGroup: "그룹 '{groupName}'에 구성원 추가",
   removeMember: '제거',
@@ -606,10 +607,10 @@ const ko: Record<string, string> = {
   total: '전체',
   kanbanBoard: '칸반 보드',
   viewList: '목록 보기',
-  participatingMembers: '참여 멤버',
+  participatingMembers: '참여 구성원',
   persons: '명',
-  memberList: '멤버 리스트',
-  manageMembers: '멤버 관리',
+  memberList: '구성원 목록',
+  manageMembers: '구성원 관리',
   projectInfo: '프로젝트 정보',
   homepage: '홈페이지',
   issueList: '이슈 목록',
@@ -624,6 +625,7 @@ const ko: Record<string, string> = {
   assignedToMeIssues: '나에게 할당된 이슈',
   viewAll: '전체보기',
   noAssignedIssues: '할당된 이슈가 없습니다.',
+  noAssignedIssuesDesc: '나에게 할당된 이슈가 여기에 표시됩니다.',
   activeProjects: '활성 프로젝트',
   noActiveProjects: '활성 프로젝트가 없습니다.',
   goTo: '이동',
@@ -914,7 +916,7 @@ const ko: Record<string, string> = {
   searchToAdd: '이름 또는 아이디 검색하여 추가...',
   read: '읽음',
   searchDots: '검색...',
-  member2: '맴버',
+  member2: '구성원',
   zoomOut: '축소',
   zoomIn: '확대',
   newTracker: '신규 (New)',
@@ -922,6 +924,9 @@ const ko: Record<string, string> = {
   resolvedTracker: '해결됨 (Resolved)',
   feedbackTracker: '피드백 (Feedback)',
   createNewProject: '새 프로젝트 생성',
+  onlyAdminCanCreateProject: '프로젝트 생성은 시스템 관리자만 가능합니다.',
+  allProjects: '전체 프로젝트',
+  myProjectsOnly: '참여 중인 프로젝트',
   memoScheduled: '쪽지가 예약 발송되었습니다.',
   folderCreated: '폴더가 생성되었습니다.',
   folderRenamed: '폴더 이름이 변경되었습니다.',
@@ -951,13 +956,13 @@ const ko: Record<string, string> = {
   addChannel: '새 채널 추가',
   channelAdd: '채널 추가',
   systemMenu: '시스템 관리 메뉴',
-  currentMembers: '현재 멤버',
+  currentMembers: '현재 구성원',
   noMembers2: '구성원 없음',
   members: '구성원',
   addSubDept: '새 부서 추가',
-  changeMemberPermission: '선택한 멤버의 권한 변경',
-  searchMembers: '멤버 검색...',
-  memberAddFailed: '멤버 추가에 실패했습니다.',
+  changeMemberPermission: '선택한 구성원의 권한 변경',
+  searchMembers: '구성원 검색...',
+  memberAddFailed: '구성원 추가에 실패했습니다.',
   newPassword: '새 비밀번호',
   editUser: '사용자 수정',
   noToc: '목차가 없습니다.',
@@ -1178,7 +1183,7 @@ const ko: Record<string, string> = {
   noParent: '없음',
   prev: '이전',
   saved: '저장되었습니다.',
-  searchMembersPlaceholder: '멤버 검색...',
+  searchMembersPlaceholder: '구성원 검색...',
   searchUserPlaceholder: '이름 또는 아이디 검색하여 추가...',
   sidebar: '사이드바 네비게이션',
   unsavedLeaveConfirm: '작성 중인 내용이 저장되지 않았습니다. 정말 나가시겠습니까?',
@@ -1208,12 +1213,12 @@ const ko: Record<string, string> = {
   notificationCenter: '알림 센터',
   markAllRead: '모두 읽음',
   noNewNotifications: '새로운 알림이 없습니다.',
-  inviteNewMember: '새 멤버 초대',
+  inviteNewMember: '새 구성원 추가',
   excludeSelected: '선택 제외',
-  noMemberSelected: '선택된 멤버가 없습니다.',
-  selectMemberHint: '목록에서 확인하려는 멤버를 선택하세요.',
+  noMemberSelected: '선택된 구성원이 없습니다.',
+  selectMemberHint: '목록에서 확인하려는 구성원을 선택하세요.',
   roleDeveloper: '개발자',
-  confirmRemoveSelectedMembers: '선택한 {count}명의 멤버를 프로젝트에서 제외하시겠습니까?',
+  confirmRemoveSelectedMembers: '선택한 {count}명의 구성원을 프로젝트에서 제외하시겠습니까?',
   selectDept: '부서 선택',
   noUserSelected: '선택된 사용자가 없습니다.',
   selectUserHint: '목록에서 확인하려는 사용자를 선택하세요.',
@@ -1250,7 +1255,7 @@ const ko: Record<string, string> = {
   resourceShort: '자료',
   categoryLabel: '분류',
   identifierPrefix: '식별자: {id}',
-  confirmRemoveProjectMember: '\'{name}\' 멤버를 프로젝트에서 제외하시겠습니까?',
+  confirmRemoveProjectMember: '\'{name}\' 구성원을 프로젝트에서 제외하시겠습니까?',
   serverSetupTitle: 'ProjectHub 연결 설정',
   serverSetupDesc: '데스크톱 앱이 연결할 백엔드 서버 주소를 입력하세요.',
   serverAddress: '서버 주소',
@@ -1267,7 +1272,7 @@ const ko: Record<string, string> = {
   selectAllLabel: '전체 선택',
   selectedCountSuffix: '{count}명 선택됨',
   selectUserAria: '{name} 선택',
-  inviteCount: '{count}명 초대하기',
+  inviteCount: '{count}명 추가하기',
   searchUser: '사용자 검색',
 
   // ── i18n 보강: 하드코딩 제거 과정에서 추가된 키 ──

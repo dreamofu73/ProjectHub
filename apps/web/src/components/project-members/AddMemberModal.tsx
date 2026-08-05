@@ -79,10 +79,10 @@ export function AddMemberModal({
           saving={adding}
           t={(key) => {
             const translations: Record<string, string> = {
-              save: t('chatInviteActionBtn'),
-              processing: t('inviting'),
+              save: t('save'),
+              processing: t('processing'),
             };
-            return translations[key] || '';
+            return translations[key] || t(key);
           }}
           footerLeft={
             <div className="flex items-center gap-2">

@@ -21,6 +21,12 @@ export default function ProjectSettings() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { t } = useLanguage();
+
+  const userStr = localStorage.getItem('user');
+  const currentUser = userStr ? JSON.parse(userStr) : null;
+  const isSysAdmin = currentUser?.role === 'admin';
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+
   const [taskTypes, setTaskTypes] = useState('');
   const [issueTypes, setIssueTypes] = useState('');
   const [statuses, setStatuses] = useState('');
@@ -40,20 +46,44 @@ export default function ProjectSettings() {
       .then(res => res.json())
       .then(json => {
         if (json.success) {
+          const isManager = isSysAdmin || json.data.my_role === 'manager';
+          if (!isManager) {
+            setIsAuthorized(false);
+            return;
+          }
+          setIsAuthorized(true);
           setTaskTypes(json.data.task_types || '');
           setIssueTypes(json.data.issue_types || '');
           setStatuses(json.data.statuses || '');
           setTaskCategories(json.data.task_categories || '');
           setTaskStatuses(json.data.task_statuses || '');
+        } else {
+          setIsAuthorized(false);
         }
-      });
-  }, [id]);
+      })
+      .catch(() => setIsAuthorized(false));
+  }, [id, isSysAdmin]);
 
   useEffect(() => {
-    api(`/api/projects/${id}/custom-fields`)
-      .then(res => res.json())
-      .then(json => { if (json.success) setCustomFields(json.data || []); });
-  }, [id]);
+    if (isAuthorized) {
+      api(`/api/projects/${id}/custom-fields`)
+        .then(res => res.json())
+        .then(json => { if (json.success) setCustomFields(json.data || []); });
+    }
+  }, [id, isAuthorized]);
+
+  if (isAuthorized === false) {
+    return (
+      <Card className="border-danger max-w-xl mx-auto mt-8">
+        <CardBody className="text-center py-8">
+          <p className="text-danger font-semibold mb-4">{t('noPermission') || '프로젝트 관리자 권한이 없습니다.'}</p>
+          <Button variant="secondary" onClick={() => navigate(`/projects/${id}/dashboard`)}>
+            {t('dashboardHome')}
+          </Button>
+        </CardBody>
+      </Card>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

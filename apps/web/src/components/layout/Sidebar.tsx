@@ -114,7 +114,8 @@ export function Sidebar() {
     chatRooms,
     chatUnreadCounts,
     wikiList,
-    navigate
+    navigate,
+    isProjectManager
   } = props;
 
   // 프로젝트 게시판 내비 — 경로/쿼리 문자열 includes 대신 정확 비교
@@ -160,17 +161,19 @@ export function Sidebar() {
                     </Link>
                   </Tooltip>
                 </li>
-                <li className="sidebar-nav-item">
-                  <Tooltip content={t('settings')} disabled={!isSidebarCollapsed} position="right">
-                    <Link
-                      to={`/projects/${location.pathname.split('/')[2]}/settings`}
-                      className={`sidebar-nav-link ${location.pathname.endsWith('/settings') ? 'active' : ''} ${isSidebarCollapsed ? 'justify-center px-1' : ''}`}
-                    >
-                      <Settings size={16} className={`shrink-0 ${location.pathname.endsWith('/settings') ? 'opacity-100' : 'opacity-60'}`} />
-                      {!isSidebarCollapsed && <span>{t('settings')}</span>}
-                    </Link>
-                  </Tooltip>
-                </li>
+                {isProjectManager && (
+                  <li className="sidebar-nav-item">
+                    <Tooltip content={t('settings')} disabled={!isSidebarCollapsed} position="right">
+                      <Link
+                        to={`/projects/${location.pathname.split('/')[2]}/settings`}
+                        className={`sidebar-nav-link ${location.pathname.endsWith('/settings') ? 'active' : ''} ${isSidebarCollapsed ? 'justify-center px-1' : ''}`}
+                      >
+                        <Settings size={16} className={`shrink-0 ${location.pathname.endsWith('/settings') ? 'opacity-100' : 'opacity-60'}`} />
+                        {!isSidebarCollapsed && <span>{t('settings')}</span>}
+                      </Link>
+                    </Tooltip>
+                  </li>
+                )}
               </ul>
             </div>
           )}

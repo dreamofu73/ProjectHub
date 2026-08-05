@@ -12,7 +12,29 @@ export default function NewProject() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   
-  // Form states
+  const userStr = localStorage.getItem('user');
+  const currentUser = userStr ? JSON.parse(userStr) : null;
+  const isSysAdmin = currentUser?.role === 'admin';
+
+  if (!isSysAdmin) {
+    return (
+      <div className="flex flex-col gap-6 max-w-4xl mx-auto mt-8">
+        <Card className="border-red-200 dark:border-red-900/50">
+          <CardBody className="p-8 text-center">
+            <h2 className="text-lg font-bold text-red-600 dark:text-red-400 mb-2">
+              {t('permissionDenied') || '접근 권한이 없습니다.'}
+            </h2>
+            <p className="text-sm text-[var(--text-secondary)] mb-6">
+              {t('onlyAdminCanCreateProject')}
+            </p>
+            <Link to="/projects">
+              <Button variant="secondary">{t('backToProject')}</Button>
+            </Link>
+          </CardBody>
+        </Card>
+      </div>
+    );
+  }
   const [name, setName] = useState('');
   const [identifier, setIdentifier] = useState('');
   const [description, setDescription] = useState('');
