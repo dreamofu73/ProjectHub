@@ -1,37 +1,31 @@
+<!--
+  ProjectHub app icon — FULL DETAIL master (for raster sizes >= 57px).
+  Concept: Expanded Radiant Hub Shield with 6 outer connection nodes.
+
+  Geometry is the 512px projection of packages/ui/src/ProjectHubLogo.tsx
+  (x21.33 from its 24px viewBox), so the OS icon and the in-app logo share one
+  silhouette. Background is transparent — no container plate, and no glow
+  filter: without a dark plate behind it a 12px blur reads as a grey halo on
+  light taskbars instead of as depth.
+
+  Do not edit derived copies. Regenerate them with:
+    node scripts/branding/generate-icons.mjs
+-->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
   <defs>
-    <!-- Dark App Container Background -->
-    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0f172a"/>
-      <stop offset="100%" stop-color="#1e1b4b"/>
-    </linearGradient>
-
     <!-- Single-Tone Primary Gradient (Indigo Single Color Tone-on-Tone) -->
     <linearGradient id="single-tone-grad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#818cf8"/>
       <stop offset="50%" stop-color="#6366f1"/>
       <stop offset="100%" stop-color="#4338ca"/>
     </linearGradient>
-
-    <!-- Outer Glow Filter -->
-    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="12" result="blur"/>
-      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
-    </filter>
   </defs>
-
-  <!-- Container -->
-  <rect width="512" height="512" rx="120" ry="120" fill="url(#bg-grad)"/>
-
-  <!-- Inner Subtle Border -->
-  <rect width="504" height="504" x="4" y="4" rx="116" ry="116" fill="none" stroke="#ffffff" stroke-opacity="0.15" stroke-width="8"/>
 
   <!-- Expanded Radiant Hub Shield Base -->
   <g>
     <path
       d="M 256 25 L 450 115 V 290 C 450 395 355 470 256 490 C 157 470 62 395 62 290 V 115 L 256 25 Z"
       fill="url(#single-tone-grad)"
-      filter="url(#glow)"
     />
 
     <!-- Radiant Inward Channels (6 Convergence Rays) -->
@@ -52,7 +46,7 @@
     <circle cx="256" cy="460" r="22" fill="#ffffff" />
 
     <!-- Central Core Hub Node -->
-    <circle cx="256" cy="256" r="50" fill="#ffffff" filter="url(#glow)" />
+    <circle cx="256" cy="256" r="50" fill="#ffffff" />
     <circle cx="256" cy="256" r="32" fill="#4338ca" />
   </g>
 </svg>

@@ -1,16 +1,3 @@
-<!--
-  ProjectHub app icon — FULL DETAIL master (for raster sizes >= 57px).
-  Concept: Expanded Radiant Hub Shield with 6 outer connection nodes.
-
-  Geometry is the 512px projection of packages/ui/src/ProjectHubLogo.tsx
-  (x21.33 from its 24px viewBox), so the OS icon and the in-app logo share one
-  silhouette. Background is transparent — no container plate, and no glow
-  filter: without a dark plate behind it a 12px blur reads as a grey halo on
-  light taskbars instead of as depth.
-
-  Do not edit derived copies. Regenerate them with:
-    node scripts/branding/generate-icons.mjs
--->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
   <defs>
     <!-- Single-Tone Primary Gradient (Indigo Single Color Tone-on-Tone) -->

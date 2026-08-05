@@ -1,0 +1,45 @@
+<!--
+  ProjectHub app icon — SMALL SIZE master (for raster sizes <= 56px).
+
+  Identical shield silhouette to icon.svg, but every detail that collapses
+  below ~56px is removed or thickened:
+
+    - no glow filter    (a 12px blur smears the whole mark at 32px)
+    - no 6 outer nodes  (22px radius = 1.4px at 32px, merges into the rays)
+    - 6 thin rays  -> 4 chunky convergence nubs (32px stroke = 2px -> 44px)
+    - bigger core, no inner dot (a 32px inner circle is sub-pixel at 32px)
+    - slightly brighter gradient so the shield holds up on light taskbars
+
+  Background is transparent — no container plate.
+
+  Do not edit derived copies. Regenerate them with:
+    node scripts/branding/generate-icons.mjs
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Brightened Primary Gradient (needs more presence at small sizes) -->
+    <linearGradient id="shield-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a5b4fc"/>
+      <stop offset="55%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#4f46e5"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Radiant Hub Shield Base (same silhouette as icon.svg) -->
+  <path
+    d="M 256 25 L 450 115 V 290 C 450 395 355 470 256 490 C 157 470 62 395 62 290 V 115 L 256 25 Z"
+    fill="url(#shield-grad)"
+  />
+
+  <!-- 4 Convergence Nubs (diagonal: most head-room inside the shield) -->
+  <path
+    d="M 194 194 L 150 150 M 318 194 L 362 150 M 194 318 L 150 362 M 318 318 L 362 362"
+    stroke="#ffffff"
+    stroke-width="44"
+    stroke-linecap="round"
+    stroke-opacity="0.95"
+  />
+
+  <!-- Central Core Hub Node -->
+  <circle cx="256" cy="256" r="54" fill="#ffffff" />
+</svg>
