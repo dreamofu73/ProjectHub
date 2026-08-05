@@ -4,7 +4,7 @@ import {
   Plus, Search, RefreshCw, ChevronUp, ChevronDown, ChevronsUpDown,
   Trash2, CheckSquare, Square, Minus, Newspaper, BookOpen,
   Rows, Columns, Menu, User, Calendar, Clock, Edit2, FileText, X,
-  Pin, Paperclip, Eye, LayoutGrid, List as ListIcon
+  Pin, Paperclip
 } from 'lucide-react';
 import { api, fetchBlobUrl } from 'shared/lib/api';
 import { useDebounce } from 'shared/hooks/useDebounce';
@@ -89,12 +89,6 @@ export default function GlobalBoardList() {
   const isResource = boardType === 'resource';
   const pageTitle = isNotice ? t('notices') : t('resources');
 
-  // 자료실 전용 카드(썸네일) 뷰
-  const [resourceViewMode, setResourceViewMode] = useState<'table' | 'grid'>(() =>
-    localStorage.getItem('board_resourceView') === 'grid' ? 'grid' : 'table'
-  );
-  const isGridView = isResource && resourceViewMode === 'grid';
-
   // 검색 디바운스 — 매 키 입력마다 서버 요청이 나가지 않도록 지연시킵니다.
   const debouncedSearchTerm = useDebounce(searchTerm, 250);
   const activeSearchTerm = debouncedSearchTerm.trim();
@@ -167,11 +161,6 @@ export default function GlobalBoardList() {
   useEffect(() => {
     localStorage.setItem('board_splitLayout', splitLayout);
   }, [splitLayout]);
-
-  // 자료실 뷰 모드 영속화
-  useEffect(() => {
-    localStorage.setItem('board_resourceView', resourceViewMode);
-  }, [resourceViewMode]);
 
   // 서버가 이미 검색·정렬·페이징을 마친 결과를 그대로 렌더합니다.
   const pagedPosts = posts;
@@ -385,81 +374,6 @@ export default function GlobalBoardList() {
 
   const isAuthorOrAdmin = postDetail && (String(currentUser.id) === String(postDetail.author_id) || isAdmin);
 
-  // ── 자료실 카드(썸네일) 뷰 ────────────────────────────────────────
-  const renderResourceGrid = () => {
-    if (loading) {
-      return (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3 p-3" aria-busy="true">
-          {Array.from({ length: SKELETON_ROW_COUNT }).map((_, index) => (
-            <div key={`grid-skeleton-${index}`} className="h-28 rounded-xl border border-[var(--border)] bg-[var(--bg-surface-2)]/40 animate-pulse" aria-hidden="true" />
-          ))}
-        </div>
-      );
-    }
-    if (pagedPosts.length === 0) {
-      return (
-        <div className="flex flex-col items-center justify-center gap-3 py-24 text-xs font-medium text-[var(--text-muted)]">
-          {activeSearchTerm ? (
-            <>
-              <p>{t('noSearchResultsFor').replace('{term}', activeSearchTerm)}</p>
-              <button
-                type="button"
-                onClick={() => { setSearchTerm(''); setCurrentPage(1); }}
-                className="px-3 py-1.5 border border-[var(--border)] rounded-lg bg-[var(--bg-surface)] text-xs font-semibold text-[var(--text-secondary)] hover:bg-[var(--bg-surface-2)] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/60"
-              >
-                {t('clearSearch')}
-              </button>
-            </>
-          ) : (
-            t('noPosts')
-          )}
-        </div>
-      );
-    }
-    return (
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3 p-3">
-        {pagedPosts.map(post => {
-          const isActive = selectedPost?.id === post.id && splitLayout !== 'list';
-          return (
-            <button
-              key={post.id}
-              type="button"
-              onClick={() => handleOpenDetail(post)}
-              className={`flex flex-col gap-2 p-3 text-left rounded-xl border transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/60 ${
-                isActive
-                  ? 'border-[var(--primary)] bg-[var(--primary)]/5'
-                  : 'border-[var(--border)] bg-[var(--bg-surface)] hover:border-[var(--primary)]/50 hover:shadow-sm'
-              }`}
-            >
-              <span className="flex items-center gap-1.5">
-                <span className="w-8 h-8 rounded-lg bg-[var(--bg-surface-2)] flex items-center justify-center shrink-0 text-[var(--primary)]">
-                  <FileText size={15} aria-hidden="true" />
-                </span>
-                {post.is_pinned && <Pin size={11} className="text-[var(--primary)] shrink-0" aria-label={t('pinned')} />}
-              </span>
-              <span className="text-xs font-bold text-[var(--text-primary)] line-clamp-2 leading-snug">{post.title}</span>
-              <span className="flex items-center justify-between text-xs text-[var(--text-muted)] font-medium">
-                <span className="truncate">{post.author_name}</span>
-                <span className="shrink-0">{formatDate(post.created_at)}</span>
-              </span>
-              <span className="flex items-center gap-2.5 text-xs text-[var(--text-muted)] font-medium">
-                <span className="flex items-center gap-1">
-                  <Paperclip size={10} aria-hidden="true" />
-                  {post.attachment_count ?? 0}
-                </span>
-                {!!post.attachment_total_size && <span>{formatFileSize(post.attachment_total_size)}</span>}
-                <span className="flex items-center gap-1">
-                  <Eye size={10} aria-hidden="true" />
-                  {post.view_count ?? 0}
-                </span>
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    );
-  };
-
   // ── 상세 패널 내용 렌더링 (inline / slide-over 공용) ──────────────
   const renderDetailContent = () => {
     if (detailLoading) {
@@ -662,29 +576,6 @@ export default function GlobalBoardList() {
               <span className="ml-2 text-[var(--primary)] font-bold">{t('bulkSelectCount').replace('{count}', String(selectedIds.size))}</span>
             )}
           </span>
-          {/* 자료실 전용: 목록 / 카드(썸네일) 뷰 토글 */}
-          {isResource && (
-            <div className="flex items-center border border-[var(--border)] rounded bg-[var(--bg-surface)] p-0.5">
-              <button
-                type="button"
-                onClick={() => setResourceViewMode('table')}
-                aria-pressed={resourceViewMode === 'table'}
-                className={`p-1 rounded cursor-pointer border-none ${resourceViewMode === 'table' ? 'bg-[var(--primary)]/10 text-[var(--primary)]' : 'hover:bg-[var(--bg-surface-2)] text-[var(--text-muted)]'} transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/60`}
-                title={t('listView')}
-              >
-                <ListIcon size={12} />
-              </button>
-              <button
-                type="button"
-                onClick={() => setResourceViewMode('grid')}
-                aria-pressed={resourceViewMode === 'grid'}
-                className={`p-1 rounded cursor-pointer border-none ${resourceViewMode === 'grid' ? 'bg-[var(--primary)]/10 text-[var(--primary)]' : 'hover:bg-[var(--bg-surface-2)] text-[var(--text-muted)]'} transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/60`}
-                title={t('gridView')}
-              >
-                <LayoutGrid size={12} />
-              </button>
-            </div>
-          )}
           {/* 분할 뷰 토글 */}
           <div className="flex items-center border border-[var(--border)] rounded bg-[var(--bg-surface)] p-0.5">
             <button
@@ -728,7 +619,6 @@ export default function GlobalBoardList() {
         >
           {/* 테이블 스크롤 영역 */}
           <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 custom-scrollbar">
-            {isGridView ? renderResourceGrid() : (
             <table className="w-full text-left border-collapse table-fixed">
               <thead>
                 <tr className="border-b border-[var(--border)] text-xs font-bold text-[var(--text-muted)] bg-[var(--bg-surface-2)]/50">
@@ -921,7 +811,6 @@ export default function GlobalBoardList() {
                 )}
               </tbody>
             </table>
-            )}
           </div>
 
           {/* 페이지네이션 */}
