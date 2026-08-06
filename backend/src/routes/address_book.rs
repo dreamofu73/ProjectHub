@@ -10,7 +10,7 @@ use serde::Deserialize;
 use serde_json::{json, Value};
 use sqlx::{AnyPool, Row};
 use crate::auth::AuthUser;
-use sea_query::{Expr, Query as SeaQuery, Order, Func, JoinType, ExprTrait, OnConflict};
+use sea_query::{Expr, Query as SeaQuery, Order, Func, JoinType, ExprTrait};
 
 pub fn router() -> crate::routes::ProtectedRoutes {
     crate::routes::ProtectedRoutes::from_router(
@@ -343,23 +343,34 @@ async fn add_members(
     let mut skipped = 0;
 
     for uid in &payload.user_ids {
+        let check_stmt = SeaQuery::select()
+            .column("id")
+            .from("address_book_members")
+            .and_where(Expr::col("group_id").eq(id))
+            .and_where(Expr::col("user_id").eq(*uid))
+            .to_owned();
+
+        let existing = crate::db::fetch_optional(&pool, &check_stmt)
+            .await
+            .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()}))))?;
+
+        if existing.is_some() {
+            skipped += 1;
+            continue;
+        }
+
         let member_id = crate::db::new_id();
         let stmt = SeaQuery::insert()
             .into_table("address_book_members")
             .columns(["id", "group_id", "user_id", "created_at"])
             .values_panic([member_id.into(), id.into(), (*uid).into(), crate::db::now_string().into()])
-            .on_conflict(OnConflict::columns(["group_id", "user_id"]).do_nothing().to_owned())
             .to_owned();
 
-        let result = crate::db::execute(&pool, &stmt).await.map_err(|e| {
+        crate::db::execute(&pool, &stmt).await.map_err(|e| {
             (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()})))
         })?;
 
-        if result.rows_affected() > 0 {
-            added += 1;
-        } else {
-            skipped += 1;
-        }
+        added += 1;
     }
 
     Ok(Json(json!({"success": true, "data": {"added": added, "skipped": skipped}})))

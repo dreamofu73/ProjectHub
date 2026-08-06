@@ -12,7 +12,7 @@ use sqlx::{AnyPool, Row};
 use crate::auth::AuthUser;
 use std::collections::HashMap;
 use crate::routes::utils::{check_project_access, require_project_member, is_project_archived, display_name};
-use sea_query::{Alias, Asterisk, Expr, ExprTrait, Func, JoinType, Order, Query as SeaQuery, SelectStatement};
+use sea_query::{Asterisk, Expr, ExprTrait, Func, JoinType, Order, Query as SeaQuery, SelectStatement};
 
 pub fn router() -> crate::routes::ProtectedRoutes {
     crate::routes::ProtectedRoutes::from_router(
@@ -54,7 +54,7 @@ async fn get_issues(
             if !p.is_empty() && p != "all" {
                 stmt.and_where(
                     Expr::col(("p", "identifier")).eq(p.clone())
-                        .or(Expr::col(("i", "project_id")).cast_as(Alias::new("TEXT")).eq(p.clone())),
+                        .or(Expr::col(("i", "project_id")).eq(p.clone())),
                 );
             }
         }

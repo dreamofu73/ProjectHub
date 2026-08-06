@@ -74,6 +74,7 @@ export interface CreateProjectRequest {
   identifier: string;
   description?: string;
   status?: 'active' | 'archived' | 'closed';
+  is_public?: boolean;
 }
 
 export interface UpdateProjectRequest {

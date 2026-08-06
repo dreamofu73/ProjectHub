@@ -230,13 +230,13 @@ async fn get_projects(
             ),
             "open_issue_count",
         )
-        // cust_with_values 의 `$1` 은 값 순번 마커입니다.
-        // SeaQuery 가 연결된 엔진의 플레이스홀더(Postgres `$N`, MySQL·SQLite `?`)로 치환합니다.
         .expr_as(
-            Expr::cust_with_values(
-                "(SELECT role FROM project_members WHERE project_id = p.id AND user_id = $1)",
-                [user_id],
-            ),
+            Expr::SubQuery(None, Box::new(sea_query::SubQueryStatement::SelectStatement(SeaQuery::select()
+                    .column("role")
+                    .from("project_members")
+                    .and_where(Expr::col("project_id").equals(("p", "id")))
+                    .and_where(Expr::col("user_id").eq(user_id))
+                    .to_owned()))),
             "my_role",
         )
         .from_as("projects", "p");

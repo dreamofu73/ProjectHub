@@ -54,10 +54,18 @@ async fn create_user_group(
     let name = body.get("name").and_then(|v| v.as_str()).ok_or_else(|| (StatusCode::BAD_REQUEST, Json(json!({"success": false, "error": "name is required"}))))?;
 
     let group_id = crate::db::new_id();
+    let now = crate::db::now_string();
     let stmt = SeaQuery::insert()
         .into_table("user_groups")
-        .columns(["id", "name", "user_id", "created_at"])
-        .values_panic([group_id.into(), name.into(), user.id.into(), crate::db::now_string().into()])
+        .columns(["id", "name", "user_id", "created_at", "description", "updated_at"])
+        .values_panic([
+            group_id.into(),
+            name.into(),
+            user.id.into(),
+            now.clone().into(),
+            "".into(),
+            now.into(),
+        ])
         .to_owned();
     crate::db::execute(&pool, &stmt).await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()}))))?;
@@ -68,8 +76,14 @@ async fn create_user_group(
             if let Some(member_id) = member_val.as_i64() {
                 let stmt = SeaQuery::insert()
                     .into_table("user_group_members")
-                    .columns(["id", "group_id", "user_id"])
-                    .values_panic([crate::db::new_id().into(), group_id.into(), member_id.into()])
+                    .columns(["id", "group_id", "user_id", "role", "joined_at"])
+                    .values_panic([
+                        crate::db::new_id().into(),
+                        group_id.into(),
+                        member_id.into(),
+                        "member".into(),
+                        crate::db::now_string().into(),
+                    ])
                     .on_conflict(OnConflict::new().do_nothing().to_owned())
                     .to_owned();
                 let _ = crate::db::execute(&pool, &stmt).await;
@@ -200,8 +214,14 @@ async fn add_group_members(
         if let Some(member_id) = member_val.as_i64() {
             let stmt = SeaQuery::insert()
                 .into_table("user_group_members")
-                .columns(["id", "group_id", "user_id"])
-                .values_panic([crate::db::new_id().into(), id.into(), member_id.into()])
+                .columns(["id", "group_id", "user_id", "role", "joined_at"])
+                .values_panic([
+                    crate::db::new_id().into(),
+                    id.into(),
+                    member_id.into(),
+                    "member".into(),
+                    crate::db::now_string().into(),
+                ])
                 .on_conflict(OnConflict::new().do_nothing().to_owned())
                 .to_owned();
             let _ = crate::db::execute_ignore(&pool, &stmt).await;

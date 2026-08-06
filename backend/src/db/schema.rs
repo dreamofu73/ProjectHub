@@ -79,6 +79,21 @@ fn text(name: &str) -> ColumnDef {
     col
 }
 
+/// `TEXT NOT NULL` 컬럼.
+///
+/// MySQL 8.0 은 BLOB/TEXT/GEOMETRY/JSON 컬럼에 리터럴 DEFAULT 를 허용하지 않습니다
+/// (ERROR 1101). 따라서 MySQL(`DbKind::MySql`) 에서는 DEFAULT 절을 생략하고,
+/// INSERT 지점에서 항상 값을 명시합니다. MariaDB(10.2.1+)·SQLite·Postgres 는
+/// DEFAULT 를 유지합니다.
+fn text_nn_default(name: &str, default: &str, kind: DbKind) -> ColumnDef {
+    let mut col = ColumnDef::new(name.to_string());
+    col.text().not_null();
+    if kind != DbKind::MySql {
+        col.default(default);
+    }
+    col
+}
+
 /// `BIGINT NOT NULL DEFAULT <default>` 컬럼. 불리언 플래그는 0/1 로 저장합니다.
 fn int_nn(name: &str, default: i64) -> ColumnDef {
     let mut col = ColumnDef::new(name.to_string());
@@ -224,11 +239,11 @@ async fn create_project_tables(pool: &AnyPool, kind: DbKind) {
             .col(text_nn("homepage"))
             .col(int_nn("is_public", 1))
             .col(text_nn("status"))
-            .col(json_list("task_types"))
-            .col(json_list("issue_types"))
-            .col(json_list("statuses"))
-            .col(json_list("task_categories"))
-            .col(json_list("task_statuses"))
+            .col(json_list("task_types", kind))
+            .col(json_list("issue_types", kind))
+            .col(json_list("statuses", kind))
+            .col(json_list("task_categories", kind))
+            .col(json_list("task_statuses", kind))
             .col(text_nn("created_at"))
             .col(text_nn("updated_at"))
             .to_owned(),
@@ -381,11 +396,9 @@ async fn create_project_tables(pool: &AnyPool, kind: DbKind) {
     .await;
 }
 
-/// JSON 배열 문자열을 담는 `TEXT NOT NULL DEFAULT '[]'` 컬럼.
-fn json_list(name: &str) -> ColumnDef {
-    let mut col = ColumnDef::new(name.to_string());
-    col.text().not_null().default("[]");
-    col
+/// JSON 배열 문자열을 담는 `TEXT NOT NULL` 컬럼. MySQL 에서는 DEFAULT 를 생략합니다.
+fn json_list(name: &str, kind: DbKind) -> ColumnDef {
+    text_nn_default(name, "[]", kind)
 }
 
 // ---------------------------------------------------------------------------
@@ -879,10 +892,8 @@ async fn create_messaging_tables(pool: &AnyPool, kind: DbKind) {
 // ---------------------------------------------------------------------------
 
 async fn create_group_tables(pool: &AnyPool, kind: DbKind) {
-    let mut description = ColumnDef::new("description");
-    description.text().not_null().default("");
-    let mut updated_at = ColumnDef::new("updated_at");
-    updated_at.text().not_null().default("");
+    let description = text_nn_default("description", "", kind);
+    let updated_at = text_nn_default("updated_at", "", kind);
 
     create_table(
         pool,
@@ -903,8 +914,7 @@ async fn create_group_tables(pool: &AnyPool, kind: DbKind) {
     )
     .await;
 
-    let mut role = ColumnDef::new("role");
-    role.text().not_null().default("member");
+    let role = text_nn_default("role", "member", kind);
 
     create_table(
         pool,
@@ -1102,11 +1112,13 @@ async fn create_activity_tables(pool: &AnyPool, kind: DbKind) {
 /// 현재 정의는 모두 `CREATE TABLE` 안에 포함되어 있으므로 새 DB 에서는 전부 실패하고
 /// 무시됩니다. 이미 컬럼이 있는 경우의 오류도 정상 경로입니다.
 async fn apply_legacy_upgrades(pool: &AnyPool) {
+    let kind = get_kind(pool);
+
     add_column(pool, "users", int_null("organization_id")).await;
     add_column(pool, "users", int_null("department_id")).await;
 
     for column in ["task_types", "issue_types", "statuses", "task_categories", "task_statuses"] {
-        add_column(pool, "projects", json_list(column)).await;
+        add_column(pool, "projects", json_list(column, kind)).await;
     }
 
     for (column, default) in [
@@ -1124,17 +1136,14 @@ async fn apply_legacy_upgrades(pool: &AnyPool) {
 
     add_column(pool, "attachments", key_string("memo_id")).await;
 
-    let mut description = ColumnDef::new("description");
-    description.text().not_null().default("");
+    let description = text_nn_default("description", "", kind);
     add_column(pool, "user_groups", description).await;
     add_column(pool, "user_groups", int_nn("is_shared", 0)).await;
     add_column(pool, "user_groups", int_null("owner_id")).await;
-    let mut updated_at = ColumnDef::new("updated_at");
-    updated_at.text().not_null().default("");
+    let updated_at = text_nn_default("updated_at", "", kind);
     add_column(pool, "user_groups", updated_at).await;
 
-    let mut role = ColumnDef::new("role");
-    role.text().not_null().default("member");
+    let role = text_nn_default("role", "member", kind);
     add_column(pool, "user_group_members", role).await;
     add_column(pool, "user_group_members", text("joined_at")).await;
     add_column(pool, "user_group_members", int_null("invited_by")).await;

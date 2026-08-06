@@ -474,8 +474,11 @@ describe('Projects API - 추가 예외 커버리지', () => {
     return new ApiClient({ baseUrl: TEST_CONFIG.baseUrl });
   }
 
-  async function createProject(): Promise<string> {
-    const res = await testContext.api!.createProject(factories.project());
+  async function createProject(overrides: Record<string, unknown> = {}): Promise<string> {
+    const res = await testContext.api!.createProject({
+      ...factories.project(),
+      ...overrides,
+    } as any);
     return (res as any).id as string;
   }
 
@@ -534,7 +537,7 @@ describe('Projects API - 추가 예외 커버리지', () => {
   });
 
   it('비관리자/비멤버가 멤버 목록 조회 시 403을 반환한다', async () => {
-    const projectId = await createProject();
+    const projectId = await createProject({ is_public: false });
     try {
       await authedNonAdmin().listProjectMembers(projectId);
       expect.fail('Should have thrown 403');

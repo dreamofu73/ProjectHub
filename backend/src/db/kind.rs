@@ -21,7 +21,8 @@ impl DbKind {
 /// 연결된 풀의 `database_url` 스킴으로 DBMS 종류를 판별합니다.
 pub fn get_kind(pool: &AnyPool) -> DbKind {
     let options = pool.connect_options();
-    kind_from_url(options.database_url.as_str())
+    let url = options.database_url.as_str();
+    kind_from_url(url)
 }
 
 /// URL 스킴으로부터 [`DbKind`] 를 판별합니다.

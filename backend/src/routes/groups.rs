@@ -589,7 +589,24 @@ async fn update_member_role(
         return Err((StatusCode::BAD_REQUEST, Json(json!({"success": false, "error": "Invalid role. Must be one of: member, admin, viewer"}))));
     }
 
-    // Cannot change owner's role via this endpoint
+    // Check if target user is group owner via user_groups or user_group_members
+    let group_stmt = SeaQuery::select()
+        .columns(["owner_id", "user_id"])
+        .from("user_groups")
+        .and_where(Expr::col("id").eq(group_id))
+        .to_owned();
+    let group_row = crate::db::fetch_optional(&*pool, &group_stmt).await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()}))))?;
+
+    let is_group_owner = match group_row {
+        Some(r) => {
+            let owner_id: Option<i64> = r.get("owner_id");
+            let creator_id: Option<i64> = r.get("user_id");
+            owner_id == Some(user_id) || creator_id == Some(user_id)
+        }
+        None => false,
+    };
+
     let stmt = SeaQuery::select()
         .column("role")
         .from("user_group_members")
@@ -599,14 +616,12 @@ async fn update_member_role(
     let current_role: Option<String> = crate::db::fetch_scalar_optional(&*pool, &stmt).await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()}))))?;
 
-    match current_role {
-        Some(r) if r == "owner" => {
-            return Err((StatusCode::FORBIDDEN, Json(json!({"success": false, "error": "소유자의 역할은 변경할 수 없습니다. 소유권 이전을 사용하세요."}))));
-        }
-        None => {
-            return Err((StatusCode::NOT_FOUND, Json(json!({"success": false, "error": "Member not found"}))));
-        }
-        _ => {}
+    if is_group_owner || current_role.as_deref() == Some("owner") {
+        return Err((StatusCode::FORBIDDEN, Json(json!({"success": false, "error": "소유자의 역할은 변경할 수 없습니다. 소유권 이전을 사용하세요."}))));
+    }
+
+    if current_role.is_none() {
+        return Err((StatusCode::NOT_FOUND, Json(json!({"success": false, "error": "Member not found"}))));
     }
 
     let stmt = SeaQuery::update()
@@ -630,7 +645,23 @@ async fn remove_member(
     let user_id = crate::serde_utils::parse_path_id(&user_id_str)?;
     require_group_admin(&pool, &user, group_id).await?;
 
-    // Cannot remove owner
+    let group_stmt = SeaQuery::select()
+        .columns(["owner_id", "user_id"])
+        .from("user_groups")
+        .and_where(Expr::col("id").eq(group_id))
+        .to_owned();
+    let group_row = crate::db::fetch_optional(&*pool, &group_stmt).await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()}))))?;
+
+    let is_group_owner = match group_row {
+        Some(r) => {
+            let owner_id: Option<i64> = r.get("owner_id");
+            let creator_id: Option<i64> = r.get("user_id");
+            owner_id == Some(user_id) || creator_id == Some(user_id)
+        }
+        None => false,
+    };
+
     let stmt = SeaQuery::select()
         .column("role")
         .from("user_group_members")
@@ -640,14 +671,12 @@ async fn remove_member(
     let current_role: Option<String> = crate::db::fetch_scalar_optional(&*pool, &stmt).await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()}))))?;
 
-    match current_role {
-        Some(r) if r == "owner" => {
-            return Err((StatusCode::FORBIDDEN, Json(json!({"success": false, "error": "소유자는 그룹에서 제거할 수 없습니다. 소유권 이전을 사용하세요."}))));
-        }
-        None => {
-            return Err((StatusCode::NOT_FOUND, Json(json!({"success": false, "error": "Member not found"}))));
-        }
-        _ => {}
+    if is_group_owner || current_role.as_deref() == Some("owner") {
+        return Err((StatusCode::FORBIDDEN, Json(json!({"success": false, "error": "소유자는 그룹에서 제거할 수 없습니다. 소유권 이전을 사용하세요."}))));
+    }
+
+    if current_role.is_none() {
+        return Err((StatusCode::NOT_FOUND, Json(json!({"success": false, "error": "Member not found"}))));
     }
 
     let stmt = SeaQuery::delete()
