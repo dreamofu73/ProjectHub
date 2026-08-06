@@ -11,7 +11,7 @@ import { Indent } from '../../IndentExtension';
 import { LineHeight } from '../../LineHeightExtension';
 import { CustomStyle } from './CustomStyle';
 import { CustomOrderedList, CustomBulletList } from './lists';
-import { CustomTable, CustomTableRow, CustomTableCell } from './tables';
+import { CustomTable, CustomTableRow, CustomTableCell, WidthAwareTableView } from './tables';
 
 // --- 커스텀 Indent 확장 커맨드 타입 보강 ---
 declare module '@tiptap/core' {
@@ -56,7 +56,12 @@ export const buildExtensions = (placeholder: string) => [
   Image,
   CustomStyle,
   CustomTable.configure({
-    resizable: true,
+    // Tiptap 기본 열 리사이즈(columnResizing)는 쓰지 않는다 —
+    // colwidth/colgroup 방식이라 저장 시 sanitize에 지워지고, 드래그 중 표 너비를 100%로 되돌린다.
+    // 열 너비는 useTableResize가 셀 style에 직접 기록한다.
+    resizable: false,
+    // 사용자가 지정한 표 너비를 유지하는 커스텀 뷰
+    View: WidthAwareTableView,
     HTMLAttributes: {
       class: 'border-collapse table-auto',
     },
@@ -68,4 +73,4 @@ export const buildExtensions = (placeholder: string) => [
 
 export { CustomStyle } from './CustomStyle';
 export { CustomOrderedList, CustomBulletList } from './lists';
-export { CustomTable, CustomTableRow, CustomTableCell } from './tables';
+export { CustomTable, CustomTableRow, CustomTableCell, WidthAwareTableView } from './tables';

@@ -49,6 +49,11 @@ export interface HTMLEditorLabels {
   splitCell: string;
   toggleHeaderColumn: string;
   toggleHeaderRow: string;
+  tableWidth: string;
+  cellWidth: string;
+  rowHeight: string;
+  fitContent: string;
+  fullWidth: string;
   cellBorderColor: string;
   addColumnLeft: string;
   addColumnRight: string;
@@ -114,6 +119,11 @@ export const DEFAULT_HTML_EDITOR_LABELS: HTMLEditorLabels = {
   splitCell: '셀 분할',
   toggleHeaderColumn: '헤더 열 전환',
   toggleHeaderRow: '헤더 행 전환',
+  tableWidth: '표 너비',
+  cellWidth: '셀 너비',
+  rowHeight: '행 높이',
+  fitContent: '콘텐츠에 맞춤',
+  fullWidth: '100% 너비',
   cellBorderColor: '셀 테두리색',
   addColumnLeft: '왼쪽에 열 추가',
   addColumnRight: '오른쪽에 열 추가',
@@ -187,6 +197,11 @@ export function createHTMLEditorLabels(
     splitCell: t('editorSplitCell'),
     toggleHeaderColumn: t('editorToggleHeaderColumn'),
     toggleHeaderRow: t('editorToggleHeaderRow'),
+    tableWidth: t('editorTableWidth'),
+    cellWidth: t('editorCellWidth'),
+    rowHeight: t('editorRowHeight'),
+    fitContent: t('editorFitContent'),
+    fullWidth: t('editorFullWidth'),
     cellBorderColor: t('editorCellBorderColor'),
     addColumnLeft: t('editorAddColumnLeft'),
     addColumnRight: t('editorAddColumnRight'),

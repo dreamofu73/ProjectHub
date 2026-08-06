@@ -128,10 +128,20 @@ export function useEditorSelectionState({ editor, isSourceMode, contentRef, scro
     setLinkToolbarPos(pos ? { ...pos, visible: true } : HIDDEN);
   }, [editor, isSourceMode, clearLinkState, toContentOffset]);
 
+  /** 포커스가 플로팅 도구(패널 입력창 등) 안에 있는지 — 에디터 컨테이너 안이지만 본문 밖이면 우리 UI다 */
+  const isFocusInFloatingUI = useCallback(() => {
+    const active = document.activeElement;
+    if (!active || !editor) return false;
+    return !!contentRef.current?.contains(active) && !editor.view.dom.contains(active);
+  }, [editor, contentRef]);
+
   const updateSelectionState = useCallback(() => {
+    // 패널의 숫자 입력창에 포커스가 가면 selectionchange가 발생하는데, 이때 선택 상태를 갱신하면
+    // 커서가 표 밖으로 나간 것으로 판정돼 도구 모음과 패널이 통째로 사라진다.
+    if (isFocusInFloatingUI()) return;
     updateTableState();
     updateLinkState();
-  }, [updateTableState, updateLinkState]);
+  }, [isFocusInFloatingUI, updateTableState, updateLinkState]);
 
   useEffect(() => {
     document.addEventListener('selectionchange', updateSelectionState);

@@ -1,5 +1,16 @@
 import { useMemo } from 'react';
 import type { Editor } from '@tiptap/react';
+import {
+  applyColumnWidth,
+  applyRowHeight,
+  applyTableWidth,
+  measureColumnWidth,
+  measureRowHeight,
+  measureTableWidth,
+  readColumnWidth,
+  readRowHeight,
+  readTableWidth,
+} from './tableStyle';
 
 export interface TableConfig {
   rows: number;
@@ -105,6 +116,51 @@ export function useEditorCommands(editor: Editor | null) {
 
     toggleHeaderRow() {
       editor?.chain().focus().toggleHeaderRow().run();
+    },
+
+    /** 표 너비 지정 — null이면 콘텐츠에 맞춤 */
+    setTableWidth(width: string | null) {
+      applyTableWidth(editor, width);
+    },
+
+    /** 표 style에 저장된 너비 ('' | 'auto' | '100%' | 'NNNpx') */
+    getTableWidth(): string {
+      return readTableWidth(editor);
+    },
+
+    /** 현재 렌더된 표 너비(px) — 입력창 기본값용 */
+    getRenderedTableWidth(): number {
+      return measureTableWidth(editor);
+    },
+
+    /** 현재 열 너비 지정 — null이면 콘텐츠에 맞춤 */
+    setColumnWidth(width: string | null) {
+      applyColumnWidth(editor, width);
+    },
+
+    /** 셀 style에 저장된 너비 ('' | 'NNNpx') */
+    getColumnWidth(): string {
+      return readColumnWidth(editor);
+    },
+
+    /** 현재 렌더된 셀 너비(px) — 입력창 기본값용 */
+    getRenderedColumnWidth(): number {
+      return measureColumnWidth(editor);
+    },
+
+    /** 현재 행 높이 지정 — null이면 콘텐츠에 맞춤 */
+    setRowHeight(height: string | null) {
+      applyRowHeight(editor, height);
+    },
+
+    /** 행 style에 저장된 높이 ('' | 'NNNpx') */
+    getRowHeight(): string {
+      return readRowHeight(editor);
+    },
+
+    /** 현재 렌더된 행 높이(px) — 입력창 기본값용 */
+    getRenderedRowHeight(): number {
+      return measureRowHeight(editor);
     },
 
     /** 같은 타입을 다시 고르면 해제, 다른 타입이면 교체 */

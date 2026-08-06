@@ -4,12 +4,14 @@ import { useClickOutside } from '../hooks/useClickOutside';
 export type PopoverKey =
   | 'heading' | 'font' | 'size' | 'color' | 'bgColor'
   | 'align' | 'list' | 'lineHeight' | 'table'
-  | 'cellBg' | 'cellBorder' | 'specialChar' | 'emoji';
+  | 'cellBg' | 'cellBorder' | 'specialChar' | 'emoji'
+  | 'tableWidth' | 'cellWidth' | 'rowHeight';
 
 const POPOVER_KEYS: PopoverKey[] = [
   'heading', 'font', 'size', 'color', 'bgColor',
   'align', 'list', 'lineHeight', 'table',
   'cellBg', 'cellBorder', 'specialChar', 'emoji',
+  'tableWidth', 'cellWidth', 'rowHeight',
 ];
 
 const CLOSED = Object.fromEntries(POPOVER_KEYS.map(k => [k, false])) as Record<PopoverKey, boolean>;
@@ -55,6 +57,9 @@ export function usePopovers(enabled: boolean): PopoverApi {
 
   const handleMenuKeyDown = useCallback((e: React.KeyboardEvent<HTMLElement>) => {
     const menu = e.currentTarget;
+    // 입력창 안에서는 방향키가 값 조작용이다 — 메뉴 이동으로 가로채면 포커스를 빼앗긴다 (Escape는 그대로 닫기)
+    const tag = (e.target as HTMLElement).tagName;
+    if (e.key !== 'Escape' && (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT')) return;
     const items = Array.from(menu.querySelectorAll<HTMLElement>('button:not([disabled])'));
     if (items.length === 0) return;
     if (e.key === 'Escape') {

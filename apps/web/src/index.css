@@ -1296,15 +1296,6 @@ a:hover { text-decoration: underline; }
   position: absolute;
   z-index: 2;
 }
-.prose table .column-resize-handle {
-  background-color: var(--primary);
-  bottom: -2px;
-  position: absolute;
-  right: -2px;
-  top: 0;
-  width: 4px;
-  z-index: 20;
-}
 .prose table p {
   margin: 0;
 }

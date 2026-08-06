@@ -6,7 +6,7 @@ import { createImageHandlers } from './editor/imageUpload';
 import { usePopovers } from './editor/usePopovers';
 import { useEditorCommands } from './editor/useEditorCommands';
 import { useEditorSelectionState } from './editor/useEditorSelectionState';
-import { useTableRowResize } from './editor/useTableRowResize';
+import { useTableResize } from './editor/useTableResize';
 import { useUrlPrompt } from './editor/useUrlPrompt';
 import { EditorToolbar } from './editor/toolbar/EditorToolbar';
 import { TableFloatingToolbar } from './editor/TableFloatingToolbar';
@@ -78,7 +78,7 @@ export function HTMLEditor({
     scrollRef: editorScrollRef,
   });
   const urlPrompt = useUrlPrompt(editor, labels);
-  useTableRowResize(editor);
+  useTableResize(editor);
 
   // props의 value를 에디터로 동기화
   useEffect(() => {
