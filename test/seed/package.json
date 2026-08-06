@@ -1,0 +1,16 @@
+{
+  "name": "projecthub-seed",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "ProjectHub sample data seeder (REST API based, replaces the removed Rust seeder)",
+  "scripts": {
+    "seed": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
+  }
+}
