@@ -92,6 +92,7 @@ async fn main() {
 
     let pool = db::init_pool(&app_config.database_url).await;
     db::run_migrations(&pool).await;
+
     db::seed_data(&pool, &app_config).await;
 
     // 백그라운드 스케줄러 기동 (예약 발송, 만료 알림 및 자동 삭제 처리)

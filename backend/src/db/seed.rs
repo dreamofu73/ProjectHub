@@ -8,7 +8,6 @@ use sqlx::{AnyPool, Row};
 use uuid::Uuid;
 
 use super::{execute, execute_ignore, fetch_all, fetch_scalar, fetch_scalar_optional, new_id};
-
 /// 타임스탬프 문자열. 스키마상 `created_at`/`updated_at` 이 TEXT 이므로
 /// 엔진의 `NOW()` 대신 애플리케이션에서 생성해 모든 엔진에서 동일한 형식을 씁니다.
 /// 형식은 기존 데이터(SQLite `datetime('now')`, MySQL `NOW()`)와 동일한 UTC `%Y-%m-%d %H:%M:%S` 입니다.
@@ -246,3 +245,4 @@ async fn ensure_owner_membership(pool: &AnyPool, group_id: i64, owner_id: i64) {
     )
     .await;
 }
+

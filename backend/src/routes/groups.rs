@@ -7,7 +7,7 @@ use axum::{
 };
 use std::sync::Arc;
 use serde_json::{json, Value};
-use sea_query::{Asterisk, Expr, ExprTrait, JoinType, Order, Query as SeaQuery, Func, OnConflict};
+use sea_query::{Asterisk, Expr, ExprTrait, JoinType, Order, Query as SeaQuery, Func};
 use sqlx::{AnyPool, Row};
 use crate::auth::AuthUser;
 
@@ -185,6 +185,7 @@ async fn create_group(
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()}))))?;
 
     // Add creator as member with role 'owner'
+    // (방금 생성한 그룹이므로 중복 없음 — on_conflict는 MySQL에서 무효 문법을 만들므로 사용하지 않는다)
     let stmt = SeaQuery::insert()
         .into_table("user_group_members")
         .columns(["id", "group_id", "user_id", "role", "joined_at", "invited_by"])
@@ -196,11 +197,6 @@ async fn create_group(
             crate::db::now_string().into(),
             user.id.into(),
         ])
-        .on_conflict(
-            OnConflict::columns(["group_id", "user_id"])
-                .do_nothing()
-                .to_owned()
-        )
         .to_owned();
     let _ = crate::db::execute(&*pool, &stmt).await;
 
@@ -219,11 +215,6 @@ async fn create_group(
                         crate::db::now_string().into(),
                         user.id.into(),
                     ])
-                    .on_conflict(
-                        OnConflict::columns(["group_id", "user_id"])
-                            .do_nothing()
-                            .to_owned()
-                    )
                     .to_owned();
                 let _ = crate::db::execute(&*pool, &stmt).await;
             }
@@ -547,6 +538,17 @@ async fn add_member(
 
     for member_val in user_ids {
         if let Some(member_id) = crate::serde_utils::value_to_opt_i64(member_val) {
+            // MySQL 호환성: on_conflict 대신 기존 멤버 여부를 먼저 확인한다.
+            let exists_stmt = SeaQuery::select()
+                .expr(Func::count(Expr::col("id")))
+                .from("user_group_members")
+                .and_where(Expr::col("group_id").eq(id))
+                .and_where(Expr::col("user_id").eq(member_id))
+                .to_owned();
+            let already: i64 = crate::db::fetch_scalar(&*pool, &exists_stmt).await.unwrap_or(0);
+            if already > 0 {
+                continue;
+            }
             let stmt = SeaQuery::insert()
                 .into_table("user_group_members")
                 .columns(["id", "group_id", "user_id", "role", "joined_at", "invited_by"])
@@ -558,11 +560,6 @@ async fn add_member(
                     crate::db::now_string().into(),
                     user.id.into(),
                 ])
-                .on_conflict(
-                    OnConflict::columns(["group_id", "user_id"])
-                        .do_nothing()
-                        .to_owned()
-                )
                 .to_owned();
             let _ = crate::db::execute(&*pool, &stmt).await;
         }
@@ -893,11 +890,6 @@ async fn create_chat_room(
                 member_id.into(),
                 crate::db::now_string().into(),
             ])
-            .on_conflict(
-                OnConflict::columns(["room_id", "user_id"])
-                    .do_nothing()
-                    .to_owned()
-            )
             .to_owned();
         let _ = crate::db::execute(&*pool, &stmt).await;
     }
@@ -924,11 +916,6 @@ async fn create_chat_room(
                 owner.into(),
                 crate::db::now_string().into(),
             ])
-            .on_conflict(
-                OnConflict::columns(["room_id", "user_id"])
-                    .do_nothing()
-                    .to_owned()
-            )
             .to_owned();
         let _ = crate::db::execute(&*pool, &stmt).await;
     }

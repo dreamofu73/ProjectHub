@@ -8,7 +8,7 @@ use axum::{
 use std::sync::Arc;
 use serde_json::{json, Value};
 use sqlx::{AnyPool, Row};
-use sea_query::{Asterisk, Expr, ExprTrait, JoinType, Order, Query as SeaQuery, OnConflict};
+use sea_query::{Asterisk, Expr, ExprTrait, JoinType, Order, Query as SeaQuery};
 use crate::auth::AuthUser;
 
 pub fn router() -> crate::routes::ProtectedRoutes {
@@ -84,7 +84,6 @@ async fn create_user_group(
                         "member".into(),
                         crate::db::now_string().into(),
                     ])
-                    .on_conflict(OnConflict::new().do_nothing().to_owned())
                     .to_owned();
                 let _ = crate::db::execute(&pool, &stmt).await;
             }
@@ -212,6 +211,18 @@ async fn add_group_members(
 
     for member_val in user_ids {
         if let Some(member_id) = member_val.as_i64() {
+            // MySQL 호환성: on_conflict 대신 기존 멤버 여부를 먼저 확인한다.
+            let exists_stmt = SeaQuery::select()
+                .column("id")
+                .from("user_group_members")
+                .and_where(Expr::col("group_id").eq(id))
+                .and_where(Expr::col("user_id").eq(member_id))
+                .to_owned();
+            let existing = crate::db::fetch_optional(&pool, &exists_stmt).await
+                .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()}))))?;
+            if existing.is_some() {
+                continue;
+            }
             let stmt = SeaQuery::insert()
                 .into_table("user_group_members")
                 .columns(["id", "group_id", "user_id", "role", "joined_at"])
@@ -222,7 +233,6 @@ async fn add_group_members(
                     "member".into(),
                     crate::db::now_string().into(),
                 ])
-                .on_conflict(OnConflict::new().do_nothing().to_owned())
                 .to_owned();
             let _ = crate::db::execute_ignore(&pool, &stmt).await;
         }

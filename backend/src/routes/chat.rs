@@ -8,7 +8,7 @@ use axum::{
 use std::sync::Arc;
 use serde_json::{json, Value};
 use sqlx::{AnyPool, Row};
-use sea_query::{Asterisk, Expr, ExprTrait, Func, JoinType, OnConflict, Order, Query as SeaQuery};
+use sea_query::{Asterisk, Expr, ExprTrait, Func, JoinType, Order, Query as SeaQuery};
 use crate::auth::AuthUser;
 use tokio::sync::broadcast;
 use std::collections::HashMap;
@@ -224,17 +224,29 @@ async fn add_chat_room_member(
     let room_id = crate::serde_utils::parse_path_id(&room_id_str)?;
     let user_id = member_data.get("user_id").and_then(crate::serde_utils::value_to_opt_i64).ok_or_else(|| (StatusCode::BAD_REQUEST, Json(json!({"success": false, "error": "user_id is required"}))))?;
 
-    let stmt = SeaQuery::insert()
-        .into_table("chat_room_members")
-        .columns(["id", "room_id", "user_id", "joined_at"])
-        .values_panic([crate::db::new_id().into(), room_id.into(), user_id.into(), crate::db::now_string().into()])
-        .on_conflict(OnConflict::columns(["room_id", "user_id"]).do_nothing().to_owned())
+    // sea-query MySQL은 do_nothing()을 "ON DUPLICATE KEY IGNORE"(무효 문법)로
+    // 변환하므로 on_conflict를 쓰지 않고, 기존 멤버 여부를 먼저 확인한다.
+    let exists_stmt = SeaQuery::select()
+        .expr(Func::count(Expr::col("id")))
+        .from("chat_room_members")
+        .and_where(Expr::col("room_id").eq(room_id))
+        .and_where(Expr::col("user_id").eq(user_id))
         .to_owned();
-
-    crate::db::execute(&pool, &stmt)
+    let already: i64 = crate::db::fetch_scalar(&pool, &exists_stmt)
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()}))))?;
 
+    if already == 0 {
+        let stmt = SeaQuery::insert()
+            .into_table("chat_room_members")
+            .columns(["id", "room_id", "user_id", "joined_at"])
+            .values_panic([crate::db::new_id().into(), room_id.into(), user_id.into(), crate::db::now_string().into()])
+            .to_owned();
+
+        crate::db::execute(&pool, &stmt)
+            .await
+            .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"success": false, "error": e.to_string()}))))?;
+    }
 
     Ok(Json(json!({ "success": true })))
 }
