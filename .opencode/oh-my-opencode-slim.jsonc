@@ -4,7 +4,7 @@
   "presets": {
     "opencode": {
       "orchestrator": {
-        "model": "opencode/mimo-v2.5-free",
+        "model": "opencode/big-pickle",
         "skills": [
           "*",
           "!make-interfaces-feel-better"
@@ -29,13 +29,13 @@
         ]
       },
       "council": {
-        "model": "opencode/mimo-v2.5-free",
+        "model": "opencode/deepseek-v4-flash-free",
         "variant": "high",
         "skills": [],
         "mcps": []
       },
       "librarian": {
-        "model": "opencode/deepseek-v4-flash-free",
+        "model": "opencode/mimo-v2.5-free",
         "skills": [
           "customer-research"
         ],
@@ -53,7 +53,7 @@
         ]
       },
       "designer": {
-        "model": "opencode/mimo-v2.5-free",
+        "model": "opencode/deepseek-v4-flash-free",
         "variant": "medium",
         "skills": [
           "make-interfaces-feel-better",
