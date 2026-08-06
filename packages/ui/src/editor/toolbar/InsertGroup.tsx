@@ -2,6 +2,7 @@ import React from 'react';
 import { Image as ImageIcon, Link as LinkIcon, Minus, Smile } from 'lucide-react';
 import { EmojiPicker } from '../EmojiPicker';
 import { SPECIAL_CHARACTERS } from '../constants';
+import { useFlipPosition } from '../useFlipPosition';
 import { MENU_PANEL_CLASS, ToolbarButton } from './ToolbarButton';
 import { TableInsertMenu } from './TableInsertMenu';
 import type { ToolbarGroupProps } from './types';
@@ -15,6 +16,9 @@ const ICON_BUTTON_CLASS = 'text-slate-600 dark:text-slate-400';
 
 /** 링크 / 이미지 / 구분선 / 특수문자 / 이모지 / 표 삽입 */
 export function InsertGroup({ editor, labels, commands, popovers, onAddLink, onAddImage }: Props) {
+  const specialCharAlign = useFlipPosition(popovers.refs.specialChar, popovers.isOpen('specialChar'));
+  const emojiAlign = useFlipPosition(popovers.refs.emoji, popovers.isOpen('emoji'), 360);
+
   return (
     <div className="flex items-center gap-0.5">
       <ToolbarButton keepSelection onClick={onAddLink} title={labels.link} className={ICON_BUTTON_CLASS}>
@@ -45,7 +49,7 @@ export function InsertGroup({ editor, labels, commands, popovers, onAddLink, onA
         </ToolbarButton>
         {popovers.isOpen('specialChar') && (
           <div
-            className={`${MENU_PANEL_CLASS} right-0 dark:border-slate-700 shadow-xl p-2 rounded-md grid grid-cols-10 gap-1 w-max max-h-[220px] overflow-y-auto overflow-x-auto custom-scrollbar`}
+            className={`${MENU_PANEL_CLASS} ${specialCharAlign} dark:border-slate-700 shadow-xl p-2 rounded-md grid grid-cols-10 gap-1 w-max max-h-[220px] overflow-y-auto overflow-x-auto custom-scrollbar`}
             onKeyDown={popovers.handleMenuKeyDown}
           >
             {SPECIAL_CHARACTERS.map((char, idx) => (
@@ -74,7 +78,7 @@ export function InsertGroup({ editor, labels, commands, popovers, onAddLink, onA
           <Smile size={14} />
         </ToolbarButton>
         {popovers.isOpen('emoji') && (
-          <div className="absolute right-0 mt-1 z-30 shadow-xl rounded-xl overflow-hidden border border-border dark:border-slate-700 max-w-[calc(100vw-2rem)]">
+          <div className={`absolute ${emojiAlign} mt-1 z-30 shadow-xl rounded-xl overflow-hidden border border-border dark:border-slate-700 max-w-[calc(100vw-2rem)]`}>
             <React.Suspense
               fallback={
                 <div className="w-[352px] h-[435px] flex items-center justify-center bg-white dark:bg-slate-900 text-xs text-slate-500 dark:text-slate-400">

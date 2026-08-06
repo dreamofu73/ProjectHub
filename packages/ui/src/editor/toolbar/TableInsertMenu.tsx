@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Check, Table as TableIcon } from 'lucide-react';
 import { TABLE_GRID_SIZE } from '../constants';
+import { useFlipPosition } from '../useFlipPosition';
 import type { TableConfig } from '../useEditorCommands';
 import { MENU_PANEL_CLASS, ToolbarButton } from './ToolbarButton';
 import type { ToolbarGroupProps } from './types';
@@ -24,6 +25,7 @@ export function TableInsertMenu({ labels, commands, popovers }: Props) {
   const [showDetails, setShowDetails] = useState(false);
 
   const isOpen = popovers.isOpen('table');
+  const tableAlign = useFlipPosition(popovers.refs.table, isOpen, 260);
   const previewCols = hovered.r >= 0 ? hovered.c + 1 : config.cols;
   const previewRows = hovered.r >= 0 ? hovered.r + 1 : config.rows;
 
@@ -45,7 +47,7 @@ export function TableInsertMenu({ labels, commands, popovers }: Props) {
       </ToolbarButton>
 
       {isOpen && (
-        <div className={`${MENU_PANEL_CLASS} right-0 dark:border-slate-700 shadow-xl p-3 rounded-md flex flex-col gap-3 w-64`} onKeyDown={popovers.handleMenuKeyDown}>
+        <div className={`${MENU_PANEL_CLASS} ${tableAlign} dark:border-slate-700 shadow-xl p-3 rounded-md flex flex-col gap-3 w-64`} onKeyDown={popovers.handleMenuKeyDown}>
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold">
               {labels.insertTable} <span className="text-indigo-500">{previewCols}x{previewRows}</span>
