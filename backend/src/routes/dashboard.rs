@@ -41,6 +41,25 @@ async fn get_dashboard(
         crate::db::fetch_scalar(&pool, &stmt).await.unwrap_or(0)
     };
 
+    // 활성화 프로젝트 수는 목록(LIMIT 6)이 아닌 전체 개수를 별도로 계산합니다.
+    let active_projects: i64 = if is_admin {
+        let stmt = SeaQuery::select()
+            .expr(Func::count(Expr::cust("*")))
+            .from("projects")
+            .and_where(Expr::col("status").eq("active"))
+            .to_owned();
+        crate::db::fetch_scalar(&pool, &stmt).await.unwrap_or(0)
+    } else {
+        let stmt = SeaQuery::select()
+            .expr(Func::count_distinct(Expr::col(("p", "id"))))
+            .from_as("projects", "p")
+            .join_as(JoinType::InnerJoin, "project_members", "pm", Expr::col(("pm", "project_id")).equals(("p", "id")))
+            .and_where(Expr::col(("pm", "user_id")).eq(user_id))
+            .and_where(Expr::col(("p", "status")).eq("active"))
+            .to_owned();
+        crate::db::fetch_scalar(&pool, &stmt).await.unwrap_or(0)
+    };
+
     let total_issues: i64 = if is_admin {
         let stmt = SeaQuery::select()
             .expr(Func::count(Expr::cust("*")))
@@ -318,6 +337,7 @@ async fn get_dashboard(
         "success": true,
         "data": {
             "total_projects": total_projects,
+            "active_projects": active_projects,
             "total_issues": total_issues,
             "open_issues": open_issues,
             "my_open_issues": my_open_issues,

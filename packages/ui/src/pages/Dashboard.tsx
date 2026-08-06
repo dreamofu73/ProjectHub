@@ -10,6 +10,7 @@ import type { Issue, DashboardActivity, ProjectSummary } from 'shared/types';
 
 interface DashboardData {
   total_projects: number;
+  active_projects: number;
   total_issues: number;
   open_issues: number;
   my_open_issues: number;
@@ -367,7 +368,7 @@ export default function Dashboard() {
             <CardTitle className="text-sm font-bold text-[var(--text-primary)]">
               {t('activeProjects')}
               <span className="ml-1.5 text-xs font-semibold text-muted-foreground bg-[var(--bg-surface-2)]! px-2 py-0.5 rounded">
-                {data.projects_summary?.length || 0}
+                {data.active_projects ?? data.projects_summary?.length ?? 0}
               </span>
             </CardTitle>
             <Link to="/projects" className="text-xs font-bold text-primary hover:text-primary/80 flex items-center gap-0.5 transition-colors no-underline">

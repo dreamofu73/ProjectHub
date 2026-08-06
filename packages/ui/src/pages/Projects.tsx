@@ -36,8 +36,12 @@ export default function ProjectsPage() {
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  // 시스템 관리자는 projects 화면에서 전체 프로젝트 목록을 기본으로 표시합니다.
+  const userStr = localStorage.getItem('user');
+  const currentUser = userStr ? JSON.parse(userStr) : null;
+  const isSysAdmin = currentUser?.role === 'admin';
   const [membershipFilter, setMembershipFilter] = useState<'all' | 'mine'>(
-    () => (searchParams.get('all') === 'true' ? 'all' : 'mine')
+    () => (searchParams.get('all') === 'true' || isSysAdmin ? 'all' : 'mine')
   );
   const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
   const [currentPage, setCurrentPage] = useState(1);
@@ -85,9 +89,6 @@ export default function ProjectsPage() {
     setCurrentPage(1);
   };
 
-  const userStr = localStorage.getItem('user');
-  const currentUser = userStr ? JSON.parse(userStr) : null;
-  const isSysAdmin = currentUser?.role === 'admin';
   const pagedProjects = projects;
 
   return (

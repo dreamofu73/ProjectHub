@@ -2,21 +2,30 @@ import { useState, useEffect } from 'react';
 import { Folder } from 'lucide-react';
 import { apiJson, apiPut } from 'shared/lib/api';
 import type { Project, ApiResponse } from 'shared/types';
+import { Pagination } from 'ui/Pagination';
 import { useLanguage } from '../../context/LanguageContext';
 
 export default function ProjectManagement() {
   const { t } = useLanguage();
   const [projects, setProjects] = useState<Project[]>([]);
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'archived'>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      const url = `/api/projects?status=${statusFilter}`;
-      const res = await apiJson<ApiResponse<Project[]>>(url);
+      const url = `/api/projects?status=${statusFilter}&page=${currentPage}&limit=${pageSize}`;
+      const res = await apiJson<ApiResponse<Project[]> & { total?: number }>(url);
       setProjects(res.data);
+      setTotalCount(res.total ?? res.data.length);
+      // 현재 페이지가 비었으면(마지막 항목을 아카이브한 경우) 이전 페이지로 이동
+      if (res.data.length === 0 && currentPage > 1) {
+        setCurrentPage(currentPage - 1);
+      }
     } catch (err) {
       setError(t('fetchError'));
     } finally {
@@ -26,7 +35,7 @@ export default function ProjectManagement() {
 
   useEffect(() => {
     fetchProjects();
-  }, [statusFilter]);
+  }, [statusFilter, currentPage, pageSize]);
 
   const handleUpdateProject = async (id: string, updates: { is_public?: boolean; status?: string }) => {
     try {
@@ -49,7 +58,10 @@ export default function ProjectManagement() {
       <div className="mb-4">
         <select
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'archived')}
+          onChange={(e) => {
+            setStatusFilter(e.target.value as 'all' | 'active' | 'archived');
+            setCurrentPage(1);
+          }}
           className="bg-[var(--bg-surface)] border border-[var(--border)] rounded px-3 py-2"
         >
           <option value="all">{t('allProjectsFilter')}</option>
@@ -108,6 +120,18 @@ export default function ProjectManagement() {
           </tbody>
         </table>
       </div>
+      {totalCount > 0 && (
+        <div className="mt-4">
+          <Pagination
+            currentPage={currentPage}
+            totalCount={totalCount}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={(s) => { setPageSize(s); setCurrentPage(1); }}
+            pageSizeOptions={[10, 20, 30, 50, 100]}
+          />
+        </div>
+      )}
     </div>
   );
 }

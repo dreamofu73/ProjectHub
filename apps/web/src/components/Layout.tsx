@@ -282,7 +282,7 @@ export default function Layout({ children }: LayoutProps) {
   const pathSegments = location.pathname.split('/').filter(Boolean);
   const isProjectContext = pathSegments[0] === 'projects' && pathSegments[1] && pathSegments[1] !== 'new';
   const projectId = isProjectContext ? pathSegments[1] : null;
-  const isSystemContext = location.pathname.startsWith('/users') || location.pathname.startsWith('/admin/groups') || location.pathname.startsWith('/admin/organization') || location.pathname.startsWith('/admin/scheduler') || location.pathname.startsWith('/admin/logs');
+  const isSystemContext = location.pathname.startsWith('/users') || location.pathname.startsWith('/admin/groups') || location.pathname.startsWith('/admin/organization') || location.pathname.startsWith('/admin/scheduler') || location.pathname.startsWith('/admin/projects') || location.pathname.startsWith('/admin/logs');
 
   useEffect(() => {
     if (!projectId) {
