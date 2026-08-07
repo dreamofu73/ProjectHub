@@ -258,8 +258,30 @@ async fn bulk_update_issues(
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     let ids = bulk_data.get("ids").and_then(|v| v.as_array()).ok_or_else(|| (StatusCode::BAD_REQUEST, Json(json!({"success": false, "error": "ids is required"}))))?;
     let status = bulk_data.get("status").and_then(|v| v.as_str());
+    let priority = bulk_data.get("priority").and_then(|v| v.as_str());
+    let task_type = bulk_data.get("task_type").and_then(|v| v.as_str());
+    let tracker = bulk_data.get("tracker").and_then(|v| v.as_str());
     let assigned_to_id = bulk_data.get("assigned_to_id");
-    let due_date = bulk_data.get("due_date").and_then(|v| v.as_str());
+    let planned_start_date: Option<Option<String>> = match bulk_data.get("planned_start_date") {
+        Some(v) if v.is_null() => Some(None),
+        Some(v) => Some(v.as_str().map(|s| s.to_string())),
+        None => None,
+    };
+    let actual_start_date: Option<Option<String>> = match bulk_data.get("actual_start_date") {
+        Some(v) if v.is_null() => Some(None),
+        Some(v) => Some(v.as_str().map(|s| s.to_string())),
+        None => None,
+    };
+    let actual_end_date: Option<Option<String>> = match bulk_data.get("actual_end_date") {
+        Some(v) if v.is_null() => Some(None),
+        Some(v) => Some(v.as_str().map(|s| s.to_string())),
+        None => None,
+    };
+    let due_date: Option<Option<String>> = match bulk_data.get("due_date") {
+        Some(v) if v.is_null() => Some(None),
+        Some(v) => Some(v.as_str().map(|s| s.to_string())),
+        None => None,
+    };
 
     if ids.is_empty() {
         return Ok(Json(json!({ "success": true })));
@@ -308,8 +330,34 @@ async fn bulk_update_issues(
             update_stmt.value("assigned_to_id", Expr::val(assigned_id));
         }
         
-        if let Some(d) = due_date {
-            update_stmt.value("due_date", d);
+        if let Some(p) = priority {
+            update_stmt.value("priority", p);
+        }
+        if let Some(tt) = task_type {
+            update_stmt.value("task_type", tt);
+        }
+        if let Some(tr) = tracker {
+            update_stmt.value("tracker", tr);
+        }
+        match &planned_start_date {
+            Some(None) => { update_stmt.value("planned_start_date", None::<String>); }
+            Some(Some(v)) => { update_stmt.value("planned_start_date", v.as_str()); }
+            None => {}
+        }
+        match &actual_start_date {
+            Some(None) => { update_stmt.value("actual_start_date", None::<String>); }
+            Some(Some(v)) => { update_stmt.value("actual_start_date", v.as_str()); }
+            None => {}
+        }
+        match &actual_end_date {
+            Some(None) => { update_stmt.value("actual_end_date", None::<String>); }
+            Some(Some(v)) => { update_stmt.value("actual_end_date", v.as_str()); }
+            None => {}
+        }
+        match &due_date {
+            Some(None) => { update_stmt.value("due_date", None::<String>); }
+            Some(Some(v)) => { update_stmt.value("due_date", v.as_str()); }
+            None => {}
         }
         
         update_stmt.value("updated_at", crate::db::now_string());
