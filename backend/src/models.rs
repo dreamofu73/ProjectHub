@@ -124,6 +124,7 @@ pub struct Task {
     pub task_type: Option<String>,
     pub task_category: Option<String>,
     pub status: Option<String>,
+    pub priority: Option<String>,
     pub planned_start_date: Option<String>,
     pub planned_end_date: Option<String>,
     pub actual_start_date: Option<String>,
@@ -146,6 +147,7 @@ pub struct TaskRow {
     pub task_type: Option<String>,
     pub task_category: Option<String>,
     pub status: Option<String>,
+    pub priority: Option<String>,
     pub planned_start_date: Option<String>,
     pub planned_end_date: Option<String>,
     pub actual_start_date: Option<String>,
@@ -163,6 +165,7 @@ pub struct CreateTaskRequest {
     pub task_type: Option<String>,
     pub task_category: Option<String>,
     pub status: Option<String>,
+    pub priority: Option<String>,
     pub planned_start_date: Option<String>,
     pub planned_end_date: Option<String>,
     pub actual_start_date: Option<String>,
@@ -183,6 +186,7 @@ pub struct UpdateTaskRequest {
     pub task_type: Option<String>,
     pub task_category: Option<String>,
     pub status: Option<String>,
+    pub priority: Option<String>,
     #[serde(default, deserialize_with = "crate::serde_utils::nullable_string")]
     pub planned_start_date: Option<Option<String>>,
     #[serde(default, deserialize_with = "crate::serde_utils::nullable_string")]
@@ -225,6 +229,13 @@ pub struct BulkUpdateTasksRequest {
     pub status: Option<String>,
     pub task_type: Option<String>,
     pub task_category: Option<String>,
+    pub priority: Option<String>,
+    #[serde(default, deserialize_with = "crate::serde_utils::nullable_string")]
+    pub actual_start_date: Option<Option<String>>,
+    #[serde(default, deserialize_with = "crate::serde_utils::nullable_string")]
+    pub actual_end_date: Option<Option<String>>,
+    #[serde(default, deserialize_with = "crate::serde_utils::nullable_string_or_number")]
+    pub parent_task_id: Option<Option<i64>>,
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow, ToSchema)]

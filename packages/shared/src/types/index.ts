@@ -61,6 +61,7 @@ export interface Task {
   task_type: string;
   task_category: string;
   status: string;
+  priority: string | null;
   planned_start_date: string | null;
   planned_end_date: string | null;
   actual_start_date: string | null;

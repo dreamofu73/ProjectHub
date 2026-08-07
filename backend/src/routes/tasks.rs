@@ -130,6 +130,7 @@ async fn bulk_create_tasks(
                         task_type: row.get(2).map(|d| d.to_string()),
                         task_category: row.get(3).map(|d| d.to_string()),
                         status: row.get(4).map(|d| d.to_string()),
+                        priority: None,
                         planned_start_date: row.get(5).map(|d| d.to_string()),
                         planned_end_date: row.get(6).map(|d| d.to_string()),
                         actual_start_date: row.get(7).map(|d| d.to_string()),
@@ -168,7 +169,7 @@ async fn bulk_create_tasks(
         let stmt = SeaQuery::insert()
             .into_table("tasks")
             .columns([
-                "id", "project_id", "title", "description", "task_type", "task_category", "status",
+                "id", "project_id", "title", "description", "task_type", "task_category", "status", "priority",
                 "planned_start_date", "planned_end_date", "actual_start_date", "actual_end_date",
                 "progress", "author_id", "assignee_id", "created_at", "updated_at"
             ])
@@ -180,6 +181,7 @@ async fn bulk_create_tasks(
                 task.task_type.clone().into(),
                 task.task_category.clone().into(),
                 task.status.clone().unwrap_or_else(|| "New".to_string()).into(),
+                task.priority.clone().into(),
                 task.planned_start_date.clone().into(),
                 task.planned_end_date.clone().into(),
                 task.actual_start_date.clone().into(),
@@ -331,7 +333,7 @@ async fn create_task(
     let stmt = SeaQuery::insert()
         .into_table("tasks")
         .columns([
-            "id", "project_id", "title", "description", "task_type", "task_category", "status",
+            "id", "project_id", "title", "description", "task_type", "task_category", "status", "priority",
             "planned_start_date", "planned_end_date", "actual_start_date", "actual_end_date",
             "progress", "author_id", "assignee_id", "parent_task_id", "created_at", "updated_at"
         ])
@@ -343,6 +345,7 @@ async fn create_task(
             req.task_type.into(),
             req.task_category.into(),
             req.status.unwrap_or_else(|| "New".to_string()).into(),
+            req.priority.into(),
             req.planned_start_date.into(),
             req.planned_end_date.into(),
             req.actual_start_date.into(),
@@ -399,6 +402,7 @@ fn task_row_to_json(t: &sqlx::any::AnyRow) -> Value {
         "task_type": t.get::<Option<String>, _>("task_type"),
         "task_category": t.get::<Option<String>, _>("task_category"),
         "status": t.get::<Option<String>, _>("status"),
+        "priority": t.get::<Option<String>, _>("priority"),
         "planned_start_date": t.get::<Option<String>, _>("planned_start_date"),
         "planned_end_date": t.get::<Option<String>, _>("planned_end_date"),
         "actual_start_date": t.get::<Option<String>, _>("actual_start_date"),
@@ -508,6 +512,7 @@ async fn update_task(
     if let Some(task_type) = req.task_type { update_stmt.value("task_type", task_type); }
     if let Some(task_category) = req.task_category { update_stmt.value("task_category", task_category); }
     if let Some(status) = req.status { update_stmt.value("status", status); }
+    if let Some(priority) = req.priority { update_stmt.value("priority", priority); }
     match req.planned_start_date {
         Some(None) => { update_stmt.value("planned_start_date", None::<String>); }
         Some(Some(v)) => { update_stmt.value("planned_start_date", v); }
@@ -629,8 +634,27 @@ async fn bulk_update_tasks(
             None => {}
         }
         if let Some(status) = &req.status { update_stmt.value("status", status.as_str()); }
+        if let Some(priority) = &req.priority { update_stmt.value("priority", priority.as_str()); }
         if let Some(task_type) = &req.task_type { update_stmt.value("task_type", task_type.as_str()); }
         if let Some(task_category) = &req.task_category { update_stmt.value("task_category", task_category.as_str()); }
+        match &req.actual_start_date {
+            Some(None) => { update_stmt.value("actual_start_date", None::<String>); }
+            Some(Some(v)) => { update_stmt.value("actual_start_date", v.as_str()); }
+            None => {}
+        }
+        match &req.actual_end_date {
+            Some(None) => { update_stmt.value("actual_end_date", None::<String>); }
+            Some(Some(v)) => { update_stmt.value("actual_end_date", v.as_str()); }
+            None => {}
+        }
+        match req.parent_task_id {
+            Some(None) => { update_stmt.value("parent_task_id", None::<i64>); }
+            Some(Some(v)) => {
+                validate_parent_task(&pool, project_id, Some(id), v).await?;
+                update_stmt.value("parent_task_id", v);
+            }
+            None => {}
+        }
 
         let stmt = update_stmt
             .and_where(Expr::col("id").eq(id))

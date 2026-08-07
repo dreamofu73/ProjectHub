@@ -317,6 +317,7 @@ async fn create_project_tables(pool: &AnyPool, kind: DbKind) {
             .col(text("task_type"))
             .col(text("task_category"))
             .col(text("status"))
+            .col(text("priority"))
             .col(text("planned_start_date"))
             .col(text("planned_end_date"))
             .col(text("actual_start_date"))
@@ -1163,6 +1164,7 @@ async fn apply_legacy_upgrades(pool: &AnyPool) {
 
     // 일감 계층 구조 (구버전 DB 따라잡기)
     add_column(pool, "tasks", int_null("parent_task_id")).await;
+    add_column(pool, "tasks", text("priority")).await;
 
     add_column(pool, "messages", text("edited_at")).await;
     add_column(pool, "chat_room_members", int_null("last_read_message_id")).await;
