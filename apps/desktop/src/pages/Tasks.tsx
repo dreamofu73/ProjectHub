@@ -1,16 +1,18 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Plus, CheckSquare, Upload, Search, CornerDownRight, Settings, X, Layers, AlertCircle, GanttChart } from 'lucide-react';
+import { Plus, CheckSquare, Upload, Search, Settings, X, Layers, AlertCircle, GanttChart } from 'lucide-react';
 import { useToast } from 'ui/Toast';
 import { useLanguage } from '../context/LanguageContext';
 import { useTasks } from 'shared/hooks/useTasks';
+import { useProjectMembers } from 'shared/hooks/useProjectMembers';
 import { NewTaskPanel } from 'ui/NewTaskPanel';
 import { TaskDetailPanel } from 'ui/TaskDetailPanel';
 import { BulkTaskEditPanel } from 'ui/BulkTaskEditPanel';
 import { BulkUploadModal } from 'ui/BulkUploadModal';
 import { TasksGanttChart } from 'ui/TasksGanttChart';
 import { NewMilestonePanel } from 'ui/NewMilestonePanel';
-import { TaskStatusBadge } from 'ui/TaskStatusBadge';
+import { InlineEditableTable } from 'ui/InlineEditableTable';
+import { getStatusLabel } from 'ui/taskStatus';
 import { useMilestones } from 'shared/hooks/useMilestones';
 import { flattenTaskTree } from 'shared/lib/taskTree';
 import type { Task } from 'shared/types';
@@ -20,6 +22,7 @@ export default function TasksPage() {
   const { t } = useLanguage();
   const { showToast } = useToast();
   const { tasks, loading, error, project, fetchTasks, updateTask, bulkUpdateTasks } = useTasks();
+  const { members } = useProjectMembers(project?.id);
   const isArchived = project?.status === 'archived';
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -166,8 +169,8 @@ export default function TasksPage() {
     else setSelectedIds(new Set(visibleTasks.map(task => task.id)));
   };
 
-  const toggleSelectRow = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const toggleSelectRow = (id: string, e?: React.MouseEvent) => {
+    e?.stopPropagation?.();
     setSelectedIds(prev => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
@@ -274,7 +277,7 @@ export default function TasksPage() {
                 >
                   <option value="all" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('filterAll')}</option>
                   {statusOptions.map((s) => (
-                    <option key={s} value={s} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{s}</option>
+                    <option key={s} value={s} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{getStatusLabel(s, t)}</option>
                   ))}
                 </select>
 
@@ -396,115 +399,24 @@ export default function TasksPage() {
                   )}
                 </div>
               ) : (
-                <div className="table-container custom-scrollbar border-none rounded-none shadow-none">
-                  <table className="table">
-                    <thead>
-                      <tr className="sticky top-0 z-10">
-                        {!isArchived && (
-                          <th className="w-11 min-w-[44px] max-w-[44px] text-center bg-[var(--bg-surface-2)] sticky top-0 z-10">
-                            <input
-                              type="checkbox"
-                              checked={allSelected}
-                              onChange={toggleSelectAll}
-                              className="accent-[var(--primary)]"
-                            />
-                          </th>
-                        )}
-                        {TASK_COLUMNS.filter(col => columnKeys.includes(col.key)).map(col => (
-                          <th
-                            key={col.key}
-                            className={`select-none py-1.5 px-3 text-left font-bold text-xs uppercase tracking-wider sticky top-0 z-10 bg-[var(--bg-surface-2)] ${
-                              col.key === 'title' ? '' : col.key === 'progress' ? 'w-28' : 'w-32'
-                            }`}
-                          >
-                            {t(col.labelKey)}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {visibleRows.map(({ task, depth }, idx) => {
-                        const isSelected = selectedIds.has(task.id);
-                        return (
-                          <tr
-                            key={task.id}
-                            className={`group transition-colors duration-150 cursor-pointer ${
-                              isSelected ? 'bg-[var(--primary)]/5' : ''
-                            }`}
-                            style={{ animation: `slideUpFade 0.3s ease ${idx * 0.03}s both` }}
-                            onClick={() => setSelectedTaskId(task.id)}
-                          >
-                            {!isArchived && (
-                              <td className="text-center py-1.5" onClick={(e) => toggleSelectRow(task.id, e)}>
-                                <input
-                                  type="checkbox"
-                                  checked={isSelected}
-                                  onChange={() => toggleSelectRow(task.id, {} as React.MouseEvent)}
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="accent-[var(--primary)]"
-                                />
-                              </td>
-                            )}
-                            {columnKeys.includes('title') && (
-                              <td className="py-1.5 px-3">
-                                <div className="flex items-center gap-2" style={{ paddingLeft: depth * 18 }}>
-                                  {depth > 0 && <CornerDownRight size={12} className="text-[var(--text-muted)] shrink-0" />}
-                                  <span className="truncate text-sm font-medium text-[var(--text-primary)]">{task.title}</span>
-                                  {!isArchived && (
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        openSubtaskPanel(task.id);
-                                      }}
-                                      className="opacity-0 group-hover:opacity-100 focus:opacity-100 p-1 rounded-md text-[var(--text-muted)] hover:text-[var(--primary)] hover:bg-[var(--bg-surface-2)] transition-all shrink-0 cursor-pointer"
-                                      title={t('addSubtask')}
-                                      aria-label={t('addSubtask')}
-                                    >
-                                      <Plus size={12} />
-                                    </button>
-                                  )}
-                                </div>
-                              </td>
-                            )}
-                            {columnKeys.includes('task_type') && (
-                              <td className="py-1.5 px-3 text-xs text-[var(--text-secondary)]">{task.task_type || '-'}</td>
-                            )}
-                            {columnKeys.includes('task_category') && (
-                              <td className="py-1.5 px-3 text-xs text-[var(--text-secondary)]">{task.task_category || '-'}</td>
-                            )}
-                            {columnKeys.includes('status') && (
-                              <td className="py-1.5 px-3"><TaskStatusBadge status={task.status} /></td>
-                            )}
-                            {columnKeys.includes('planned_dates') && (
-                              <td className="py-1.5 px-3 text-xs text-[var(--text-muted)]">
-                                {task.planned_start_date ?? '-'} ~ {task.planned_end_date ?? '-'}
-                              </td>
-                            )}
-                            {columnKeys.includes('actual_dates') && (
-                              <td className="py-1.5 px-3 text-xs text-[var(--text-muted)]">
-                                {task.actual_start_date ?? '-'} ~ {task.actual_end_date ?? '-'}
-                              </td>
-                            )}
-                            {columnKeys.includes('progress') && (
-                              <td className="py-1.5 px-3">
-                                <div className="flex items-center gap-2">
-                                  <div className="flex-1 h-1.5 rounded-full bg-[var(--bg-surface-2)] overflow-hidden">
-                                    <div
-                                      className="h-full rounded-full bg-[var(--primary)] transition-all duration-300"
-                                      style={{ width: `${task.progress ?? 0}%` }}
-                                    />
-                                  </div>
-                                  <span className="text-xs text-[var(--text-muted)] tabular-nums min-w-[2.5rem] text-right">{task.progress ?? 0}%</span>
-                                </div>
-                              </td>
-                            )}
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+                <InlineEditableTable
+                  rows={visibleRows}
+                  columnKeys={columnKeys}
+                  project={project}
+                  members={members}
+                  isArchived={isArchived}
+                  selectedIds={selectedIds}
+                  onToggleSelect={(id, e) => toggleSelectRow(id, e)}
+                  allSelected={allSelected}
+                  onToggleSelectAll={toggleSelectAll}
+                  onSave={async (taskId, patch) => {
+                    const ok = await updateTask(taskId, patch);
+                    if (!ok) showToast(t('inlineEditSaveError'), 'error');
+                    return ok;
+                  }}
+                  onTitleClick={(taskId) => setSelectedTaskId(taskId)}
+                  onAddSubtask={openSubtaskPanel}
+                />
               )}
             </>
             )}
@@ -585,6 +497,7 @@ const TASK_COLUMNS = [
   { key: 'task_type', labelKey: 'task_type' },
   { key: 'task_category', labelKey: 'task_category' },
   { key: 'status', labelKey: 'status' },
+  { key: 'assignee', labelKey: 'assignee' },
   { key: 'planned_dates', labelKey: 'planned_dates' },
   { key: 'actual_dates', labelKey: 'actual_dates' },
   { key: 'progress', labelKey: 'progress' },

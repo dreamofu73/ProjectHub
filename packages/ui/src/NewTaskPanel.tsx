@@ -7,6 +7,7 @@ import { api } from 'shared/lib/api';
 import { useLanguage } from 'shared/hooks/LanguageContext';
 import { useProjectMembers, type Member } from 'shared/hooks/useProjectMembers';
 import type { Project } from 'shared/types';
+import { getStatusLabel } from './taskStatus';
 
 interface NewTaskPanelProps {
   project: Project;
@@ -120,7 +121,7 @@ export function NewTaskPanel({ project, parentTaskId, parentTaskTitle, onClose, 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Select label={t('task_type')} value={taskType} onChange={(e) => setTaskType(e.target.value)} options={taskTypes.map((t: string) => ({ value: t, label: t }))} fullWidth />
             <Select label={t('task_category')} value={taskCategory} onChange={(e) => setTaskCategory(e.target.value)} options={taskCategories.map((t: string) => ({ value: t, label: t }))} fullWidth />
-            <Select label={t('status')} value={status} onChange={(e) => setStatus(e.target.value)} options={taskStatuses.map((s: string) => ({ value: s, label: s }))} fullWidth />
+            <Select label={t('status')} value={status} onChange={(e) => setStatus(e.target.value)} options={taskStatuses.map((s: string) => ({ value: s, label: getStatusLabel(s, t) }))} fullWidth />
           </div>
           <Select label={t('assignee')} value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)} options={assigneeOptions} fullWidth />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

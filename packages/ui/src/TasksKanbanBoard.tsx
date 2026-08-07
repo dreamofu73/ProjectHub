@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import type { Task } from 'shared/types/index';
 import { useLanguage } from 'shared/hooks/LanguageContext';
 import { KanbanBoard, type KanbanColumnDef, getWorkflowStatusRank } from './KanbanBoard';
+import { getStatusLabel } from './taskStatus';
 
 export interface TasksKanbanBoardProps {
   tasks: Task[];
@@ -47,7 +48,7 @@ export const TasksKanbanBoard: React.FC<TasksKanbanBoardProps> = ({
         const match = defaultColumns.find(c => (c.id ?? '').toLowerCase() === st.toLowerCase());
         return {
           id: st,
-          label: st,
+          label: getStatusLabel(st, t),
           color: match?.color || 'bg-slate-500',
           defaultWip: match?.defaultWip || 10,
         };
