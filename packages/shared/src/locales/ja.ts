@@ -699,6 +699,8 @@ const ja: Record<string, string> = {
   noTasksDesc: '条件に一致するタスクがありません。フィルターを変更してみてください。',
   filterAll: 'すべて',
   bulkEdit: '一括編集',
+  bulkConvertToTask: 'タスク登録',
+  bulkChange: '一括変更',
   bulkSelectCount: '{count}件選択',
   bulkUnchanged: '変更しない',
   bulkEditSuccess: '選択したタスクを更新しました。',

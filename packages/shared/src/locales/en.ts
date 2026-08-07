@@ -1061,6 +1061,8 @@ const en: Record<string, string> = {
   attachmentsLabel: 'Attachments',
   backToList: 'Back to List',
   bulkEdit: 'Bulk Edit',
+  bulkConvertToTask: 'Register as Task',
+  bulkChange: 'Bulk Change',
   bulkEditError: 'Bulk edit failed.',
   bulkEditSuccess: 'Selected tasks were updated.',
   bulkSelectCount: '{count} selected',

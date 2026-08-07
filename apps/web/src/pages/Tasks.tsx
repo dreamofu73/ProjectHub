@@ -355,6 +355,18 @@ export default function TasksPage() {
             <>
               {/* ── 툴바 ── */}
               <div className="flex items-center gap-2 flex-wrap min-w-0 mb-3">
+                {/* 상태 필터 */}
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="h-8 px-2 border border-[var(--border)] rounded bg-[var(--bg-surface)] text-xs focus:outline-none text-[var(--text-primary)] cursor-pointer font-medium"
+                >
+                  <option value="all" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('filterAll')}</option>
+                  {statusOptions.map((s) => (
+                    <option key={s} value={s} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{getStatusLabel(s, t)}</option>
+                  ))}
+                </select>
+
                 {/* 검색 입력 */}
                 <div className="relative">
                   <input
@@ -371,18 +383,6 @@ export default function TasksPage() {
                     <Search size={12} />
                   </button>
                 </div>
-
-                {/* 상태 필터 */}
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="h-8 px-2 border border-[var(--border)] rounded bg-[var(--bg-surface)] text-xs focus:outline-none text-[var(--text-primary)] cursor-pointer font-medium"
-                >
-                  <option value="all" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{t('filterAll')}</option>
-                  {statusOptions.map((s) => (
-                    <option key={s} value={s} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{getStatusLabel(s, t)}</option>
-                  ))}
-                </select>
 
                 {/* 초기화 버튼 */}
                 <button

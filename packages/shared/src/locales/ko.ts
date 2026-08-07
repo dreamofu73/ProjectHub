@@ -698,6 +698,8 @@ const ko: Record<string, string> = {
   noTasksDesc: '조건에 맞는 일감이 없습니다. 필터를 변경해보세요.',
   filterAll: '전체',
   bulkEdit: '일괄 수정',
+  bulkConvertToTask: '일감등록',
+  bulkChange: '일괄변경',
   bulkSelectCount: '{count}개 선택',
   bulkUnchanged: '변경하지 않음',
   bulkEditSuccess: '선택한 일감이 일괄 수정되었습니다.',

@@ -981,6 +981,8 @@ const es: Record<string, string> = {
   backToList: 'Volver a la Lista',
   backToProject: 'Volver al Proyecto',
   bulkEdit: 'Edición Masiva',
+  bulkConvertToTask: 'Registrar Tarea',
+  bulkChange: 'Cambio Masivo',
   bulkEditError: 'Error en la edición masiva.',
   bulkEditSuccess: 'Las tareas seleccionadas se actualizaron.',
   bulkSelectCount: '{count} seleccionados',
