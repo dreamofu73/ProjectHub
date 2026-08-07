@@ -434,32 +434,33 @@ export default function TasksPage() {
                     </div>
                   )}
                 </div>
-              </div>
 
-              {/* ── 일괄 선택 바 ── */}
-              {!isArchived && selectedIds.size > 0 && (
-                <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-xl bg-[var(--bg-surface-2)]/70 border border-[var(--border)]">
-                  <span className="text-xs font-bold text-[var(--primary)] whitespace-nowrap">
-                    {t('bulkSelectCount').replace('{count}', String(selectedIds.size))}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setIsBulkEditOpen(true)}
-                    className="h-7 px-3 bg-[var(--primary)] hover:opacity-90 text-white rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer border-none"
-                  >
-                    {t('bulkEdit')}
-                  </button>
-                  <span className="text-[var(--border)] mx-0.5">|</span>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedIds(new Set())}
-                    className="flex items-center gap-1 px-2.5 py-1.5 border border-[var(--border)] hover:bg-[var(--bg-surface-2)] text-[var(--text-secondary)] rounded text-xs font-semibold transition-all cursor-pointer bg-[var(--bg-surface)] h-7"
-                  >
-                    <X size={11} />
-                    {t('deselectAll')}
-                  </button>
-                </div>
-              )}
+                {/* 일괄 선택 */}
+                {!isArchived && selectedIds.size > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="w-px h-5 bg-[var(--border)] mx-0.5" aria-hidden="true" />
+                    <span className="text-xs font-bold text-[var(--primary)] whitespace-nowrap">
+                      {t('bulkSelectCount').replace('{count}', String(selectedIds.size))}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setIsBulkEditOpen(true)}
+                      className="h-8 px-3 bg-[var(--primary)] hover:opacity-90 text-white rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer border-none"
+                    >
+                      {t('bulkEdit')}
+                    </button>
+                    <span className="text-[var(--border)] mx-0.5">|</span>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedIds(new Set())}
+                      className="h-8 px-2.5 flex items-center gap-1 border border-[var(--border)] rounded bg-[var(--bg-surface)] text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-2)] transition-colors cursor-pointer font-medium"
+                    >
+                      <X size={11} />
+                      {t('deselectAll')}
+                    </button>
+                  </div>
+                )}
+              </div>
 
               {/* ── 스켈레톤 / 빈 상태 / 테이블 ── */}
               {loading ? (

@@ -87,9 +87,13 @@ function PreviewModal({ file, onClose, onDownload }: PreviewModalProps) {
   const [imgScale,    setImgScale]    = useState(1);
   const [imgRotation, setImgRotation] = useState(0);
 
-  // ESC 키로 닫기
+  // ESC 키로 닫기 (부모 페이지의 window 리스너로 ESC가 전파되어
+  // 보고 있던 게시글/이슈 등이 함께 닫히지 않도록 전파를 막는다)
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape') onClose();
+    if (e.key === 'Escape') {
+      e.stopPropagation();
+      onClose();
+    }
   }, [onClose]);
 
   useEffect(() => {
