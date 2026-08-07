@@ -704,6 +704,8 @@ const ko: Record<string, string> = {
   bulkUnchanged: '변경하지 않음',
   bulkEditSuccess: '선택한 일감이 일괄 수정되었습니다.',
   bulkEditError: '일괄 수정에 실패했습니다.',
+  bulkIssueEditSuccess: '선택한 이슈가 일괄 수정되었습니다.',
+  bulkIssueEditError: '일괄 수정에 실패했습니다.',
   clearSearch: '검색 초기화',
   noSearchResultsFor: "'{term}'에 대한 검색 결과가 없습니다.",
   selectPost: '게시글 선택',

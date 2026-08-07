@@ -705,6 +705,8 @@ const ja: Record<string, string> = {
   bulkUnchanged: '変更しない',
   bulkEditSuccess: '選択したタスクを更新しました。',
   bulkEditError: '一括更新に失敗しました。',
+  bulkIssueEditSuccess: '選択したイシューが一括更新されました。',
+  bulkIssueEditError: '一括更新に失敗しました。',
   clearSearch: '検索をクリア',
   noSearchResultsFor: '「{term}」の検索結果がありません。',
   selectPost: '投稿を選択',

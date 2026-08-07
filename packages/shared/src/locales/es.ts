@@ -985,6 +985,8 @@ const es: Record<string, string> = {
   bulkChange: 'Cambio Masivo',
   bulkEditError: 'Error en la edición masiva.',
   bulkEditSuccess: 'Las tareas seleccionadas se actualizaron.',
+  bulkIssueEditSuccess: 'Las incidencias seleccionadas se actualizaron.',
+  bulkIssueEditError: 'Error en la edición masiva.',
   bulkSelectCount: '{count} seleccionados',
   bulkUnchanged: 'Sin cambios',
   cancelAddFolder: 'Cancelar añadir carpeta',

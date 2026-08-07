@@ -152,28 +152,6 @@ export function useIssues() {
     }
   };
 
-  const handleBulkAction = async (type: 'status' | 'assignee' | 'due_date', value: string) => {
-    if (selectedIssues.length === 0 || !value) return;
-    if (!window.confirm(t('bulkUpdateConfirm').replace('{count}', selectedIssues.length.toString()))) return;
-    try {
-      const body: { ids: string[]; status?: string; assigned_to_id?: string | null; due_date?: string } = { ids: selectedIssues };
-      if (type === 'status') body.status = value;
-      if (type === 'assignee') body.assigned_to_id = value === 'unassigned' ? null : value;
-      if (type === 'due_date') body.due_date = value;
-      const res = await api('/api/issues/bulk', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      const json = await res.json();
-      if (json.success) { setSelectedIssues([]); fetchIssues(); }
-      else alert(json.error || t('bulkUpdateError'));
-    } catch (err) {
-      console.error('Bulk action failed:', err);
-      alert(t('bulkUpdateError'));
-    }
-  };
-
   const handleSort = (key: string) => {
     const params = new URLSearchParams(searchParams);
     params.set('page', '1');
@@ -236,7 +214,6 @@ export function useIssues() {
     updateFilter,
     handleSelectAll,
     handleSelectIssue,
-    handleBulkAction,
     handleBulkConvertToTask,
     handleSort,
     handleResetFilters,

@@ -1065,6 +1065,8 @@ const en: Record<string, string> = {
   bulkChange: 'Bulk Change',
   bulkEditError: 'Bulk edit failed.',
   bulkEditSuccess: 'Selected tasks were updated.',
+  bulkIssueEditSuccess: 'Selected issues were updated.',
+  bulkIssueEditError: 'Bulk edit failed.',
   bulkSelectCount: '{count} selected',
   bulkUnchanged: 'Unchanged',
   clearSearch: 'Clear search',

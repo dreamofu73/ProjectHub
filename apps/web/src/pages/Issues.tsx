@@ -7,7 +7,9 @@ import { IssuesToolbar } from '../components/issues/IssuesToolbar';
 
 import { IssueDetailPanel } from '../components/issues/IssueDetailPanel';
 import { NewIssuePanel } from '../components/issues/NewIssuePanel';
+import { BulkIssueEditPanel } from 'ui/BulkIssueEditPanel';
 import { useIssues } from 'shared/hooks/useIssues';
+import { api } from 'shared/lib/api';
 import {
   STATUS_CONFIG,
   buildPriorityConfig,
@@ -47,7 +49,6 @@ export default function IssuesPage() {
     updateFilter,
     handleSelectAll,
     handleSelectIssue,
-    handleBulkAction,
     handleBulkConvertToTask,
     handleSort,
     handleResetFilters,
@@ -67,8 +68,23 @@ export default function IssuesPage() {
 
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
   const [isNewIssueOpen, setIsNewIssueOpen] = useState(false);
+  const [isBulkIssueEditOpen, setIsBulkIssueEditOpen] = useState(false);
   
   const handleOpenDetail = (issue: Issue) => setSelectedIssueId(issue.id);
+
+  const bulkUpdateIssues = async (updates: Record<string, unknown>): Promise<boolean> => {
+    try {
+      const res = await api('/api/issues/bulk', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: selectedIssues, ...updates }),
+      });
+      const json = await res.json();
+      return !!json.success;
+    } catch {
+      return false;
+    }
+  };
 
   // ── 컬럼 설정 ──
   const [columnKeys, setColumnKeys] = useState<string[]>(() => {
@@ -118,6 +134,11 @@ export default function IssuesPage() {
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable)) return;
       if (isNewIssueOpen) return;
+      if (isBulkIssueEditOpen) {
+        e.preventDefault();
+        setIsBulkIssueEditOpen(false);
+        return;
+      }
       if (selectedIssueId !== null) {
         e.preventDefault();
         setSelectedIssueId(null);
@@ -125,7 +146,7 @@ export default function IssuesPage() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedIssueId, isNewIssueOpen]);
+  }, [selectedIssueId, isNewIssueOpen, isBulkIssueEditOpen]);
 
   const isArchived = project?.status === 'archived';
 
@@ -189,15 +210,9 @@ export default function IssuesPage() {
             handleResetFilters={handleResetFilters}
             selectedIssues={selectedIssues}
             setSelectedIssues={setSelectedIssues}
-            handleBulkAction={handleBulkAction}
             handleBulkConvertToTask={handleBulkConvertToTask}
-            users={users}
-            projectMembers={projectMembers}
-            issues={issues}
-            statusLabels={statusLabels}
+            onOpenBulkEdit={() => setIsBulkIssueEditOpen(true)}
             t={t}
-            trackerLabels={trackerLabels}
-            priorityLabels={priorityLabels}
             columnKeys={columnKeys}
             toggleColumn={toggleColumn}
             isColumnSettingsOpen={isColumnSettingsOpen}
@@ -299,6 +314,28 @@ export default function IssuesPage() {
             onCreated={() => {
               setIsNewIssueOpen(false);
               fetchIssues();
+            }}
+          />
+        </div>
+      )}
+
+      {/* ── 우측 일괄 수정 패널 (slide-over) ── */}
+      {isBulkIssueEditOpen && (
+        <div className="fixed top-[calc(var(--header-height)+1rem)] bottom-4 right-0 w-2/3 z-50 bg-[var(--bg-surface)] border-l border-y border-[var(--border)] rounded-l-xl shadow-2xl animate-slide-in-right flex flex-col overflow-hidden">
+          <BulkIssueEditPanel
+            project={project}
+            issueIds={selectedIssues}
+            users={users}
+            projectMembers={projectMembers}
+            issues={issues}
+            statusLabels={statusLabels}
+            onSave={bulkUpdateIssues}
+            onClose={(success) => {
+              setIsBulkIssueEditOpen(false);
+              if (success) {
+                setSelectedIssues([]);
+                fetchIssues();
+              }
             }}
           />
         </div>

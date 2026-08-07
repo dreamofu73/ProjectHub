@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { Search, ChevronDown, Calendar, User, X, Settings } from 'lucide-react';
+import { useRef } from 'react';
+import { Search, X, Settings } from 'lucide-react';
 import { ALL_COLUMNS, getColumnLabel } from './IssuesTableView';
 
 interface IssuesToolbarProps {
@@ -29,16 +29,9 @@ interface IssuesToolbarProps {
   setSelectedIssues: (ids: string[]) => void;
 
   // Bulk actions
-  handleBulkAction: (type: 'status' | 'assignee' | 'due_date', value: string) => void;
   handleBulkConvertToTask: (projectId: string) => void;
-  users: Array<{ id: string; firstname: string; lastname: string }>;
-  projectMembers: Array<{ project_id: string; user_id: string }>;
-  issues: Array<{ id: string; project_id: string }>;
+  onOpenBulkEdit: () => void;
 
-  // Labels (from t())
-  statusLabels: Record<string, string>;
-  priorityLabels: Record<string, string>;
-  trackerLabels: Record<string, string>;
   t: (key: string) => string;
 
   // Column settings
@@ -68,12 +61,8 @@ export function IssuesToolbar({
   handleResetFilters,
   selectedIssues,
   setSelectedIssues,
-  handleBulkAction,
   handleBulkConvertToTask,
-  users,
-  projectMembers,
-  issues,
-  statusLabels,
+  onOpenBulkEdit,
   t,
   columnKeys,
   toggleColumn,
@@ -82,40 +71,6 @@ export function IssuesToolbar({
   columnSettingsRef,
 }: IssuesToolbarProps) {
   const toolbarRef = useRef<HTMLDivElement>(null);
-
-  // 드롭다운 열림 상태 관리 (일괄변경 단일 드롭다운)
-  const [activeDropdown, setActiveDropdown] = useState<'bulk' | null>(null);
-
-  // 외부 클릭 시 모든 드롭다운 닫기
-  useEffect(() => {
-    const handleOutsideClick = (e: MouseEvent) => {
-      if (toolbarRef.current && !toolbarRef.current.contains(e.target as Node)) {
-        setActiveDropdown(null);
-      }
-    };
-    document.addEventListener('click', handleOutsideClick);
-    return () => document.removeEventListener('click', handleOutsideClick);
-  }, []);
-
-  // 드롭다운 토글 함수
-  const toggleDropdown = () => {
-    setActiveDropdown(prev => (prev === 'bulk' ? null : 'bulk'));
-  };
-
-  // 선택된 이슈들이 속한 프로젝트들의 공통 멤버 계산
-  const getCommonMembers = () => {
-    if (selectedIssues.length === 0) return [];
-    const selectedIssueProjects = issues
-      .filter(i => selectedIssues.includes(String(i.id)))
-      .map(i => i.project_id);
-    const uniqueProjectIds = Array.from(new Set(selectedIssueProjects));
-    if (uniqueProjectIds.length === 0) return [];
-    return users.filter(user =>
-      uniqueProjectIds.every(pid =>
-        projectMembers.some(pm => pm.project_id === pid && pm.user_id === user.id),
-      ),
-    );
-  };
 
   const hasSelection = selectedIssues.length > 0;
 
@@ -317,86 +272,14 @@ export function IssuesToolbar({
             </button>
           )}
 
-          {/* 일괄변경 (상태/담당자/기한 일괄 변경 드롭다운) */}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={toggleDropdown}
-              className={secondaryBtnClass}
-            >
-              {t('bulkChange')}
-              <ChevronDown size={11} className="opacity-60" />
-            </button>
-            {activeDropdown === 'bulk' && (
-              <div className="absolute right-0 mt-1 w-60 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl shadow-xl z-30 py-2 animate-in fade-in slide-in-from-top-1 duration-150">
-                {/* 상태 변경 */}
-                <div className="px-3 pb-1 mb-1 border-b border-[var(--border)]">
-                  <span className="text-[0.65rem] font-bold text-[var(--text-muted)]">{t('status')}</span>
-                </div>
-                <div className="max-h-32 overflow-y-auto custom-scrollbar px-1 pb-1">
-                  {Object.entries(statusLabels).map(([key, label]) => (
-                    <button
-                      key={key}
-                      onClick={() => {
-                        handleBulkAction('status', key);
-                        setActiveDropdown(null);
-                      }}
-                      className="w-full text-left px-2 py-1.5 text-xs hover:bg-[var(--bg-surface-2)] text-[var(--text-primary)] flex items-center gap-2 cursor-pointer border-none bg-transparent font-medium rounded-lg"
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-
-                {/* 담당자 변경 */}
-                <div className="px-3 pb-1 mb-1 border-b border-[var(--border)]">
-                  <span className="text-[0.65rem] font-bold text-[var(--text-muted)]">{t('assignee')}</span>
-                </div>
-                <div className="max-h-32 overflow-y-auto custom-scrollbar px-1 pb-1">
-                  <button
-                    onClick={() => {
-                      handleBulkAction('assignee', 'unassigned');
-                      setActiveDropdown(null);
-                    }}
-                    className="w-full text-left px-2 py-1.5 text-xs hover:bg-[var(--bg-surface-2)] text-[var(--text-primary)] flex items-center gap-2 cursor-pointer border-none bg-transparent font-medium rounded-lg"
-                  >
-                    {t('unassigned')}
-                  </button>
-                  {getCommonMembers().map(user => (
-                    <button
-                      key={user.id}
-                      onClick={() => {
-                        handleBulkAction('assignee', String(user.id));
-                        setActiveDropdown(null);
-                      }}
-                      className="w-full text-left px-2 py-1.5 text-xs hover:bg-[var(--bg-surface-2)] text-[var(--text-primary)] flex items-center gap-2 cursor-pointer border-none bg-transparent font-medium rounded-lg"
-                    >
-                      <User size={11} className="text-[var(--text-muted)]" />
-                      {user.firstname} {user.lastname}
-                    </button>
-                  ))}
-                </div>
-
-                {/* 기한 변경 */}
-                <div className="px-3 pb-1 mb-1 border-b border-[var(--border)]">
-                  <span className="text-[0.65rem] font-bold text-[var(--text-muted)]">{t('dueDateLabel')}</span>
-                </div>
-                <div className="px-2 pb-1 flex items-center gap-2">
-                  <Calendar size={12} className="text-[var(--text-muted)] shrink-0" />
-                  <input
-                    type="date"
-                    className="w-full bg-transparent border-none text-xs text-[var(--text-primary)] outline-none py-1"
-                    onChange={e => {
-                      if (e.target.value) {
-                        handleBulkAction('due_date', e.target.value);
-                        setActiveDropdown(null);
-                      }
-                    }}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
+          {/* 일괄변경 */}
+          <button
+            type="button"
+            onClick={onOpenBulkEdit}
+            className={secondaryBtnClass}
+          >
+            {t('bulkChange')}
+          </button>
 
           <span className="text-[var(--border)] mx-0.5">|</span>
 
